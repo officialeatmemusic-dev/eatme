@@ -43,6 +43,16 @@ als CSS-Snippet geliefert.
    siehe DSGVO-Hinweis aus dem Architektur-Chat) besorgt und ins Repo unter
    `/assets/fonts/` gelegt werden, bevor die Fonts live sichtbar sind.
 
+5. **Pfade immer relativ, nie mit führendem `/`.**
+   GitHub Pages läuft hier als Project-Page unter `t-i-l.github.io/eatme/`
+   (nicht als reine `username.github.io`-Hauptseite). Ein Pfad mit
+   führendem `/` (z.B. `/assets/...`) zeigt von der Domain-Wurzel aus und
+   würde am `/eatme/`-Unterordner vorbeizeigen → 404. Deshalb überall
+   relative Pfade ohne führenden Slash verwenden (`assets/...`,
+   `sound/...`). Betraf ursprünglich die Font-Pfade in `tokens.css`,
+   wurde gefixt — bei neuen Asset-Referenzen (z.B. in
+   `background-and-motion.md` oder Sektions-CSS) unbedingt genauso machen.
+
 ## Nicht in tokens.css enthalten (bewusst)
 - Spacing-/Abstands-Skala — in Figma noch nicht als Variablen gesehen,
   wird ggf. pro Sektion aus den Frame-Maßen abgeleitet oder separat
