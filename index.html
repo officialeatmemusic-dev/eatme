@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EatMe</title>
+
+  <!-- Design-Tokens: Farben, Fonts, Font-Faces — einzige Quelle, siehe tokens-notes.md -->
+  <link rel="stylesheet" href="tokens.css" />
+
+  <!-- Globales Layout-Grundgerüst (Hintergrund-Layer, Sektions-Wrapper-Basics) -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!--
+    Durchgehender Himmel-Hintergrund über alle Sektionen.
+    Verhalten (Verlauf, Textur, evtl. Parallax) wird separat in
+    background-and-motion.md spezifiziert und hier per CSS/JS befüllt,
+    sobald das geklärt ist. Liegt hinter allen Sektionen (z-index).
+  -->
+  <div class="page-background" aria-hidden="true"></div>
+
+  <!--
+    Wiederkehrende Navigation (Logo, Social-Links, Sound-Toggle später).
+    Wird eigener Chat / eigene Komponente, siehe ARCHITECTURE.md
+    -> Komponenten: eatme-navigation
+  -->
+  <header id="site-nav">
+    <!-- component: eatme-navigation -->
+  </header>
+
+  <main>
+    <!--
+      Jede Sektion bekommt ihren eigenen Chat + eigene CSS-Datei unter
+      /sections. Platzhalter hier halten nur die Reihenfolge und IDs fest,
+      damit background-and-motion.md und spätere Sektions-Chats sich darauf
+      beziehen können.
+    -->
+    <section id="section-01-stage" class="section">
+      <!-- Hero: Logo, Vogelschwarm-Animation (birds-stage.html) -->
+    </section>
+
+    <section id="section-02-text-01" class="section">
+      <!-- Intro-Text -->
+    </section>
+
+    <section id="section-03-images" class="section">
+      <!-- Bandfotos + Songzeile 1 -->
+    </section>
+
+    <section id="section-04-text-02" class="section">
+      <!-- Fließtext + Vogel-Übergang -->
+    </section>
+
+    <section id="section-05-images-drops" class="section">
+      <!-- Bandfoto + Wassertropfen + Songzeile 2 -->
+    </section>
+
+    <section id="section-06-text-social" class="section">
+      <!-- Ankündigungstext + Instagram-Modul -->
+    </section>
+
+    <section id="section-07-footer" class="section">
+      <!-- Songzeile, Booking-CTA, Kontakt, Footer-Links -->
+    </section>
+  </main>
+
+  <!-- Content wird zur Laufzeit aus content.json geladen -->
+  <script src="script.js" defer></script>
+</body>
+</html>

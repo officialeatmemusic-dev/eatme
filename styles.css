@@ -1,0 +1,68 @@
+/* ==========================================================================
+   EatMe — Globales Grundgerüst
+   Enthält NUR: Reset, Basis-Layout, Hintergrund-Layer-Grundgerüst.
+   Sektions-spezifisches Styling gehört in die jeweilige Sektions-Datei
+   unter /sections, nicht hierher — siehe ARCHITECTURE.md.
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-display);
+  color: var(--color-black);
+  background: var(--color-white);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ---- Hintergrund-Layer ----
+   Liegt fixed hinter dem gesamten Seiteninhalt, erstreckt sich über die
+   komplette Scroll-Höhe. Farben/Verlauf/Textur/Parallax-Logik werden in
+   background-and-motion.md spezifiziert und hier ergänzt, sobald geklärt.
+   Platzhalter aktuell: einfacher statischer Verlauf aus den Tokens, damit
+   man schon einen Eindruck von der Grundfläche hat. */
+.page-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  background: linear-gradient(180deg, var(--gradient-top), var(--gradient-bottom));
+  pointer-events: none;
+}
+
+/* ---- Layout-Grundgerüst ---- */
+main {
+  position: relative;
+  z-index: 1;
+}
+
+.section {
+  position: relative;
+  width: 100%;
+}
+
+#site-nav {
+  position: relative;
+  z-index: 10;
+}
+
+/* ---- Globaler Breakpoint ----
+   Siehe tokens-notes.md: 768px ist verbindlich für ALLE Sektionen.
+   CSS-Variablen funktionieren nicht in @media-Queries, daher hier als
+   fest verdrahtete Zahl — exakt so in jeder Sektions-Datei übernehmen. */
+@media (max-width: 768px) {
+  .section {
+    /* Sektionsspezifische Mobile-Anpassungen passieren in den jeweiligen
+       Sektions-Dateien, nicht hier. Dieser Block ist nur Referenz/Anker. */
+  }
+}

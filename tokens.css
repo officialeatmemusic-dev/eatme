@@ -1,0 +1,142 @@
+/* ==========================================================================
+   EatMe — Design Tokens
+   Quelle: Figma (njS6vA0NyvIyFcsPk3dDXH), Variablen-Collection auf Node 3:5404
+   Diese Datei ist die EINZIGE Quelle für Farben, Fonts und den Button/Footer-
+   Gradient. Sektions-CSS darf keine eigenen Hex-Codes oder Font-Werte
+   einführen — immer diese Variablen referenzieren.
+   ========================================================================== */
+
+:root {
+  /* ---- Farben ---- */
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --color-blue: #6b9ea9;
+  --color-blue-05: #6b9ea90d;      /* blue bei 5% Opacity */
+  --color-grey-50: #b4c1cb80;      /* grey bei 50% Opacity */
+
+  --gradient-top: #c9e1e7;
+  --gradient-bottom: #60cae4;
+
+  /* Button/Footer-Gradient — NICHT der Himmel-Hintergrund (der wird separat
+     in background-and-motion.md behandelt). Direkt aus Figma-Style übernommen,
+     inkl. eigener Opacity-Werte und Farb-Stop bei 26.93%. */
+  --gradient-buttons-footer: linear-gradient(
+    180deg,
+    rgba(201, 225, 231, 0.50) 26.93%,
+    rgba(96, 202, 228, 0.50) 100%
+  );
+
+  /* ---- Fonts: Families ---- */
+  --font-display: "Michroma", sans-serif;   /* Headlines, Nav, Buttons, Labels */
+  --font-lyrics: "EB Garamond", serif;      /* Songzeilen, kursiv */
+
+  /* ---- Fonts: Textstile (Größe / Line-Height / Letter-Spacing) ----
+     Hinweis: Figma liefert letterSpacing als reine Zahl ohne Einheit-Tag.
+     Als px angenommen (Figma-Default bei "absoluten" Werten) — bitte einmal
+     im Figma-Inspector (rechtes Panel, ausgewählter Text -> "Letter spacing")
+     gegenprüfen, ob es sich um px oder % handelt, bevor wir das final fixieren. */
+
+  /* highlight: große Headline-Schrift (z.B. Hero-Claim) */
+  --font-highlight-family: var(--font-display);
+  --font-highlight-size: 30px;
+  --font-highlight-line-height: 1.2;
+  --font-highlight-letter-spacing: -10px; /* siehe Hinweis oben */
+
+  /* copy-l: größere Fließtext-Variante (z.B. Intro-Absätze) */
+  --font-copy-l-family: var(--font-display);
+  --font-copy-l-size: 14px;
+  --font-copy-l-line-height: 1.8;
+  --font-copy-l-letter-spacing: 0px;
+
+  /* copy-s: Standard-Copy (z.B. Nav-Links, kleinere Absätze) */
+  --font-copy-s-family: var(--font-display);
+  --font-copy-s-size: 10px;
+  --font-copy-s-line-height: 1;
+  --font-copy-s-letter-spacing: 6px; /* siehe Hinweis oben */
+
+  /* copy-xs: kleinste Copy (z.B. Footer-Links, Meta-Infos) */
+  --font-copy-xs-family: var(--font-display);
+  --font-copy-xs-size: 8px;
+  --font-copy-xs-line-height: 1;
+  --font-copy-xs-letter-spacing: 8px; /* siehe Hinweis oben */
+
+  /* lyrics: kursive Songzeilen */
+  --font-lyrics-family: var(--font-lyrics);
+  --font-lyrics-style: italic;
+  --font-lyrics-size: 14px;
+  --font-lyrics-line-height: 1.5;
+  --font-lyrics-letter-spacing: 2px;
+}
+
+/* ==========================================================================
+   Font-Faces — selbst gehostet (DSGVO: kein Google Fonts CDN)
+   Dateipfade gehen von /assets/fonts/ aus. .woff2-Dateien müssen dort liegen,
+   sobald du sie von Google Fonts als Datei (nicht als Web-Link) heruntergeladen
+   und ins Repo gelegt hast.
+   ========================================================================== */
+
+@font-face {
+  font-family: "Michroma";
+  src: url("/assets/fonts/Michroma-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "EB Garamond";
+  src: url("/assets/fonts/EBGaramond-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Falls EB Garamond auch nicht-kursiv irgendwo gebraucht wird, hier ergänzen:
+@font-face {
+  font-family: "EB Garamond";
+  src: url("/assets/fonts/EBGaramond-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+*/
+
+/* ==========================================================================
+   Utility-Klassen für die Textstile (optional nutzbar in Sektionen)
+   ========================================================================== */
+
+.text-highlight {
+  font-family: var(--font-highlight-family);
+  font-size: var(--font-highlight-size);
+  line-height: var(--font-highlight-line-height);
+  letter-spacing: var(--font-highlight-letter-spacing);
+}
+
+.text-copy-l {
+  font-family: var(--font-copy-l-family);
+  font-size: var(--font-copy-l-size);
+  line-height: var(--font-copy-l-line-height);
+  letter-spacing: var(--font-copy-l-letter-spacing);
+}
+
+.text-copy-s {
+  font-family: var(--font-copy-s-family);
+  font-size: var(--font-copy-s-size);
+  line-height: var(--font-copy-s-line-height);
+  letter-spacing: var(--font-copy-s-letter-spacing);
+}
+
+.text-copy-xs {
+  font-family: var(--font-copy-xs-family);
+  font-size: var(--font-copy-xs-size);
+  line-height: var(--font-copy-xs-line-height);
+  letter-spacing: var(--font-copy-xs-letter-spacing);
+}
+
+.text-lyrics {
+  font-family: var(--font-lyrics-family);
+  font-style: var(--font-lyrics-style);
+  font-size: var(--font-lyrics-size);
+  line-height: var(--font-lyrics-line-height);
+  letter-spacing: var(--font-lyrics-letter-spacing);
+}

@@ -1,0 +1,100 @@
+{
+  "site": {
+    "title": "EatMe",
+    "logo_alt": "EatMe",
+    "social_links": {
+      "spotify": "https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg",
+      "tiktok": "https://www.tiktok.com/@eatme.music",
+      "instagram": "https://www.instagram.com/eatme.music/",
+      "youtube": "https://www.youtube.com/@eatme.music.official"
+    },
+    "contact_email": "contact@eatmemusic.com",
+    "audio_track": "sound/xyz.mp3"
+  },
+
+  "section-01-stage": {
+    "logo_image": "assets/logo/eatme_logo.png",
+    "background_animation": "assets/visuals/birds-stage.html"
+  },
+
+  "section-02-text-01": {
+    "headline": "EatMe – Independent Pop between momentum and nostalgia",
+    "paragraphs": [
+      "EatMe creates independent pop/rock with influences from shoegaze, hyperpop, and folk.",
+      "Guitars, electronic elements, and pop melodies come together—sometimes calm than loud, at times direct other times dreamy."
+    ]
+  },
+
+  "section-03-images": {
+    "images": [
+      { "src": "assets/images/eatme-image-01.jpg", "alt": "Platzhalter Alt-Text – Bandfoto 1" },
+      { "src": "assets/images/eatme-image-02.jpg", "alt": "Platzhalter Alt-Text – Bandfoto 2" }
+    ],
+    "lyrics": {
+      "song_title": "",
+      "lines": [
+        "TODO: echte Songzeile 1",
+        "TODO: echte Songzeile 2",
+        "TODO: echte Songzeile 3",
+        "TODO: echte Songzeile 4"
+      ]
+    }
+  },
+
+  "section-04-text-02": {
+    "paragraphs": [
+      "The songs revolve around in-between states, growth, and everything that defines your twenties: self-doubt, transitions, friendships, love, and the attempt to keep going after setbacks.",
+      "It's about moments when you lose yourself and find your way back again."
+    ]
+  },
+
+  "section-05-images-drops": {
+    "images": [
+      { "src": "assets/images/eatme-image-03.jpg", "alt": "Platzhalter Alt-Text – Bandfoto 3" }
+    ],
+    "lyrics": {
+      "song_title": "",
+      "lines": [
+        "TODO: echte Songzeile 1",
+        "TODO: echte Songzeile 2",
+        "TODO: echte Songzeile 3",
+        "TODO: echte Songzeile 4"
+      ]
+    }
+  },
+
+  "section-06-text-social": {
+    "paragraphs": [
+      "For their upcoming album, set to be released at the end of the year, the band has further developed their sound:",
+      "more open, more atmospheric, and with more space for experimentation, energy, and dynamics."
+    ],
+    "instagram_module": {
+      "handle": "@eatme.music",
+      "caption": "\"Let's start a band\" she said...",
+      "avatar_image": "assets/images/eatme-insta-avatar.png",
+      "post_image": "",
+      "follow_url": "https://www.instagram.com/eatme.music/"
+    }
+  },
+
+  "section-07-footer": {
+    "background_image": "assets/images/eatme-image-footer.jpg",
+    "background_image_alt": "Platzhalter Alt-Text – Bandfoto Footer (Duoton)",
+    "lyrics": {
+      "song_title": "",
+      "lines": [
+        "TODO: echte Songzeile 1",
+        "TODO: echte Songzeile 2",
+        "TODO: echte Songzeile 3",
+        "TODO: echte Songzeile 4"
+      ]
+    },
+    "cta_text": "Open for Booking",
+    "cta_link": "mailto:contact@eatmemusic.com",
+    "contact_email": "contact@eatmemusic.com",
+    "footer_links": {
+      "imprint": "imprint.html",
+      "datenschutz": "datenschutz.html"
+    }
+  }
+}
