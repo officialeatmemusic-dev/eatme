@@ -149,8 +149,10 @@ neu schreiben, gilt automatisch für alle künftigen Sektionen.
 
 - ✅ **section-01-stage** — fertig (Stage-Modul mit Cloud-Hintergrund +
   Vogelschwarm-Animation als zwei unabhängige Parallax-Ebenen, secondary-nav
-  mit Mailto-Link + Sound-Toggle). Eigene CSS: `sections/section-01-stage.css`,
-  Verhalten (Sound-Toggle, Parallax) in `script.js`.
+  mit Mailto-Link + Sound-Toggle, responsive: fluide Breite bis max. 1280px,
+  Stage-Höhe `85vh`, 768px-Breakpoint). Eigene CSS:
+  `sections/section-01-stage.css`, Verhalten (Sound-Toggle, Parallax) in
+  `script.js`.
 - ⬜ section-02-text-01 … section-07-footer — noch offen, siehe Sektionsliste
   oben.
 
@@ -181,11 +183,11 @@ Zwei getrennte Hintergrund-Systeme, nicht verwechseln:
 **Bewusste Reihenfolge:** Erst alle 7 Sektionen strukturell bauen (Layout,
 Content, Responsive), das durchgehende Hintergrund-System (Punkt 2)
 zuletzt. Til möchte die Struktur sichtbar haben, bevor der seitenweite
-Hintergrund reinkommt. Bis dahin nutzt `styles.css` einen simplen
-Platzhalter-Verlauf aus den Tokens (`--gradient-top` / `--gradient-bottom`)
-über die ganze Seite, der später durch die finale Logik aus
-`background-and-motion.md` ersetzt wird (inkl. Korrektur, dass er erst ab
-section-02 einsetzt und section-01 seinen eigenen Stage-Hintergrund behält).
+Hintergrund reinkommt. Bis dahin nutzt `styles.css` einfaches Weiß
+(`--color-white`) als Platzhalter über die ganze Seite, der später durch
+die finale Logik aus `background-and-motion.md` ersetzt wird (inkl.
+Korrektur, dass er erst ab section-02 einsetzt und section-01 seinen
+eigenen Stage-Hintergrund behält).
 
 ## Content-Struktur
 
@@ -202,6 +204,12 @@ bleiben Code, nicht editierbar), aber Text/Bild/Link-Inhalt editierbar.
 - Screenshot-Vergleich als Feedback-Loop: bauen → Screenshot → neben
   Referenzbild legen → Abweichungen benennen (konkrete Werte statt
   "sieht komisch aus")
+- **Responsive wird von Anfang an mitgedacht, nicht nachträglich
+  ergänzt.** Beim Bauen einer neuen Sektion wird direkt mit fluiden
+  Einheiten gearbeitet (`%`, `vh`, `max-width` statt fixer `px`-Breiten/
+  -Höhen wo sinnvoll) und der 768px-Breakpoint (siehe `tokens-notes.md`)
+  gleich mit angelegt — nicht erst nach dem Desktop-Layout als separater
+  Schritt nachgereicht.
 - Mobile-Anpassungen werden im jeweiligen Sektions-Chat mitentschieden,
   kein separater Mobile-Chat
 
