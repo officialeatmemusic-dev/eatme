@@ -40,6 +40,16 @@ body {
   pointer-events: none;
 }
 
+/* ---- Globale Link-Convention ----
+   Browser-Standard für <a> (blau, unterstrichen) wird zurückgesetzt, damit
+   Links immer die Textfarbe/den Font aus den tokens.css-Utility-Klassen
+   übernehmen, statt auf den User-Agent-Style zurückzufallen. Zentral hier,
+   damit jeder neue Link in jeder Sektion automatisch richtig aussieht. */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
 /* ---- Globale Hover-Convention ----
    Gilt für alle interaktiven Elemente auf der gesamten Seite (nicht nur
    einzelne Sektionen): Hover macht das Element leicht transparent.
@@ -63,6 +73,7 @@ main {
 .section {
   position: relative;
   width: 100%;
+  margin: 0 auto;
 }
 
 #site-nav {
