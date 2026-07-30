@@ -13,6 +13,7 @@
 
   <!-- Sektions-CSS: eine Datei pro Sektion, siehe ARCHITECTURE.md -->
   <link rel="stylesheet" href="sections/section-01-stage.css" />
+  <link rel="stylesheet" href="sections/section-02-text-01.css" />
 </head>
 <body>
 
@@ -52,7 +53,15 @@
     </section>
 
     <section id="section-02-text-01" class="section">
-      <!-- Intro-Text -->
+      <div class="birds-blue-container" aria-hidden="true">
+        <img class="bird-blue-lg" src="assets/visuals/birds-blue/bird-blue-lg.svg" alt="" />
+        <img class="bird-blue-sm" src="assets/visuals/birds-blue/bird-blue-sm.svg" alt="" />
+      </div>
+      <div class="text-container">
+        <div class="text-01-copy text-copy-l" id="section-02-copy">
+          <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+        </div>
+      </div>
     </section>
 
     <section id="section-03-images" class="section">

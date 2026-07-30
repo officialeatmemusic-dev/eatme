@@ -68,3 +68,43 @@ if (stageEl && stageBirdsEl && stageCloudEl) {
   };
   requestAnimationFrame(parallaxLoop);
 }
+
+// ==========================================================================
+// section-02-text-01 — Text aus content.json rendern + subtiler Parallax
+// ==========================================================================
+
+function renderSection02(data) {
+  const container = document.querySelector("#section-02-copy");
+  if (!container || !data) return;
+
+  container.innerHTML = "";
+  [data.headline, ...data.paragraphs].forEach((text) => {
+    const p = document.createElement("p");
+    p.textContent = text;
+    container.appendChild(p);
+  });
+}
+
+document.addEventListener("eatme:content-ready", (e) => {
+  renderSection02(e.detail["section-02-text-01"]);
+});
+
+// Subtiler Scroll-Parallax für die blauen Vögel: die größere/vordere Vogel
+// bewegt sich etwas schneller als die kleinere/hintere. Gleiches rAF-Muster
+// wie section-01 (kein Scroll-Listener, stattdessen durchgehender Loop).
+const section02El = document.querySelector("#section-02-text-01");
+const birdLgEl = document.querySelector("#section-02-text-01 .bird-blue-lg");
+const birdSmEl = document.querySelector("#section-02-text-01 .bird-blue-sm");
+
+if (section02El && birdLgEl && birdSmEl) {
+  const BIRD_LG_PARALLAX = 0.06; // vordere, größere Vogel — etwas schneller
+  const BIRD_SM_PARALLAX = 0.025; // hintere, kleinere Vogel — langsamer
+
+  const section02ParallaxLoop = () => {
+    const rect = section02El.getBoundingClientRect();
+    birdLgEl.style.transform = `translateY(${rect.top * BIRD_LG_PARALLAX}px)`;
+    birdSmEl.style.transform = `translateY(${rect.top * BIRD_SM_PARALLAX}px)`;
+    requestAnimationFrame(section02ParallaxLoop);
+  };
+  requestAnimationFrame(section02ParallaxLoop);
+}
