@@ -26,6 +26,36 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ==========================================================================
+// Globale Scroll-Fade-In-Convention (für Texte, siehe styles.css)
+// Ein einziger IntersectionObserver für die ganze Seite. Sektions-Chats
+// müssen dafür nichts Eigenes bauen: einfach die Klasse .fade-in-text auf
+// die gewünschten Text-Elemente setzen und initFadeInText() nach dem
+// Einfügen neuer Elemente (z.B. nach dynamischem content.json-Rendering)
+// aufrufen. Text blendet beim Reinscrollen ein UND beim Rausscrollen
+// (in beide Richtungen) wieder aus -> is-visible wird bei jeder
+// Intersection-Änderung neu gesetzt, kein einmaliges unobserve mehr.
+// ==========================================================================
+
+const fadeInObserver = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      entry.target.classList.toggle("is-visible", entry.isIntersecting);
+    });
+  },
+  { threshold: 0.15, rootMargin: "0px 0px -10% 0px" }
+);
+
+function initFadeInText(root = document) {
+  root.querySelectorAll(".fade-in-text:not(.fade-in-observed)").forEach((el, index) => {
+    el.classList.add("fade-in-observed");
+    el.style.transitionDelay = `${index * 80}ms`;
+    fadeInObserver.observe(el);
+  });
+}
+
+document.addEventListener("DOMContentLoaded", () => initFadeInText());
+
+// ==========================================================================
 // section-01-stage — Sound-Toggle + Zwei-Ebenen-Parallax (Wolken/Vögel)
 // ==========================================================================
 
@@ -81,8 +111,10 @@ function renderSection02(data) {
   [data.headline, ...data.paragraphs].forEach((text) => {
     const p = document.createElement("p");
     p.textContent = text;
+    p.classList.add("fade-in-text");
     container.appendChild(p);
   });
+  initFadeInText(container);
 }
 
 document.addEventListener("eatme:content-ready", (e) => {

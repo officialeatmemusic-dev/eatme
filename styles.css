@@ -64,6 +64,36 @@ button:hover {
   opacity: 0.6;
 }
 
+/* ---- Globale Scroll-Fade-In-Convention (für Texte) ----
+   Jedes Element mit der Klasse .fade-in-text startet unsichtbar und
+   leicht geblurred, wird beim Reinscrollen scharf und sichtbar und beim
+   Rausscrollen (in beide Richtungen) wieder unsichtbar/unscharf — keine
+   Positionsverschiebung, rein opacity + filter. Die eigentliche
+   Sichtbarkeits-Erkennung passiert zentral in script.js (ein einziger
+   IntersectionObserver für die ganze Seite, siehe initFadeInText()) —
+   Sektions-Chats müssen dafür nichts Eigenes bauen, nur die Klasse
+   .fade-in-text auf die gewünschten Text-Elemente setzen.
+   prefers-reduced-motion wird respektiert: Bewegung/Fade wird für
+   Personen, die das in ihrem System deaktiviert haben, übersprungen. */
+.fade-in-text {
+  opacity: 0;
+  filter: blur(10px);
+  transition: opacity 2s ease, filter 0.6s ease;
+}
+
+.fade-in-text.is-visible {
+  opacity: 1;
+  filter: blur(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-text {
+    opacity: 1;
+    filter: none;
+    transition: none;
+  }
+}
+
 /* ---- Layout-Grundgerüst ---- */
 main {
   position: relative;
