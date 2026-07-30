@@ -24,3 +24,47 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error("Fehler beim Laden von content.json:", err);
   }
 });
+
+// ==========================================================================
+// section-01-stage — Sound-Toggle + Zwei-Ebenen-Parallax (Wolken/Vögel)
+// ==========================================================================
+
+// Sound-Toggle: startet aus (Label durchgestrichen, siehe section-01-stage.css).
+// Klick aktiviert Loop-Playback und entfernt die Durchstreichung.
+const stageAudio = new Audio("sound/xyz.mp3");
+stageAudio.loop = true;
+const soundToggleBtn = document.querySelector("#section-01-stage .sound-toggle");
+if (soundToggleBtn) {
+  soundToggleBtn.addEventListener("click", () => {
+    const isOn = soundToggleBtn.dataset.state === "on";
+    soundToggleBtn.dataset.state = isOn ? "off" : "on";
+    if (isOn) {
+      stageAudio.pause();
+    } else {
+      stageAudio.play().catch(() => {
+        console.log("Autoplay/Play blockiert (Browser-Policy) oder Datei nicht gefunden.");
+      });
+    }
+  });
+}
+
+// Parallax: Wolken (Hintergrund) bewegen sich langsamer als die Vögel
+// (Vordergrund) -> Tiefeneffekt statt einer flachen Fläche. Kein
+// Scroll-Event-Listener (feuert unregelmäßig -> ruckelt), stattdessen ein
+// durchgehender rAF-Loop, der jeden Frame den exakten Wert direkt setzt.
+const stageEl = document.querySelector("#section-01-stage .stage");
+const stageBirdsEl = document.querySelector("#section-01-stage .stage-birds");
+const stageCloudEl = document.querySelector("#section-01-stage .stage-bg");
+
+if (stageEl && stageBirdsEl && stageCloudEl) {
+  const BIRDS_SPEED = 0.6; // Vordergrund: mehr Eigenbewegung
+  const CLOUD_SPEED = 0.3; // Hintergrund: deutlich träger/ruhiger
+
+  const parallaxLoop = () => {
+    const rect = stageEl.getBoundingClientRect();
+    stageBirdsEl.style.transform = `translateY(${-rect.top * (1 - BIRDS_SPEED)}px)`;
+    stageCloudEl.style.transform = `translateY(${-rect.top * (1 - CLOUD_SPEED)}px)`;
+    requestAnimationFrame(parallaxLoop);
+  };
+  requestAnimationFrame(parallaxLoop);
+}

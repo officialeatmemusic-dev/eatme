@@ -10,6 +10,9 @@
 
   <!-- Globales Layout-Grundgerüst (Hintergrund-Layer, Sektions-Wrapper-Basics) -->
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Sektions-CSS: eine Datei pro Sektion, siehe ARCHITECTURE.md -->
+  <link rel="stylesheet" href="sections/section-01-stage.css" />
 </head>
 <body>
 
@@ -38,7 +41,14 @@
       beziehen können.
     -->
     <section id="section-01-stage" class="section">
-      <!-- Hero: Logo, Vogelschwarm-Animation (birds-stage.html) -->
+      <div class="stage">
+        <img class="stage-bg" src="assets/visuals/backgrounds/cloud-stage-background.jpg" alt="" aria-hidden="true" />
+        <iframe class="stage-birds" src="assets/visuals/birds-stage.html" title="" aria-hidden="true" tabindex="-1"></iframe>
+      </div>
+      <nav class="secondary-nav">
+        <a href="mailto:contact@eatmemusic.com" class="text-copy-s">contact@eatmemusic.com</a>
+        <button class="sound-toggle text-copy-s" type="button" data-state="off">Sound</button>
+      </nav>
     </section>
 
     <section id="section-02-text-01" class="section">

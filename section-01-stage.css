@@ -1,0 +1,73 @@
+/* ==========================================================================
+   section-01-stage — Hero: Stage-Modul (Cloud-Hintergrund + Vogelschwarm)
+   + secondary-nav (Mailto + Sound-Toggle)
+   Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
+   ========================================================================== */
+
+#section-01-stage {
+  display: flex;
+  width: 1280px;
+  padding: 12px 12px 100px 12px;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+#section-01-stage .stage {
+  height: 805px;
+  align-self: stretch;
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Hintergrund-Ebene: Wolken. Größer als der Rahmen (Overhang), damit beim
+   langsameren Parallax-Versatz keine Lücke am Rand sichtbar wird.
+   Nebenwirkung: Bild ist dadurch etwas stärker gezoomt/beschnitten als der
+   ursprüngliche 1:1-Crop aus Figma — bei Bedarf über top/height feintunen. */
+#section-01-stage .stage-bg {
+  position: absolute;
+  top: -30%;
+  left: 0;
+  width: 100%;
+  height: 160%;
+  object-fit: cover;
+  display: block;
+  will-change: transform;
+}
+
+/* Vordergrund-Ebene: Vogelschwarm-Animation (birds-stage.html), transparenter
+   Hintergrund, reagiert selbst auf Mauszeiger (pointermove/pointerdown) —
+   daher KEIN pointer-events:none, sonst kommen die Events nicht an. */
+#section-01-stage .stage-birds {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  will-change: transform;
+}
+
+#section-01-stage .secondary-nav {
+  display: flex;
+  padding: 0 12px;
+  justify-content: space-between;
+  align-items: center;
+  align-self: stretch;
+}
+
+#section-01-stage .sound-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* Default: Sound aus -> Label durchgestrichen.
+   Aktiv: Sound an -> Label nicht durchgestrichen. */
+#section-01-stage .sound-toggle[data-state="off"] {
+  text-decoration: line-through;
+}
+#section-01-stage .sound-toggle[data-state="on"] {
+  text-decoration: none;
+}

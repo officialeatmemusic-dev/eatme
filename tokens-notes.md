@@ -16,12 +16,15 @@ als CSS-Snippet geliefert.
 
 ## Offene Punkte / zu verifizieren
 
-1. **Letter-Spacing-Einheit unklar.**
-   Figma liefert `letterSpacing: -10 / 6 / 8` als reine Zahl ohne Einheit.
-   Aktuell als `px` angenommen. Bitte einmal im Figma-Inspector (Text
-   auswählen → rechtes Panel → "Letter spacing") prüfen, ob es sich um
-   px oder % handelt — vor allem bei `-10px` (highlight) macht das einen
-   spürbaren Unterschied.
+1. **Letter-Spacing-Einheit — GEKLÄRT.**
+   Figma liefert `letterSpacing` als Prozentwert der Schriftgröße, nicht
+   als px. Umrechnung: `% × Schriftgröße`. Damit ergeben sich die
+   tatsächlich korrekten px-Werte (bereits in `tokens.css` eingetragen):
+   - highlight: -10% von 30px = **-3px** (vorher fälschlich -10px)
+   - copy-s: 6% von 10px = **0.6px** (vorher fälschlich 6px)
+   - copy-xs: 8% von 8px = **0.64px** (vorher fälschlich 8px)
+   - lyrics: 2% von 14px = **0.28px** (vorher fälschlich 2px)
+   - copy-l: 0% von 14px = 0px (unverändert, da 0 in jeder Einheit 0 ist)
 
 2. **`--gradient-buttons-footer` ist NICHT der Himmel-Hintergrund.**
    Das ist ausdrücklich der Verlauf für Buttons und Footer. Der
@@ -42,16 +45,6 @@ als CSS-Snippet geliefert.
    Google Fonts (als Datei-Download, nicht als Web-Link/CDN-Einbindung —
    siehe DSGVO-Hinweis aus dem Architektur-Chat) besorgt und ins Repo unter
    `/assets/fonts/` gelegt werden, bevor die Fonts live sichtbar sind.
-
-5. **Pfade immer relativ, nie mit führendem `/`.**
-   GitHub Pages läuft hier als Project-Page unter `t-i-l.github.io/eatme/`
-   (nicht als reine `username.github.io`-Hauptseite). Ein Pfad mit
-   führendem `/` (z.B. `/assets/...`) zeigt von der Domain-Wurzel aus und
-   würde am `/eatme/`-Unterordner vorbeizeigen → 404. Deshalb überall
-   relative Pfade ohne führenden Slash verwenden (`assets/...`,
-   `sound/...`). Betraf ursprünglich die Font-Pfade in `tokens.css`,
-   wurde gefixt — bei neuen Asset-Referenzen (z.B. in
-   `background-and-motion.md` oder Sektions-CSS) unbedingt genauso machen.
 
 ## Nicht in tokens.css enthalten (bewusst)
 - Spacing-/Abstands-Skala — in Figma noch nicht als Variablen gesehen,

@@ -40,6 +40,20 @@ body {
   pointer-events: none;
 }
 
+/* ---- Globale Hover-Convention ----
+   Gilt für alle interaktiven Elemente auf der gesamten Seite (nicht nur
+   einzelne Sektionen): Hover macht das Element leicht transparent.
+   Einheitlich hier statt pro Sektion definiert, damit jede neue Sektion
+   automatisch das gleiche Verhalten bekommt, ohne es neu zu schreiben. */
+a,
+button {
+  transition: opacity 0.2s ease;
+}
+a:hover,
+button:hover {
+  opacity: 0.6;
+}
+
 /* ---- Layout-Grundgerüst ---- */
 main {
   position: relative;
