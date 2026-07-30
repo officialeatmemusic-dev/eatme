@@ -22,11 +22,37 @@ leichter für Til selbst nachvollziehbar/wartbar.
 
 ## Hosting & Repo
 
-- GitHub Pages, sobald Repo angelegt ist (noch offen — Til legt an, Claude
-  begleitet die Schritte).
+- Live unter GitHub Pages: `https://t-i-l.github.io/eatme/` (Repo:
+  `t-i-l/eatme`, Branch `main`, Ordner `/ (root)`).
 - Content-Pflege durch den Kunden **direkt im GitHub-Web-Interface**
   (Datei anklicken → Stift-Icon → Wert ändern → Commit). Kein CMS, kein
   Admin-Panel — bewusste Entscheidung, siehe Verlauf dieses Projekts.
+- **Wichtige Regel: Immer relative Pfade, nie mit führendem `/`.**
+  Da dies eine GitHub-Pages-*Project-Page* ist (URL hat `/eatme/` als
+  Unterordner, keine reine `username.github.io`-Hauptseite), zeigt ein
+  Pfad mit führendem `/` von der Domain-Wurzel aus und würde am
+  Unterordner vorbeizeigen → 404. Betraf ursprünglich die Font-Pfade in
+  `tokens.css`, wurde gefixt. Gilt für alle künftigen Asset-Referenzen
+  (Sektions-CSS, `background-and-motion.md` etc.) — siehe auch
+  `tokens-notes.md`.
+
+### Übergabe an den Kunden (später)
+
+- **Repo-Ownership übertragen** (empfohlen für die finale Übergabe):
+  Settings → ganz unten "Transfer ownership" → GitHub-Username des
+  Kunden eingeben → Kunde bestätigt. Repo inkl. Historie und
+  GitHub-Pages-Settings wandert komplett zu seinem Account.
+  Alternative für eine Übergangsphase: Kunde als Collaborator einladen
+  (Settings → Collaborators), Repo bleibt vorerst bei Til.
+- Nach einer Übertragung ggf. **GitHub Pages einmal neu aktivieren**
+  (Settings → Pages, Branch nochmal auswählen/speichern) — läuft meist
+  automatisch weiter, kurz gegenchecken.
+- Weil alle Pfade relativ sind (siehe oben), funktioniert die Seite
+  automatisch unter jeder neuen URL/jedem Unterordner, ohne Anpassungen.
+- **Custom Domain** (falls später gewünscht, z.B. `eatmemusic.com`):
+  Domain-Registrierung/DNS läuft komplett getrennt vom GitHub-Repo, über
+  den Domain-Anbieter des Kunden. GitHub-Pages-Hosting selbst bleibt
+  kostenlos, nur die Domain-Registrierung kostet (Registrar-abhängig).
 
 ## Ordnerstruktur
 
@@ -63,10 +89,17 @@ leichter für Til selbst nachvollziehbar/wartbar.
 Direkt aus Figma übernommen (Section-Namen im File), 7 Sektionen:
 
 1. **section-01-stage** — Hero: Logo, Social-Links (Spotify/TikTok/Instagram/
-   YouTube), Himmel-Hintergrund-Start, Vogelschwarm-Animation
-   (`birds-stage.html` / Frame `html-visual-voegel`)
+   YouTube), Vogelschwarm-Animation (`birds-stage.html` / Frame
+   `html-visual-voegel`). Hat einen **eigenen Stage-Hintergrund**
+   (vermutlich `assets/visuals/backgrounds/cloud-stage-background.jpg`),
+   der zur Sektion selbst gehört und im section-01-Chat gebaut wird —
+   **das ist NICHT** der durchgehende, seitenweite Himmel-Hintergrund.
+   Der (Thema von `background-and-motion.md`) startet erst ab section-02
+   und wird bewusst zuletzt spezifiziert, nachdem die Struktur aller
+   Sektionen steht.
 2. **section-02-text-01** — Intro-Text ("EatMe – Independent Pop between
-   momentum and nostalgia" + Beschreibungsabsätze)
+   momentum and nostalgia" + Beschreibungsabsätze). Der durchgehende,
+   seitenweite **Himmel-Hintergrund beginnt hier.**
 3. **section-03-images** — Bandfotos, Songzeile 1 (Lyrics-Komponente)
 4. **section-04-text-02** — Fließtext über die Songthemen, Vogel-Übergang
    (schwarze Silhouetten)
@@ -105,6 +138,22 @@ referenziert von den Sektionen, die sie brauchen:
   Play/Pause-Button, Autoplay-Policies der Browser beachten (kein
   automatischer Sound-Start ohne Nutzer-Interaktion möglich).
 
+## Globale Interaktions-Convention
+
+**Hover (alle Sektionen):** Interaktive Elemente (Links, Buttons) werden bei
+Hover leicht transparent (`opacity: 0.6`, `transition: 0.2s ease`). Einmal
+zentral in `styles.css` definiert (`a, button` global) — nicht pro Sektion
+neu schreiben, gilt automatisch für alle künftigen Sektionen.
+
+## Sektions-Status
+
+- ✅ **section-01-stage** — fertig (Stage-Modul mit Cloud-Hintergrund +
+  Vogelschwarm-Animation als zwei unabhängige Parallax-Ebenen, secondary-nav
+  mit Mailto-Link + Sound-Toggle). Eigene CSS: `sections/section-01-stage.css`,
+  Verhalten (Sound-Toggle, Parallax) in `script.js`.
+- ⬜ section-02-text-01 … section-07-footer — noch offen, siehe Sektionsliste
+  oben.
+
 ## Design-Tokens
 
 Siehe `tokens.css` + `tokens-notes.md`. Kurzfassung der Regel: **keine neuen
@@ -119,10 +168,24 @@ rechtlich riskant).
 
 ## Hintergrund & Motion
 
-Der durchgehende Himmel-Hintergrund (über alle Sektionen) sowie
-Parallax-/Animationsverhalten werden **separat** in
-`background-and-motion.md` behandelt — noch nicht final spezifiziert, folgt
-als nächster Schritt.
+Zwei getrennte Hintergrund-Systeme, nicht verwechseln:
+
+1. **Stage-Hintergrund** (section-01 only) — eigenes Bild/Asset, gehört
+   zur Sektion selbst, wird im section-01-Chat gebaut, kein Bezug zu
+   `background-and-motion.md`.
+2. **Durchgehender, seitenweiter Himmel-Hintergrund** — startet erst ab
+   section-02 (siehe Sektionsliste oben), zieht sich über alle weiteren
+   Sektionen. Wird **separat** in `background-and-motion.md` behandelt
+   (Verlauf, Textur, Parallax-/Animationsverhalten).
+
+**Bewusste Reihenfolge:** Erst alle 7 Sektionen strukturell bauen (Layout,
+Content, Responsive), das durchgehende Hintergrund-System (Punkt 2)
+zuletzt. Til möchte die Struktur sichtbar haben, bevor der seitenweite
+Hintergrund reinkommt. Bis dahin nutzt `styles.css` einen simplen
+Platzhalter-Verlauf aus den Tokens (`--gradient-top` / `--gradient-bottom`)
+über die ganze Seite, der später durch die finale Logik aus
+`background-and-motion.md` ersetzt wird (inkl. Korrektur, dass er erst ab
+section-02 einsetzt und section-01 seinen eigenen Stage-Hintergrund behält).
 
 ## Content-Struktur
 
