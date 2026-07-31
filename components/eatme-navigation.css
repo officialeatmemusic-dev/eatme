@@ -72,11 +72,17 @@
 
 /* ---- Mobile (768px verbindlicher Breakpoint, siehe tokens-notes.md) ----
    Logo ist über clamp() bereits fluid bis zum 330px-Boden -- braucht keine
-   eigene Mobile-Regel. Horizontales Padding (8px) ist bereits klein genug
-   für Mobile und muss nicht weiter reduziert werden -- nur der Link-Gap
-   wird wie in den anderen Sektionen verringert. */
+   eigene Mobile-Regel. Links-Zeile: horizontales Padding auf Mobile ganz
+   entfernt (0 statt 8px) und flex-wrap auf nowrap gesetzt, damit die vier
+   Links auf schmalen Viewports garantiert in einer Zeile bleiben statt
+   umzubrechen. Bei sehr schmalen Screens kann das die Links zusammen mit
+   dem 12px-Gap breiter machen als der Viewport -- das ist hier bewusst in
+   Kauf genommen (Wunsch: kein Umbruch), ggf. mit horizontalem Scroll auf
+   der Nav selbst statt Umbruch, falls das später stört. */
 @media (max-width: 768px) {
   .eatme-nav-links {
+    padding: 0;
     gap: 12px;
+    flex-wrap: nowrap;
   }
 }
