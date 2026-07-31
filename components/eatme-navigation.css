@@ -11,6 +11,12 @@
    Transparenz (Palette + tRNS-Chunk), bekommt aber zusätzlich
    mix-blend-mode: multiply auf Wunsch -- verstärkt den "aufs Papier
    gedruckt"-Look über dem Himmel-Hintergrund/der Stage.
+
+   Wichtig: #site-nav hat pointer-events:none (siehe unten), damit die
+   unsichtbare Box der Nav keine Klicks auf darunterliegenden Content
+   (z.B. das Lyrics-Modul, wenn es beim Scrollen unter die Nav rutscht)
+   blockt. Nur .eatme-nav-links a holt sich das explizit zurück. Falls
+   das Logo je zum Link wird, braucht es ebenfalls pointer-events:auto.
    ========================================================================== */
 
 #site-nav {
@@ -20,6 +26,13 @@
   top: 0;
   left: 0;
   width: 100%;
+  /* Die Nav hat keinen sichtbaren Hintergrund, aber ihre Box (Padding,
+     Logo-Fläche, Lücken zwischen den Links) würde ohne dies trotzdem
+     Klicks blocken -- für alles, was beim Scrollen unter diesen Bereich
+     rutscht (z.B. das Lyrics-Modul). pointer-events:none lässt Klicks
+     grundsätzlich durch; die eigentlichen Links holen sich das gezielt
+     zurück (siehe .eatme-nav-links a unten). */
+  pointer-events: none;
 }
 
 .eatme-nav {
@@ -65,6 +78,7 @@
 }
 
 .eatme-nav-links a {
+  pointer-events: auto; /* holt sich Klickbarkeit vom #site-nav-Reset zurück */
   font-family: var(--font-copy-l-family);
   font-size: var(--font-copy-l-size);
   line-height: var(--font-copy-l-line-height);
