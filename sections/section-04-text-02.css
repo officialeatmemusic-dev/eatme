@@ -1,0 +1,59 @@
+/* ==========================================================================
+   section-04-text-02 — Fließtext (2 Absätze), einspaltig, linksbündig
+   Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
+   Figma: node 1:3441.
+
+   Textstil ist identisch zu section-02-text-01 (copy-l: Michroma 14px,
+   line-height 1.8, letter-spacing 0) — kein neuer Font-Wert nötig, nur die
+   .text-copy-l-Klasse aus tokens.css wird wiederverwendet.
+
+   Bewusst KEINE feste Höhe (Height Hug) — die Sektion nimmt exakt so viel
+   Platz ein, wie der Textinhalt braucht, gesteuert allein über das
+   vertikale Padding.
+
+   Vogel-Silhouetten-Übergang (siehe ARCHITECTURE.md Sektionsliste) wird
+   erst ganz am Schluss des Projekts ergänzt, sobald die Struktur aller
+   7 Sektionen steht — hier bewusst noch nicht enthalten.
+   ========================================================================== */
+
+#section-04-text-02 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 100px 32px;
+}
+
+/* text-container: flex:1 + items:flex-start, identisch zum Muster aus
+   section-02 — hier ohne zweite Spalte (keine Vögel), daher genügt ein
+   einzelner Container statt Grid/Flex-Row. */
+#section-04-text-02 .text-container {
+  display: flex;
+  flex: 1 0 0;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+#section-04-text-02 .text-04-copy {
+  max-width: 320px;
+  width: 100%;
+}
+
+#section-04-text-02 .text-04-copy p {
+  margin-bottom: 16px;
+}
+
+#section-04-text-02 .text-04-copy p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- Mobile (siehe tokens-notes.md: 768px ist der verbindliche,
+   fest verdrahtete Breakpoint für alle Sektionen) ----
+   Nur horizontales Padding reduziert (32px -> 16px), wie bei
+   section-02/section-03 — Layout selbst bleibt unverändert (schon
+   einspaltig, keine Umstellung auf Stack nötig). */
+@media (max-width: 768px) {
+  #section-04-text-02 {
+    padding: 100px 16px;
+  }
+}
