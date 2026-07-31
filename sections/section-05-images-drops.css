@@ -1,0 +1,141 @@
+/* ==========================================================================
+   section-05-images-drops — Bandfoto links (oben-links) + Songtext-Modul
+   rechts (zentriert), darüber 19 frei positionierte Wassertropfen
+   Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
+   Figma: node 1:3415, Referenz-Frame 1280 x 688.
+
+   Struktur identisch zu section-03-images (Flexbox, zwei Spalten), das
+   Songtext-Modul selbst kommt unverändert aus components/eatme-lyrics.css
+   (renderLyricsModule() in script.js) -- hier nur Positionierung + der
+   zusätzliche Tropfen-Layer.
+   ========================================================================== */
+
+#section-05-images-drops {
+  position: relative; /* Bezugsrahmen für die absolut positionierten Tropfen */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 100px 32px;
+}
+
+/* ---- Linke Spalte: Bandfoto, oben-links ----
+   Gleiches Muster wie section-03 .col-image-left/.image-container:
+   image-container ist h-full + items:flex-start -> Bild sitzt oben,
+   unabhängig davon wie hoch die rechte Spalte durch das Lyrics-Modul
+   wird. Zusätzliches padding-bottom: 200px kommt 1:1 aus Figma (Node
+   1:3416) -- bewusster Kompositions-Abstand nach unten, kein Fehler. */
+#section-05-images-drops .col-image-left {
+  display: flex;
+  flex: 1 0 0;
+  align-items: center;
+  align-self: stretch;
+  min-width: 0;
+}
+
+#section-05-images-drops .image-container {
+  display: flex;
+  flex: 1 0 0;
+  height: 100%;
+  align-items: flex-start;
+  padding-bottom: 200px;
+  min-width: 0;
+  position: relative;
+}
+
+#section-05-images-drops .eatme-image-03 {
+  display: block;
+  width: 216px;
+  height: 288px;
+  object-fit: cover;
+  will-change: transform;
+}
+
+/* ---- Rechte Spalte: Lyrics-Modul, zentriert (beide Achsen) ---- */
+#section-05-images-drops .col-text-image {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* ==========================================================================
+   Tropfen-Layer
+   Absolute Kinder direkt der Sektion (nicht im Autolayout, 1:1 aus Figma
+   übernommen). Positionen als % relativ zum 1280x688-Referenzrahmen (Node
+   1:3415) -- Größe bewusst NICHT fluid (bleibt fix 24px/40px). 4 Formen
+   (assets/visuals/drops/01–04.png) x 2 Größen = 8 Varianten, insgesamt
+   19 Desktop-Instanzen.
+
+   .tropfen--mobile ist ein zweiter, eigener Satz (9 Stück, weniger dicht)
+   nur für den gestapelten Mobile-Zustand -- siehe Media-Query unten.
+   In px statt % verankert, weil Bild + Bild-Padding + Gap auf Mobile eine
+   feste Höhe haben (Bild bleibt fix 216x288), unabhängig von der
+   Songtext-Länge weiter unten in der Spalte.
+
+   data-size steuert den Parallax-Faktor in script.js: größere Tropfen
+   (40px) bewegen sich stärker (wirken näher), kleinere (24px) dezenter
+   (wirken weiter weg) -- simple Tiefenwirkung, siehe initDropsParallax().
+   ========================================================================== */
+#section-05-images-drops .tropfen {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  will-change: transform;
+}
+
+#section-05-images-drops .tropfen img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+#section-05-images-drops .tropfen--mobile {
+  display: none;
+}
+
+/* ---- Mobile (siehe tokens-notes.md: 768px ist der verbindliche,
+   fest verdrahtete Breakpoint für alle Sektionen) ----
+   Verhält sich wie section-03: rechte Spalte rutscht unter die linke,
+   100px Gap zwischen den Spalten statt 12px, Bild-Bottom-Padding (200px,
+   war Desktop-Kompositionsabstand) auf 48px reduziert. Tropfen: eigener,
+   kleinerer Satz (.tropfen--mobile) statt der %-positionierten Desktop-
+   Tropfen, siehe Kommentar oben. */
+@media (max-width: 768px) {
+  #section-05-images-drops {
+    flex-direction: column;
+    align-items: center;
+    gap: 100px;
+    padding: 100px 16px;
+  }
+
+  #section-05-images-drops .col-image-left {
+    align-self: auto;
+    width: 100%;
+    height: auto;
+  }
+
+  #section-05-images-drops .image-container {
+    height: auto;
+    padding-bottom: 48px;
+  }
+
+  #section-05-images-drops .col-text-image {
+    width: 100%;
+    align-self: auto;
+  }
+
+  #section-05-images-drops .tropfen--desktop {
+    display: none;
+  }
+
+  #section-05-images-drops .tropfen--mobile {
+    display: block;
+  }
+}
