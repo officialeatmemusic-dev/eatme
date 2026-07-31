@@ -7,9 +7,10 @@
    ein Overlay über der Stage, sie schiebt den Seiteninhalt NICHT nach unten.
    Deshalb hier position: fixed statt eines eigenen Platzes im Dokumentfluss.
 
-   Logo-Asset (assets/logo/eatme_logo.png) hat bereits echte PNG-Transparenz
-   (Palette + tRNS-Chunk) -> kein mix-blend-multiply nötig, einfaches <img>
-   mit transparentem Hintergrund reicht.
+   Logo-Asset (assets/logo/eatme_logo.png) hat zwar bereits echte PNG-
+   Transparenz (Palette + tRNS-Chunk), bekommt aber zusätzlich
+   mix-blend-mode: multiply auf Wunsch -- verstärkt den "aufs Papier
+   gedruckt"-Look über dem Himmel-Hintergrund/der Stage.
    ========================================================================== */
 
 #site-nav {
@@ -41,6 +42,7 @@
   width: clamp(330px, 80vw, 743px);
   aspect-ratio: 743 / 139; /* intrinsische Maße des Logo-Assets */
   object-fit: contain;
+  mix-blend-mode: multiply;
   -webkit-user-drag: none;
   user-select: none;
 }
@@ -72,16 +74,21 @@
 
 /* ---- Mobile (768px verbindlicher Breakpoint, siehe tokens-notes.md) ----
    Logo ist über clamp() bereits fluid bis zum 330px-Boden -- braucht keine
-   eigene Mobile-Regel. Links-Zeile: horizontales Padding auf Mobile ganz
-   entfernt (0 statt 8px) und flex-wrap auf nowrap gesetzt, damit die vier
-   Links auf schmalen Viewports garantiert in einer Zeile bleiben statt
-   umzubrechen. Bei sehr schmalen Screens kann das die Links zusammen mit
-   dem 12px-Gap breiter machen als der Viewport -- das ist hier bewusst in
-   Kauf genommen (Wunsch: kein Umbruch), ggf. mit horizontalem Scroll auf
+   eigene Mobile-Regel. Nav-Gesamtpadding wird auf Mobile um 8px reduziert
+   (24px -> 16px). Links-Zeile: horizontales Padding bekommt stattdessen
+   4px links/rechts (statt komplett 0), flex-wrap bleibt auf nowrap, damit
+   die vier Links auf schmalen Viewports garantiert in einer Zeile bleiben
+   statt umzubrechen. Bei sehr schmalen Screens kann das die Links zusammen
+   mit dem 12px-Gap breiter machen als der Viewport -- das ist hier bewusst
+   in Kauf genommen (Wunsch: kein Umbruch), ggf. mit horizontalem Scroll auf
    der Nav selbst statt Umbruch, falls das später stört. */
 @media (max-width: 768px) {
+  .eatme-nav {
+    padding: 16px;
+  }
+
   .eatme-nav-links {
-    padding: 0;
+    padding: 0 4px;
     gap: 12px;
     flex-wrap: nowrap;
   }
