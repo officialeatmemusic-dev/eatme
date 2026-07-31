@@ -212,7 +212,14 @@ bekommt das automatisch:
   linksbündig, Height Hug, Details siehe eigener Abschnitt unten). Eigene
   CSS: `sections/section-04-text-02.css`, Content-Rendering +
   Fade-In-Registrierung in `script.js` (`renderSection04()`).
-- ⬜ section-05-images-drops … section-07-footer — noch offen, siehe
+- ✅ **section-05-images-drops** — fertig (Bandfoto links oben-links,
+  Songtext-Modul rechts zentriert, zusätzlich 19 frei positionierte
+  Wassertropfen mit größenabhängigem Parallax, Details siehe eigener
+  Abschnitt unten). Eigene CSS: `sections/section-05-images-drops.css`.
+  Content-Rendering (Bild + Songzeilen aus `content.json`) über
+  `renderSection05()` + die gemeinsame `renderLyricsModule()`,
+  Tropfen-Parallax in `initDropsParallax()`, beides in `script.js`.
+- ⬜ section-06-text-social, section-07-footer — noch offen, siehe
   Sektionsliste oben.
 
 ### Details section-02-text-01 (für Anschluss-Kontext)
@@ -323,6 +330,56 @@ bekommt das automatisch:
   ganz zum Schluss des Projekts zu bündeln, nachdem die Struktur aller 7
   Sektionen steht. Wird in einem eigenen späteren Schritt nachgezogen
   (eigener Figma-Node/eigene Klärung nötig, war nicht Teil von Node 1:3441).
+
+### Details section-05-images-drops (für Anschluss-Kontext)
+
+- Zwei-Spalten-Layout via **Flexbox**, strukturell identisch zu
+  section-03 (Bandfoto links oben-links via `image-container`
+  `h-full`/`items:flex-start`, Songtext-Modul rechts über die gemeinsame
+  Komponente `components/eatme-lyrics.css` + `renderLyricsModule()`).
+  Einziger struktureller Unterschied zu section-03: hier gibt es kein
+  zweites Bild rechts, das Lyrics-Modul steht allein in seiner Spalte und
+  wird beidachsig zentriert (`justify-content:center` zusätzlich zu
+  `align-items:center` auf `.col-text-image`).
+- **`padding-bottom: 200px` auf `.image-container`** ist 1:1 aus Figma
+  (Node 1:3416) übernommen — bewusster Kompositions-Abstand, kein
+  Copy-Paste-Fehler aus section-03.
+- **Tropfen-Layer (Eigenart dieser Sektion):** 19 Instanzen, in Figma
+  **nicht** im Autolayout, sondern frei/absolut auf der Sektion platziert
+  (Node 1:3415, Referenz-Frame 1280×688). 4 Formen
+  (`assets/visuals/drops/01–04.png`) × 2 Größen (24px/40px). Positionen
+  1:1 aus Figma übernommen, als **% relativ zum 1280×688-Referenzrahmen**
+  (nicht relativ zu den Spalten) — Tropfen-Größe bewusst **nicht fluid**
+  (bleibt fix 24px/40px, anders als z.B. die blauen Vögel in section-02).
+  Rein dekorativ, **nicht** `content.json`-gesteuert — Positionen/Assets
+  fest im Markup, gleiches Prinzip wie die blauen Vögel in section-02.
+- **Tropfen-Parallax nach Größe** (`initDropsParallax()` in `script.js`):
+  40px-Tropfen bekommen einen stärkeren Faktor (`0.09`) als 24px-Tropfen
+  (`0.035`) — größere wirken dadurch näher/schneller, kleinere weiter
+  weg/dezenter, simple Tiefenwirkung. Gleiches rAF-Muster wie alle
+  übrigen Parallax-Effekte (kein Scroll-Event-Listener). Faktor kommt aus
+  `data-size` auf jedem `.tropfen`-Element.
+- **Zwei getrennte Tropfen-Sätze für Desktop/Mobile**, keine reine
+  Ausblendung auf Mobile: `.tropfen--desktop` (die 19 %-positionierten)
+  werden ab 768px per CSS ausgeblendet, dafür erscheint `.tropfen--mobile`
+  (9 Stück, siehe unten). Grund: die %-Positionen der Desktop-Tropfen
+  beziehen sich auf das Zwei-Spalten-Layout und ergeben im gestapelten
+  Zustand keinen Sinn mehr.
+- **Mobile-Tropfen sind in px verankert, nicht in %** — anders als die
+  Desktop-Tropfen. Begründung: Bild + Bild-Padding-Bottom (auf Mobile
+  reduziert auf 48px) + Spalten-Gap (100px) ergeben auf Mobile eine feste,
+  von der Songtext-Länge unabhängige Höhe (Bild bleibt fix 216×288, siehe
+  section-03-Konvention) — px-Werte bleiben daher stabil, unabhängig
+  davon, wie lang der Songtext in der Spalte darunter wird. Verteilt auf
+  zwei Zonen: ~4 Tropfen oben rechts neben dem Bild (das oben links
+  sitzt, ca. y 100–380px), ~5 Tropfen im Gap zwischen Bild und
+  Lyrics-Modul (ca. y 400–560px), über die Breite verteilt.
+- Mobile (≤768px) sonst identisch zu section-03: rechte Spalte rutscht
+  unter die linke, 100px Gap zwischen den Spalten (statt 12px Desktop),
+  Bild-Bottom-Padding von 200px auf 48px reduziert.
+- Songzeilen (`content.json` → `section-05-images-drops.lyrics.lines`)
+  sind bereits die finalen Songzeilen (nicht mehr TODO-Platzhalter wie bei
+  section-03/07) — `song_title`/`song_link` sind weiterhin leer/TODO.
 
 ## Gelernte Lektionen (für alle künftigen Sektionen relevant)
 

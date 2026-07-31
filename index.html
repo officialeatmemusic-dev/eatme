@@ -20,6 +20,7 @@
   <link rel="stylesheet" href="sections/section-02-text-01.css" />
   <link rel="stylesheet" href="sections/section-03-images.css" />
   <link rel="stylesheet" href="sections/section-04-text-02.css" />
+  <link rel="stylesheet" href="sections/section-05-images-drops.css" />
 </head>
 <body>
 
@@ -116,7 +117,130 @@
     </section>
 
     <section id="section-05-images-drops" class="section">
-      <!-- Bandfoto + Wassertropfen + Songzeile 2 -->
+      <div class="col-image-left">
+        <div class="image-container">
+          <img class="eatme-image-03" id="section-05-image-01" src="" alt="" />
+        </div>
+      </div>
+      <div class="col-text-image">
+        <!--
+          Songtext-Modul: identisch zu section-03 (siehe dort), komplett
+          klickbar (siehe components/eatme-lyrics.css für Styling +
+          verstärkten Blur). href wird zur Laufzeit aus content.json
+          (lyrics.song_link) gesetzt, siehe script.js.
+        -->
+        <a href="#" class="eatme-lyrics-link" id="section-05-lyrics-link" aria-label="Song abspielen">
+          <div class="lyrics-lines text-lyrics" id="section-05-lyrics-lines">
+            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+          </div>
+          <div class="song-link">
+            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
+            </svg>
+            <span class="text-copy-xs" id="section-05-song-title"></span>
+          </div>
+        </a>
+      </div>
+
+      <!-- ==== Desktop-Tropfen-Layer: 19 Instanzen, Positionen % von 1280x688
+           (Figma Node 1:3415). Rein dekorativ, nicht content.json-gesteuert
+           (wie die blauen Vögel in section-02) -- Positionen/Assets fest im
+           Markup, siehe ARCHITECTURE.md Details section-05. 4 Formen
+           (assets/visuals/drops/01-04.png) x 2 Größen (24px/40px).
+           data-size steuert den Parallax-Faktor, siehe script.js
+           initDropsParallax(). ==== -->
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:49.786%; top:25.799%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/01.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:40.887%; top:55.977%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/01.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:53.178%; top:29.079%; width:40px; height:40px;">
+        <img src="assets/visuals/drops/01.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:42.516%; top:30.953%; width:40px; height:40px;">
+        <img src="assets/visuals/drops/01.png" alt="" />
+      </div>
+
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:63.465%; top:78.885%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/02.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:53.379%; top:62.157%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/02.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:53.222%; top:44.312%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/02.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:48.433%; top:37.859%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/02.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:32.260%; top:35.362%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/02.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:32.805%; top:56.343%; width:40px; height:40px;">
+        <img src="assets/visuals/drops/02.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:17.226%; top:25.410%; width:40px; height:40px;">
+        <img src="assets/visuals/drops/02.png" alt="" />
+      </div>
+
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:24.987%; top:65.142%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/03.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:48.535%; top:68.184%; width:40px; height:40px;">
+        <img src="assets/visuals/drops/03.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:65.613%; top:72.365%; width:40px; height:40px;">
+        <img src="assets/visuals/drops/03.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:41.522%; top:43.657%; width:40px; height:40px;">
+        <img src="assets/visuals/drops/03.png" alt="" />
+      </div>
+
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:25.629%; top:11.769%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/04.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:66.861%; top:39.951%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/04.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:33.972%; top:42.850%; width:24px; height:24px;">
+        <img src="assets/visuals/drops/04.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:74.852%; top:64.828%; width:40px; height:40px;">
+        <img src="assets/visuals/drops/04.png" alt="" />
+      </div>
+
+      <!-- ==== Mobile-Tropfen-Layer: eigener, kleinerer Satz (9 Stück),
+           in px verankert statt % (siehe ARCHITECTURE.md Details
+           section-05 für die Begründung). Zone 1 oben rechts neben dem
+           Bild, Zone 2 im Gap zwischen Bild und Lyrics-Modul. ==== -->
+      <div class="tropfen tropfen--mobile" data-size="24" style="left:78%; top:110px; width:24px; height:24px;">
+        <img src="assets/visuals/drops/01.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--mobile" data-size="40" style="left:58%; top:170px; width:40px; height:40px;">
+        <img src="assets/visuals/drops/02.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--mobile" data-size="24" style="left:87%; top:250px; width:24px; height:24px;">
+        <img src="assets/visuals/drops/03.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--mobile" data-size="24" style="left:68%; top:335px; width:24px; height:24px;">
+        <img src="assets/visuals/drops/04.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--mobile" data-size="40" style="left:12%; top:405px; width:40px; height:40px;">
+        <img src="assets/visuals/drops/01.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--mobile" data-size="24" style="left:45%; top:450px; width:24px; height:24px;">
+        <img src="assets/visuals/drops/02.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--mobile" data-size="40" style="left:74%; top:475px; width:40px; height:40px;">
+        <img src="assets/visuals/drops/03.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--mobile" data-size="24" style="left:28%; top:520px; width:24px; height:24px;">
+        <img src="assets/visuals/drops/04.png" alt="" />
+      </div>
+      <div class="tropfen tropfen--mobile" data-size="24" style="left:58%; top:545px; width:24px; height:24px;">
+        <img src="assets/visuals/drops/01.png" alt="" />
+      </div>
     </section>
 
     <section id="section-06-text-social" class="section">

@@ -297,3 +297,71 @@ function renderSection04(data) {
 document.addEventListener("eatme:content-ready", (e) => {
   renderSection04(e.detail["section-04-text-02"]);
 });
+
+// ==========================================================================
+// section-05-images-drops — Bildpfad aus content.json rendern, Songtext-
+// Modul über die gemeinsame renderLyricsModule() befüllen (siehe
+// section-03 oben), Fade-In-Registrierung. Tropfen-Layer ist NICHT
+// content.json-gesteuert (rein dekorativ, feste Positionen direkt im
+// Markup, wie die blauen Vögel in section-02) -- nur der Parallax-Loop
+// dafür läuft hier (initDropsParallax()).
+// ==========================================================================
+
+function renderSection05(data) {
+  if (!data) return;
+
+  const imgEl = document.querySelector("#section-05-image-01");
+  const sectionEl = document.querySelector("#section-05-images-drops");
+  if (!imgEl || !sectionEl) return;
+
+  const image = (data.images || [])[0];
+  if (image) {
+    imgEl.src = image.src;
+    imgEl.alt = image.alt || "";
+  }
+
+  renderLyricsModule(
+    {
+      linkEl: document.querySelector("#section-05-lyrics-link"),
+      linesContainerEl: document.querySelector("#section-05-lyrics-lines"),
+      songTitleEl: document.querySelector("#section-05-song-title"),
+      songLinkRowEl: document.querySelector("#section-05-images-drops .song-link"),
+    },
+    data.lyrics
+  );
+
+  initFadeInText(sectionEl);
+}
+
+document.addEventListener("eatme:content-ready", (e) => {
+  renderSection05(e.detail["section-05-images-drops"]);
+});
+
+// Tropfen-Parallax: Faktor abhängig von der Tropfen-Größe (data-size,
+// siehe sections/section-05-images-drops.css) -- größere Tropfen (40px)
+// bewegen sich stärker/wirken näher, kleinere (24px) dezenter/wirken
+// weiter weg. Gilt für Desktop- UND Mobile-Tropfen gleichermaßen (welcher
+// Satz sichtbar ist, steuert allein das CSS über den 768px-Breakpoint).
+// Gleiches rAF-Muster wie alle übrigen Parallax-Effekte auf der Seite.
+function initDropsParallax() {
+  const section = document.querySelector("#section-05-images-drops");
+  const drops = document.querySelectorAll("#section-05-images-drops .tropfen");
+  if (!section || !drops.length) return;
+
+  const DROP_PARALLAX_BY_SIZE = {
+    "24": 0.035,
+    "40": 0.09,
+  };
+
+  const loop = () => {
+    const rect = section.getBoundingClientRect();
+    drops.forEach((el) => {
+      const factor = DROP_PARALLAX_BY_SIZE[el.dataset.size] || 0.05;
+      el.style.transform = `translateY(${rect.top * factor}px)`;
+    });
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+}
+
+initDropsParallax();
