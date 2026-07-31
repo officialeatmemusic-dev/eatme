@@ -208,7 +208,11 @@ bekommt das automatisch:
   Link-Ziel aus `content.json`) über die gemeinsame Funktion
   `renderLyricsModule()`, Fade-In-Registrierung und Bild-Parallax in
   `script.js`.
-- ⬜ section-04-text-02 … section-07-footer — noch offen, siehe
+- ✅ **section-04-text-02** — fertig (reiner Fließtext, einspaltig,
+  linksbündig, Height Hug, Details siehe eigener Abschnitt unten). Eigene
+  CSS: `sections/section-04-text-02.css`, Content-Rendering +
+  Fade-In-Registrierung in `script.js` (`renderSection04()`).
+- ⬜ section-05-images-drops … section-07-footer — noch offen, siehe
   Sektionsliste oben.
 
 ### Details section-02-text-01 (für Anschluss-Kontext)
@@ -291,6 +295,34 @@ bekommt das automatisch:
   Spalte 100px statt 200px. Alignment pro Spalte bleibt unverändert (links
   weiterhin oben-links, rechts weiterhin oben-zentriert bzw. modulintern
   linksbündig).
+
+### Details section-04-text-02 (für Anschluss-Kontext)
+
+- Einspaltiges Layout, kein Grid/Flex-Row nötig (kein zweites Element wie
+  Bilder oder Vögel in dieser Sektion) — `#section-04-text-02` ist ein
+  einzelner Flex-Container mit `justify-content: center; align-items: center`
+  (1:1 aus Figma-Node 1:3441), `.text-container` darin mit
+  `align-items: flex-start` für die Linksbündigkeit.
+- Textstil identisch zu section-02 (`.text-copy-l`, Michroma 14px,
+  line-height 1.8, letter-spacing 0) — kein neuer Font-Wert, `max-width:
+  320px` wie bei section-02 übernommen.
+- **Bewusst Height Hug:** keine feste Höhe gesetzt, die Sektion wächst mit
+  ihrem Textinhalt — nur vertikales Padding (`100px`, wie die anderen
+  Text-Sektionen) sorgt für Abstand nach oben/unten.
+- Content-Rendering (`renderSection04()` in `script.js`) ist bewusst
+  simpler als `renderSection02()`: nur `paragraphs`-Array aus
+  `content.json`, keine zusätzliche Headline.
+- Kein Parallax in dieser Sektion (keine Bilder/Grafiken vorhanden) — nur
+  `.fade-in-text` auf beide Absätze, gleiches globales Stagger-Verhalten
+  wie überall sonst.
+- Mobile (≤768px): keine Layout-Umstellung nötig (schon einspaltig), nur
+  horizontales Padding auf `16px` reduziert — identisch zum Muster bei
+  section-02/section-03.
+- **Vogel-Silhouetten-Übergang laut Sektionsliste bewusst NICHT
+  enthalten** — Til hat entschieden, das Vögel-Thema für alle Sektionen
+  ganz zum Schluss des Projekts zu bündeln, nachdem die Struktur aller 7
+  Sektionen steht. Wird in einem eigenen späteren Schritt nachgezogen
+  (eigener Figma-Node/eigene Klärung nötig, war nicht Teil von Node 1:3441).
 
 ## Gelernte Lektionen (für alle künftigen Sektionen relevant)
 

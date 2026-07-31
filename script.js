@@ -273,3 +273,27 @@ if (section03El && section03Img1El && section03Img2El) {
   };
   requestAnimationFrame(section03ParallaxLoop);
 }
+
+// ==========================================================================
+// section-04-text-02 — Fließtext (2 Absätze) aus content.json rendern.
+// Kein Parallax, keine Bilder -- reines Fade-In auf die Absätze, gleiches
+// Muster wie renderSection02 (dort mit Headline, hier nur Absätze).
+// ==========================================================================
+
+function renderSection04(data) {
+  const container = document.querySelector("#section-04-copy");
+  if (!container || !data) return;
+
+  container.innerHTML = "";
+  (data.paragraphs || []).forEach((text) => {
+    const p = document.createElement("p");
+    p.textContent = text;
+    p.classList.add("fade-in-text");
+    container.appendChild(p);
+  });
+  initFadeInText(container);
+}
+
+document.addEventListener("eatme:content-ready", (e) => {
+  renderSection04(e.detail["section-04-text-02"]);
+});
