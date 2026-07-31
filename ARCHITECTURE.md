@@ -143,8 +143,20 @@ referenziert von den Sektionen, die sie brauchen:
 Zentral definiert statt pro Sektion neu geschrieben — jede neue Sektion
 bekommt das automatisch:
 
-- **Hover (alle interaktiven Elemente):** `opacity: 0.6` bei Hover auf
-  `a`/`button`, `transition: opacity 0.2s ease`.
+- **Hover (Buttons):** `opacity: 0.6` bei Hover, `transition: opacity 0.2s
+  ease` — unverändert seit section-01 (Sound-Toggle).
+- **Hover (Links, `<a>`):** eigene, seit der Nav-Komponente überarbeitete
+  Convention — zusätzlich zur Opacity (0.6) auch `filter: blur(4px)`,
+  beides über `transition: opacity 0.6s ease, filter 0.6s ease`. Dazu
+  zwingend `display: inline-block` (sonst schneidet der Browser den Blur
+  am inline-Textrahmen ab) sowie ein Padding/negatives-Margin-Paar als
+  Safari-Fix (Safari bemisst die Filter-Fläche sonst zu knapp -> harte
+  Kante statt weichem Verlauf). Alles zentral in `styles.css`, siehe
+  Kommentar dort für die genaue Begründung. **Faustregel für neue
+  Sektionen:** horizontales Padding + negatives Margin zusammen sollten
+  unter der Hälfte des tatsächlichen Link-Gaps bleiben, sonst überlappen
+  sich die Klickflächen benachbarter Links (getestete Standardgröße: 6px
+  pro Seite bei 16px Gap).
 - **Scroll-Fade-In für Texte (`.fade-in-text`):** Klasse auf beliebige
   Text-Elemente setzen → startet unsichtbar + leicht geblurred (`filter:
   blur(10px)`), wird beim Reinscrollen scharf/sichtbar
@@ -165,6 +177,12 @@ bekommt das automatisch:
 
 ## Sektions-Status
 
+- ✅ **eatme-navigation** (Komponente, kein eigener Sektions-Slot) — fixe
+  Top-Nav (Logo + Social-Links), liegt als Overlay über section-01-stage
+  (`position: fixed`, kein eigener Platz im Dokumentfluss). Logo skaliert
+  fluid via `clamp(330px, 80vw, 743px)`. Eigene CSS:
+  `components/eatme-navigation.css`, Content-Rendering (Logo-Pfad,
+  Social-Links aus `content.json`) in `script.js` (`renderNav()`).
 - ✅ **section-01-stage** — fertig (Stage-Modul mit Cloud-Hintergrund +
   Vogelschwarm-Animation als zwei unabhängige Parallax-Ebenen, secondary-nav
   mit Mailto-Link + Sound-Toggle, responsive: fluide Breite bis max. 1280px,

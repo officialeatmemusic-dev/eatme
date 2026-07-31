@@ -1,0 +1,82 @@
+/* ==========================================================================
+   eatme-navigation — fixe Top-Nav (Logo + Social-Links)
+   Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
+
+   Figma: node-id 1-3445 ("eatme-navigation"). Liegt in Figma als eigene
+   Instanz ÜBER section-01-stage (gleiche x/y-Position, 0/0) -> die Nav ist
+   ein Overlay über der Stage, sie schiebt den Seiteninhalt NICHT nach unten.
+   Deshalb hier position: fixed statt eines eigenen Platzes im Dokumentfluss.
+
+   Logo-Asset (assets/logo/eatme_logo.png) hat bereits echte PNG-Transparenz
+   (Palette + tRNS-Chunk) -> kein mix-blend-multiply nötig, einfaches <img>
+   mit transparentem Hintergrund reicht.
+   ========================================================================== */
+
+#site-nav {
+  /* überschreibt die Basis-Regel aus styles.css (position: relative) --
+     diese Datei wird in index.html NACH styles.css eingebunden. */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.eatme-nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  padding: 12px;
+}
+
+/* Logo: 743px max, skaliert erst fluid, sobald 743px mehr als ~80% der
+   Viewport-Breite wären -- darunter min. 330px breit.
+   clamp(MIN, PREFERRED, MAX) liefert genau dieses Verhalten:
+   - großer Viewport: 80vw > 743px -> clamp liefert 743px (MAX)
+   - mittlerer Viewport: 330px < 80vw < 743px -> clamp liefert 80vw (fluid)
+   - kleiner Viewport: 80vw < 330px -> clamp liefert 330px (MIN, Boden) */
+.eatme-nav-logo {
+  display: block;
+  width: clamp(330px, 80vw, 743px);
+  aspect-ratio: 743 / 139; /* intrinsische Maße des Logo-Assets */
+  object-fit: contain;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* Links-Zeile: volle Breite, 20px horizontales Padding, 16px Gap,
+   Textstil 1:1 aus Figma = copy-l (Michroma 14px, line-height 1.8,
+   letter-spacing 0) -- kein neuer Font-Wert nötig.
+   Hover-Verhalten (Opacity + Blur) kommt jetzt aus der globalen
+   Link-Convention in styles.css -- hier nur noch die Nav-spezifische
+   Typografie. */
+.eatme-nav-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap; /* Sicherheitsnetz für sehr schmale Viewports */
+  gap: 16px;
+  width: 100%;
+  padding: 0 20px;
+  overflow: visible; /* explizit, damit der Hover-Blur an Links/Rechts
+                         nicht am Container-Rand abgeschnitten wird */
+}
+
+.eatme-nav-links a {
+  font-family: var(--font-copy-l-family);
+  font-size: var(--font-copy-l-size);
+  line-height: var(--font-copy-l-line-height);
+  letter-spacing: var(--font-copy-l-letter-spacing);
+  white-space: nowrap;
+}
+
+/* ---- Mobile (768px verbindlicher Breakpoint, siehe tokens-notes.md) ----
+   Logo ist über clamp() bereits fluid bis zum 330px-Boden -- braucht keine
+   eigene Mobile-Regel. Nur das horizontale Padding der Links-Zeile wird wie
+   in den anderen Sektionen reduziert. */
+@media (max-width: 768px) {
+  .eatme-nav-links {
+    padding: 0 16px;
+    gap: 12px;
+  }
+}

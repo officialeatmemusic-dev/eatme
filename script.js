@@ -121,6 +121,46 @@ document.addEventListener("eatme:content-ready", (e) => {
   renderSection02(e.detail["section-02-text-01"]);
 });
 
+// ==========================================================================
+// eatme-navigation — fixe Top-Nav: Logo + Social-Links aus content.json
+// (site.logo -- momentan unter section-01-stage.logo_image geführt --
+// und site.social_links). Reine DOM-Befüllung, kein eigenes Scroll-/
+// Parallax-Verhalten -- die Nav bewegt sich nicht mit (position: fixed,
+// siehe components/eatme-navigation.css).
+// ==========================================================================
+
+function renderNav(content) {
+  if (!content) return;
+
+  const logoImg = document.querySelector("#nav-logo");
+  const linksContainer = document.querySelector("#nav-links");
+  if (!logoImg || !linksContainer) return;
+
+  const logoSrc = content["section-01-stage"]?.logo_image;
+  if (logoSrc) {
+    logoImg.src = logoSrc;
+  }
+
+  const socialLinks = content.site?.social_links || {};
+  const labels = { spotify: "Spotify", tiktok: "TikTok", instagram: "Instagram", youtube: "YouTube" };
+
+  linksContainer.innerHTML = "";
+  Object.keys(labels).forEach((key) => {
+    const url = socialLinks[key];
+    if (!url) return;
+    const a = document.createElement("a");
+    a.href = url;
+    a.textContent = labels[key];
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    linksContainer.appendChild(a);
+  });
+}
+
+document.addEventListener("eatme:content-ready", (e) => {
+  renderNav(e.detail);
+});
+
 // Subtiler Scroll-Parallax für die blauen Vögel: die größere/vordere Vogel
 // bewegt sich etwas schneller als die kleinere/hintere. Gleiches rAF-Muster
 // wie section-01 (kein Scroll-Listener, stattdessen durchgehender Loop).

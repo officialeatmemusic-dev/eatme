@@ -11,6 +11,9 @@
   <!-- Globales Layout-Grundgerüst (Hintergrund-Layer, Sektions-Wrapper-Basics) -->
   <link rel="stylesheet" href="styles.css" />
 
+  <!-- Komponenten-CSS: wiederverwendbare Bausteine, siehe ARCHITECTURE.md -->
+  <link rel="stylesheet" href="components/eatme-navigation.css" />
+
   <!-- Sektions-CSS: eine Datei pro Sektion, siehe ARCHITECTURE.md -->
   <link rel="stylesheet" href="sections/section-01-stage.css" />
   <link rel="stylesheet" href="sections/section-02-text-01.css" />
@@ -32,6 +35,12 @@
   -->
   <header id="site-nav">
     <!-- component: eatme-navigation -->
+    <div class="eatme-nav">
+      <img class="eatme-nav-logo" id="nav-logo" src="" alt="EatMe" />
+      <nav class="eatme-nav-links" id="nav-links" aria-label="Social Links">
+        <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+      </nav>
+    </div>
   </header>
 
   <main>

@@ -50,18 +50,47 @@ a {
   text-decoration: none;
 }
 
-/* ---- Globale Hover-Convention ----
-   Gilt für alle interaktiven Elemente auf der gesamten Seite (nicht nur
-   einzelne Sektionen): Hover macht das Element leicht transparent.
-   Einheitlich hier statt pro Sektion definiert, damit jede neue Sektion
-   automatisch das gleiche Verhalten bekommt, ohne es neu zu schreiben. */
-a,
+/* ---- Globale Hover-Convention: Buttons ----
+   Einfaches Opacity-Hover, unverändert seit section-01 (Sound-Toggle). */
 button {
   transition: opacity 0.2s ease;
 }
-a:hover,
 button:hover {
   opacity: 0.6;
+}
+
+/* ---- Globale Hover-Convention: Links ----
+   Verlauf: erst 1:1 wie Buttons (Opacity 0.2s), auf Wunsch dann um einen
+   Blur ergänzt, verlangsamt (0.6s) und verstärkt (4px) -- final an der
+   eatme-navigation getestet und hier als Standard für ALLE Links auf der
+   Seite festgehalten (nicht nur Nav).
+
+   - display: inline-block statt inline: verhindert, dass der Blur am
+     Text-Bounding-Box-Rand des inline-Fragments abgeschnitten wird.
+   - padding + exakt gegengleiches negatives margin: reiner Safari-Fix.
+     Safari bemisst die Filter-"Leinwand" nach der Element-Box statt
+     großzügig für den Blur-Radius -> ohne diesen Puffer zeigt der Blur
+     dort eine harte Kante statt weich auszulaufen. Das negative Margin
+     macht die Padding-Verschiebung layoutmäßig wieder rückgängig -- der
+     Text steht optisch exakt da, wo er ohne das Padding stünde.
+   - will-change: filter: Hinweis an den Browser, früh eine eigene
+     Compositing-Layer für den Filter anzulegen.
+
+   Faustregel für neue Sektionen mit engem Link-Abstand: horizontales
+   Padding + negatives Margin zusammen sollten unter der Hälfte des
+   tatsächlichen Link-Gaps bleiben, sonst überlappen sich die (unsichtbaren)
+   Hover-/Klick-Flächen benachbarter Links. Bei 16px Gap (wie in der Nav)
+   sind 6px pro Seite die getestete, sichere Größe. */
+a {
+  display: inline-block;
+  padding: 10px 6px;
+  margin: -10px -6px;
+  will-change: filter;
+  transition: opacity 0.6s ease, filter 0.6s ease;
+}
+a:hover {
+  opacity: 0.6;
+  filter: blur(4px);
 }
 
 /* ---- Globale Scroll-Fade-In-Convention (für Texte) ----
