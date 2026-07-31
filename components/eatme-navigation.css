@@ -27,7 +27,7 @@
   align-items: flex-start;
   gap: 12px;
   width: 100%;
-  padding: 12px;
+  padding: 24px;
 }
 
 /* Logo: 743px max, skaliert erst fluid, sobald 743px mehr als ~80% der
@@ -45,7 +45,7 @@
   user-select: none;
 }
 
-/* Links-Zeile: volle Breite, 20px horizontales Padding, 16px Gap,
+/* Links-Zeile: volle Breite, 8px horizontales Padding, 16px Gap,
    Textstil 1:1 aus Figma = copy-l (Michroma 14px, line-height 1.8,
    letter-spacing 0) -- kein neuer Font-Wert nötig.
    Hover-Verhalten (Opacity + Blur) kommt jetzt aus der globalen
@@ -57,7 +57,7 @@
   flex-wrap: wrap; /* Sicherheitsnetz für sehr schmale Viewports */
   gap: 16px;
   width: 100%;
-  padding: 0 20px;
+  padding: 0 8px;
   overflow: visible; /* explizit, damit der Hover-Blur an Links/Rechts
                          nicht am Container-Rand abgeschnitten wird */
 }
@@ -72,11 +72,11 @@
 
 /* ---- Mobile (768px verbindlicher Breakpoint, siehe tokens-notes.md) ----
    Logo ist über clamp() bereits fluid bis zum 330px-Boden -- braucht keine
-   eigene Mobile-Regel. Nur das horizontale Padding der Links-Zeile wird wie
-   in den anderen Sektionen reduziert. */
+   eigene Mobile-Regel. Horizontales Padding (8px) ist bereits klein genug
+   für Mobile und muss nicht weiter reduziert werden -- nur der Link-Gap
+   wird wie in den anderen Sektionen verringert. */
 @media (max-width: 768px) {
   .eatme-nav-links {
-    padding: 0 16px;
     gap: 12px;
   }
 }
