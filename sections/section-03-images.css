@@ -1,0 +1,106 @@
+/* ==========================================================================
+   section-03-images — Bandfoto links (oben-links) + Songtext-Modul und
+   zweites Bandfoto rechts (beides oben-zentriert)
+   Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
+   Figma: node 1:3407.
+
+   Das Songtext-Modul selbst (eatme-lyrics-link, Hover, Zeilen, icon-play)
+   ist ausgelagert nach components/eatme-lyrics.css -- hier steht nur noch
+   die Positionierung innerhalb dieser Sektion (Spalten, Gaps, Bildgrößen).
+   ========================================================================== */
+
+#section-03-images {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 100px 32px;
+}
+
+/* ---- Linke Spalte: Bandfoto 1, oben-links ---- */
+
+#section-03-images .col-image-left {
+  display: flex;
+  flex: 1 0 0;
+  align-items: center;
+  align-self: stretch;
+  min-width: 0;
+}
+
+/* image-container spannt die volle Spaltenhöhe (h-full aus Figma), das Bild
+   selbst wird darin per items:flex-start an den oberen Rand gesetzt -> in
+   Summe "oben-links" innerhalb der ganzen Sektionshöhe, unabhängig davon,
+   wie hoch die rechte Spalte durch Songtext+Gap+Bild 2 tatsächlich wird. */
+#section-03-images .image-container {
+  display: flex;
+  flex: 1 0 0;
+  height: 100%;
+  align-items: flex-start;
+  min-width: 0;
+  position: relative;
+}
+
+#section-03-images .eatme-image-01 {
+  display: block;
+  width: 216px;
+  height: 288px;
+  object-fit: cover;
+  will-change: transform;
+}
+
+/* ---- Rechte Spalte: Songtext-Modul + Bandfoto 2, oben-zentriert ---- */
+
+#section-03-images .col-text-image {
+  display: flex;
+  flex: 1 0 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 200px;
+  min-width: 0;
+}
+
+/* Bandfoto 2: fixe Figma-Maße (500x375) als Deckel (max-width + aspect-ratio),
+   aber width:100% statt fixer px -> schrumpft fluide mit, sobald die Spalte
+   zwischen 1280px und 768px schmaler wird als 500px (ein reiner Fixwert
+   würde hier überlaufen, siehe tokens-notes.md Fluid-Regel). */
+#section-03-images .eatme-image-02 {
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  aspect-ratio: 500 / 375;
+  object-fit: cover;
+  will-change: transform;
+}
+
+/* ---- Mobile (siehe tokens-notes.md: 768px ist der verbindliche,
+   fest verdrahtete Breakpoint für alle Sektionen) ----
+   Rechte Spalte rutscht unter die linke. Beide Spalten auf Hug-Höhe (kein
+   self-stretch/h-full mehr nötig), 100px Gap zwischen den Spalten statt der
+   schmalen 12px auf Desktop. Interner Gap der rechten Spalte wird auf
+   100px reduziert (statt 200px auf Desktop). Alignment pro Spalte bleibt
+   unverändert (links weiterhin oben-links, rechts weiterhin oben-zentriert
+   bzw. modulintern linksbündig -- letzteres kommt aus der Komponente). */
+@media (max-width: 768px) {
+  #section-03-images {
+    flex-direction: column;
+    align-items: center;
+    gap: 100px;
+    padding: 100px 16px;
+  }
+
+  #section-03-images .col-image-left {
+    align-self: auto;
+    width: 100%;
+    height: auto;
+  }
+
+  #section-03-images .image-container {
+    height: auto;
+  }
+
+  #section-03-images .col-text-image {
+    width: 100%;
+    gap: 100px;
+  }
+}
