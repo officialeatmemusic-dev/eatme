@@ -180,3 +180,96 @@ if (section02El && birdLgEl && birdSmEl) {
   };
   requestAnimationFrame(section02ParallaxLoop);
 }
+
+// ==========================================================================
+// eatme-lyrics — gemeinsame Render-Funktion für das Songtext-Modul
+// (Zeilen + icon-play + Songtitel + Link-Ziel), wiederverwendbar für
+// section-03-images, section-05-images-drops und section-07-footer (siehe
+// components/eatme-lyrics.css für das zugehörige Styling). Jede Sektion
+// übergibt nur ihre eigenen Element-Referenzen + ihre eigenen
+// content.json-Daten -- die Logik selbst ist identisch für alle drei.
+// ==========================================================================
+
+function renderLyricsModule({ linkEl, linesContainerEl, songTitleEl, songLinkRowEl }, lyricsData) {
+  if (!linkEl || !linesContainerEl || !songTitleEl || !songLinkRowEl || !lyricsData) return;
+
+  linkEl.href = lyricsData.song_link || "#";
+
+  // Zeilen dynamisch rendern, jede Zeile bekommt einzeln .fade-in-text ->
+  // initFadeInText() staggert sie automatisch (80ms pro Element,
+  // index-basiert, siehe oben). Songtitel-Zeile bekommt die Klasse
+  // ebenfalls, damit sie als letztes Element im Stagger mit einblendet
+  // ("zeilenweise + Songtitel").
+  linesContainerEl.innerHTML = "";
+  (lyricsData.lines || []).forEach((line) => {
+    const p = document.createElement("p");
+    p.textContent = line;
+    p.classList.add("fade-in-text");
+    linesContainerEl.appendChild(p);
+  });
+
+  songTitleEl.textContent = lyricsData.song_title || "Song Title";
+  songLinkRowEl.classList.add("fade-in-text");
+}
+
+// ==========================================================================
+// section-03-images — Bildpfade aus content.json rendern, Songtext-Modul
+// über renderLyricsModule() befüllen, Fade-In-Registrierung + subtiler
+// Parallax auf beiden Bildern (unterschiedliche Faktoren, siehe unten).
+// ==========================================================================
+
+function renderSection03(data) {
+  if (!data) return;
+
+  const img1El = document.querySelector("#section-03-image-01");
+  const img2El = document.querySelector("#section-03-image-02");
+  const sectionEl = document.querySelector("#section-03-images");
+
+  if (!img1El || !img2El || !sectionEl) return;
+
+  const images = data.images || [];
+  if (images[0]) {
+    img1El.src = images[0].src;
+    img1El.alt = images[0].alt || "";
+  }
+  if (images[1]) {
+    img2El.src = images[1].src;
+    img2El.alt = images[1].alt || "";
+  }
+
+  renderLyricsModule(
+    {
+      linkEl: document.querySelector("#section-03-lyrics-link"),
+      linesContainerEl: document.querySelector("#section-03-lyrics-lines"),
+      songTitleEl: document.querySelector("#section-03-song-title"),
+      songLinkRowEl: document.querySelector("#section-03-images .song-link"),
+    },
+    data.lyrics
+  );
+
+  initFadeInText(sectionEl);
+}
+
+document.addEventListener("eatme:content-ready", (e) => {
+  renderSection03(e.detail["section-03-images"]);
+});
+
+// Subtiler Scroll-Parallax auf beide Bandfotos, bewusst UNTERSCHIEDLICHE
+// Faktoren (kein identisches Bewegungsmuster) -- gleiches rAF-Muster wie
+// section-01/section-02 (kein Scroll-Event-Listener).
+const section03El = document.querySelector("#section-03-images");
+const section03Img1El = document.querySelector("#section-03-image-01");
+const section03Img2El = document.querySelector("#section-03-image-02");
+
+if (section03El && section03Img1El && section03Img2El) {
+  const IMG1_PARALLAX = 0.05;
+  const IMG2_PARALLAX = 0.09;
+
+  const section03ParallaxLoop = () => {
+    const rect = section03El.getBoundingClientRect();
+    section03Img1El.style.transform = `translateY(${rect.top * IMG1_PARALLAX}px)`;
+    section03Img2El.style.transform = `translateY(${rect.top * IMG2_PARALLAX}px)`;
+    requestAnimationFrame(section03ParallaxLoop);
+  };
+  requestAnimationFrame(section03ParallaxLoop);
+}

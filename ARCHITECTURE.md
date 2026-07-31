@@ -126,8 +126,15 @@ Wiederverwendbare Bausteine, jeweils eigene Datei unter `/components`,
 referenziert von den Sektionen, die sie brauchen:
 
 - `eatme-navigation` — Nav mit Social-Links
-- `eatme-lyrics` — Songzeilen-Block (nutzt `.text-lyrics` aus tokens.css)
-- `icon-play` — Play-Icon für Songzeilen
+- `eatme-lyrics` — ✅ **implementiert** (`components/eatme-lyrics.css`,
+  Rendering über `renderLyricsModule()` in `script.js`). Songzeilen-Block
+  (nutzt `.text-lyrics` aus tokens.css), komplett klickbar, Link-Ziel kommt
+  aus `content.json` (`lyrics.song_link`). Aktuell in section-03-images
+  verbaut, wird unverändert für section-05-images-drops und
+  section-07-footer wiederverwendet, sobald diese gebaut werden.
+- `icon-play` — Play-Icon für Songzeilen. Aktuell als Inline-SVG direkt im
+  Markup jeder Sektion (kein separates Asset), siehe Details
+  section-03-images unten.
 - `eatme-button` — Button (nutzt `--gradient-buttons-footer`)
 - `eatme-footer` — Footer-Leiste
 - `instagram-module` — Insta-Post-Nachbildung (eigener Chat, siehe Verlauf)
@@ -193,8 +200,16 @@ bekommt das automatisch:
   Details siehe eigener Abschnitt unten). Eigene CSS:
   `sections/section-02-text-01.css`, Content-Rendering + Vogel-Parallax +
   Fade-In-Registrierung in `script.js`.
-- ⬜ section-03-images … section-07-footer — noch offen, siehe Sektionsliste
-  oben.
+- ✅ **section-03-images** — fertig (Bandfoto links oben-links, Songtext-
+  Modul + zweites Bandfoto rechts oben-zentriert, Details siehe eigener
+  Abschnitt unten). Eigene CSS: `sections/section-03-images.css` (reine
+  Positionierung), Songtext-Modul selbst ausgelagert nach
+  `components/eatme-lyrics.css`. Content-Rendering (Bilder + Songzeilen +
+  Link-Ziel aus `content.json`) über die gemeinsame Funktion
+  `renderLyricsModule()`, Fade-In-Registrierung und Bild-Parallax in
+  `script.js`.
+- ⬜ section-04-text-02 … section-07-footer — noch offen, siehe
+  Sektionsliste oben.
 
 ### Details section-02-text-01 (für Anschluss-Kontext)
 
@@ -220,6 +235,62 @@ bekommt das automatisch:
   hintere Vogel `0.025` — gleiches rAF-Muster wie section-01, kein
   Scroll-Event-Listener.
 - Text nutzt `.fade-in-text` (siehe globale Konvention oben) mit Stagger.
+
+### Details section-03-images (für Anschluss-Kontext)
+
+- Zwei-Spalten-Layout via **Flexbox** (nicht Grid wie section-02), da hier
+  keine %-positionierten absoluten Kinder vorkommen -- Flexbox reicht.
+  Linke Spalte: Bandfoto 1 (216x288, fix), rechte Spalte: Songtext-Modul +
+  200px Gap + Bandfoto 2 (500x375, fluid gedeckelt).
+- **Songtext-Modul (`eatme-lyrics-link`) ist als eigene Komponente
+  ausgelagert** (`components/eatme-lyrics.css` + `renderLyricsModule()` in
+  `script.js`), weil es laut `content.json` in section-03, section-05 und
+  section-07 vorkommt -- Styling/Rendering also nur einmal geschrieben,
+  nicht dreimal. `sections/section-03-images.css` enthält dadurch nur noch
+  die Positionierung (Spalten, Gaps, Bildgrößen), nicht mehr das Modul
+  selbst.
+- Modul ist bewusst `width: fit-content` (Hug) statt fix/prozentual --
+  damit es immer genau so breit ist wie seine längste Zeile. Zeilen
+  bekommen `white-space: nowrap` (kein Umbruch). Intern sind Zeilen +
+  Songtitel-Zeile **linksbündig zueinander** (`align-items: flex-start` im
+  Modul selbst) -- nur die Box als Ganzes zentriert sich dank
+  `align-items: center` auf der übergeordneten Spalte im Column. Wichtige
+  Lektion aus dem Bau: erst `align-items: center` + `text-align: center`
+  auch INNERHALB des Moduls gesetzt, wodurch der Songtitel bei ungleich
+  langen Zeilen sichtbar relativ zu den Songzeilen verschoben wirkte --
+  korrigiert auf linksbündig innen / zentriert außen.
+- Das **komplette Modul (Zeilen + icon-play + Songtitel) ist EIN `<a>`**,
+  klickbar, mit der globalen Hover-Convention aus `styles.css` als Basis,
+  aber **verstärktem Blur (14px statt der globalen 4px)** speziell für
+  dieses Modul. `href` kommt zur Laufzeit aus `content.json`
+  (`lyrics.song_link`, aktuell noch leer/Platzhalter für alle drei
+  Sektionen) -- fällt auf `#` zurück, falls das Feld leer bleibt.
+- **`icon-play` ist als Inline-SVG direkt im Markup** (kein separates
+  Asset) -- Nachbau des Figma-Icons (Play-Dreieck, `currentColor`), da der
+  Original-Export aus Figma technisch nicht abrufbar war. Falls das
+  Original-SVG aus Figma vorliegt, 1:1 austauschbar (nur der `<path>` im
+  `icon-play`-SVG in `index.html`).
+- Bandfoto 2 (`eatme-image-02`) nutzt **`width: 100%` + `max-width: 500px`
+  + `aspect-ratio: 500/375`** statt der fixen 500x375px aus Figma, da die
+  Spalte zwischen 1280px und 768px irgendwann schmaler als 500px wird
+  (reiner Fixwert würde überlaufen) -- gleiches Prinzip wie bei den blauen
+  Vögeln in section-02 (width in % + aspect-ratio statt width+height).
+  Bandfoto 1 (216x288) bleibt bewusst fix, da es auch bei 768px noch
+  komfortabel in seine Spalte passt.
+- **Fade-In zeilenweise + Songtitel:** jede Songzeile bekommt einzeln
+  `.fade-in-text` (nicht eine gemeinsame Wrapper-Div), zusätzlich auch die
+  Songtitel-Zeile (`.song-link`) -- `initFadeInText()` staggert sie
+  automatisch nacheinander ein (80ms pro Element, index-basiert), Zeilen
+  zuerst, Songtitel als letztes Element.
+- **Subtiler Scroll-Parallax auf beiden Bandfotos**, bewusst mit
+  UNTERSCHIEDLICHEN Faktoren (Bandfoto 1: `0.05`, Bandfoto 2: `0.09`) --
+  kein identisches Bewegungsmuster, gleiches rAF-Muster wie
+  section-01/section-02 (kein Scroll-Event-Listener).
+- Mobile (≤768px): rechte Spalte rutscht unter die linke, 100px Gap
+  zwischen den Spalten (statt 12px auf Desktop), interner Gap der rechten
+  Spalte 100px statt 200px. Alignment pro Spalte bleibt unverändert (links
+  weiterhin oben-links, rechts weiterhin oben-zentriert bzw. modulintern
+  linksbündig).
 
 ## Gelernte Lektionen (für alle künftigen Sektionen relevant)
 

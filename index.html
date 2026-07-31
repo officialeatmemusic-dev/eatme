@@ -13,10 +13,12 @@
 
   <!-- Komponenten-CSS: wiederverwendbare Bausteine, siehe ARCHITECTURE.md -->
   <link rel="stylesheet" href="components/eatme-navigation.css" />
+  <link rel="stylesheet" href="components/eatme-lyrics.css" />
 
   <!-- Sektions-CSS: eine Datei pro Sektion, siehe ARCHITECTURE.md -->
   <link rel="stylesheet" href="sections/section-01-stage.css" />
   <link rel="stylesheet" href="sections/section-02-text-01.css" />
+  <link rel="stylesheet" href="sections/section-03-images.css" />
 </head>
 <body>
 
@@ -74,7 +76,32 @@
     </section>
 
     <section id="section-03-images" class="section">
-      <!-- Bandfotos + Songzeile 1 -->
+      <div class="col-image-left">
+        <div class="image-container">
+          <img class="eatme-image-01" id="section-03-image-01" src="" alt="" />
+        </div>
+      </div>
+      <div class="col-text-image">
+        <!--
+          Songtext-Modul: komplett klickbar (siehe components/eatme-lyrics.css
+          für Styling + verstärkten Blur). href wird zur Laufzeit aus
+          content.json (lyrics.song_link) gesetzt, siehe script.js --
+          Platzhalter-# hier nur als Fallback, falls content.json mal nicht
+          lädt.
+        -->
+        <a href="#" class="eatme-lyrics-link" id="section-03-lyrics-link" aria-label="Song abspielen">
+          <div class="lyrics-lines text-lyrics" id="section-03-lyrics-lines">
+            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+          </div>
+          <div class="song-link">
+            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
+            </svg>
+            <span class="text-copy-xs" id="section-03-song-title"></span>
+          </div>
+        </a>
+        <img class="eatme-image-02" id="section-03-image-02" src="" alt="" />
+      </div>
     </section>
 
     <section id="section-04-text-02" class="section">
