@@ -1,0 +1,68 @@
+/* ==========================================================================
+   eatme-lyrics — wiederverwendbares Songtext-Modul
+   (Songzeilen + icon-play + Songtitel, komplett klickbar)
+
+   Taucht laut content.json in section-03-images, section-05-images-drops
+   und section-07-footer auf -> deshalb als eigene Komponente ausgelagert
+   statt pro Sektion neu geschrieben. Referenziert nur Werte aus
+   tokens.css, siehe ARCHITECTURE.md.
+
+   Bewusst KLASSENBASIERT (kein #section-03-images-Präfix mehr), damit
+   dieselben Regeln unverändert von section-05/07 wiederverwendet werden
+   können -- Positionierung (wo das Modul innerhalb einer Sektion sitzt)
+   bleibt Aufgabe der jeweiligen Sektions-CSS, nicht dieser Datei.
+   Rendering (Zeilen aus content.json, href aus content.json) passiert
+   über die gemeinsame Funktion renderLyricsModule() in script.js.
+   ========================================================================== */
+
+/* Das komplette Modul (Zeilen + icon-play + Songtitel) ist EIN einziger
+   Link -> Opacity-Hover kommt automatisch aus der globalen a-Convention in
+   styles.css, der Blur wird unten bewusst stärker überschrieben.
+
+   Breite bewusst NICHT fix/prozentual, sondern width: fit-content (Hug) ->
+   das Modul ist immer genau so breit wie seine längste Zeile. Dadurch
+   zentriert sich die Box als Ganzes automatisch, sobald die jeweilige
+   Sektions-CSS align-items:center auf den umgebenden Container legt --
+   OHNE dass Zeilen und Songtitel INNERHALB des Moduls zueinander
+   zentriert werden (align-items hier bewusst flex-start, nicht center).
+   Zeilen und Songtitel bleiben linksbündig zueinander, wie bei
+   Songtext-Layouts üblich; nur die Box im Ganzen zentriert sich außen. */
+.eatme-lyrics-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 26px;
+  width: fit-content;
+}
+
+/* Stärkerer Blur nur für dieses Modul (Wunsch: auffälliger als der globale
+   4px-Standard aus styles.css). Opacity/Transition-Timing bleiben
+   identisch zur globalen Convention, nur der Blur-Radius wird erhöht. */
+.eatme-lyrics-link:hover {
+  opacity: 0.6;
+  filter: blur(14px);
+}
+
+/* Kein Umbruch der Songzeilen -- das Modul wächst stattdessen in der
+   Breite (siehe width:fit-content oben) statt die Zeile umzubrechen. */
+.eatme-lyrics-link .lyrics-lines p {
+  white-space: nowrap;
+  margin-bottom: 8px;
+}
+.eatme-lyrics-link .lyrics-lines p:last-child {
+  margin-bottom: 0;
+}
+
+.eatme-lyrics-link .song-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.eatme-lyrics-link .icon-play {
+  display: block;
+  width: 9px;
+  height: 8px;
+  flex-shrink: 0;
+}
