@@ -31,13 +31,14 @@
       { "src": "assets/images/eatme-image-02.jpg", "alt": "Platzhalter Alt-Text – Bandfoto 2" }
     ],
     "lyrics": {
-      "song_title": "",
-      "song_link": "",
+      "song_title": "Trustfalling",
+      "song_link": "https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg?si=kDi1YY0zTpa-iLCIUbmagw",
       "lines": [
-        "TODO: echte Songzeile 1",
-        "TODO: echte Songzeile 2",
-        "TODO: echte Songzeile 3",
-        "TODO: echte Songzeile 4"
+        "Trustfalling in your eyes",
+        "Don’t wanna lose myself",
+        "But call you mine",
+        "And Im falling for the first time"
+        "Will you catch me or step aside"
       ]
     }
   },
