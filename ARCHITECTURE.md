@@ -61,7 +61,7 @@ leichter für Til selbst nachvollziehbar/wartbar.
 ├── index.html
 ├── tokens.css                  ← einzige Quelle für Farben & Fonts, siehe unten
 ├── tokens-notes.md             ← offene Punkte/Herkunft der Tokens
-├── styles.css                  ← globales Grundgerüst + globale Konventionen (Hover, Fade-In)
+├── styles.css                  ← globales Grundgerüst + globale Konventionen (Hover, Fade-In, Bild-Drag)
 ├── script.js                   ← globale Logik + eine Sektion pro Kommentarblock
 ├── background-and-motion.md    ← Himmel-Hintergrund + Parallax/Animation-Logik (separat)
 ├── content.json                ← alle Texte, Bildpfade, Links
@@ -70,7 +70,9 @@ leichter für Til selbst nachvollziehbar/wartbar.
 ├── /sound                      xyz.mp3 — Hintergrund-Song, an/aus schaltbar
 ├── /assets
 │   ├── /fonts                  Michroma-Regular.woff2, EBGaramond-Italic.woff2
-│   ├── /images                 eatme-image-01/02/03.jpg, -footer.jpg, insta-avatar.png
+│   ├── /images                 eatme-image-01/02.jpg, eatme-image-04.webp
+│   │                           (ersetzt eatme-image-03.jpg, siehe section-05
+│   │                           unten), -footer.jpg, insta-avatar.png
 │   ├── /logo                   eatme_logo.png
 │   └── /visuals
 │       ├── birds-black.webp
@@ -164,6 +166,13 @@ bekommt das automatisch:
   unter der Hälfte des tatsächlichen Link-Gaps bleiben, sonst überlappen
   sich die Klickflächen benachbarter Links (getestete Standardgröße: 6px
   pro Seite bei 16px Gap).
+- **Kein Bild-Drag (`img`):** jedes `<img>` auf der Seite bekommt
+  `-webkit-user-drag: none` + `user-select: none` global in `styles.css`
+  — Bandfotos lassen sich dadurch genauso wenig aus dem Browser ziehen
+  wie die dekorativen Grafiken (Vögel, Tropfen), die das vorher schon
+  einzeln gesetzt hatten. Verhindert nur das Draggen, nicht "Bild
+  speichern unter" per Rechtsklick — das lässt sich browserseitig nicht
+  zuverlässig blocken.
 - **Scroll-Fade-In für Texte (`.fade-in-text`):** Klasse auf beliebige
   Text-Elemente setzen → startet unsichtbar + leicht geblurred (`filter:
   blur(10px)`), wird beim Reinscrollen scharf/sichtbar
@@ -215,7 +224,11 @@ bekommt das automatisch:
 - ✅ **section-05-images-drops** — fertig (Bandfoto links oben-links,
   Songtext-Modul rechts zentriert, zusätzlich 19 frei positionierte
   Wassertropfen mit größenabhängigem Parallax, Details siehe eigener
-  Abschnitt unten). Eigene CSS: `sections/section-05-images-drops.css`.
+  Abschnitt unten). **Update:** Bandfoto ist jetzt `eatme-image-04.webp`
+  im Querformat (ersetzt das ursprüngliche Hochformat-Foto
+  `eatme-image-03.jpg`), Tropfen-Positionen entsprechend an den
+  aktualisierten Figma-Referenzrahmen (1280×657 statt 1280×688)
+  angepasst. Eigene CSS: `sections/section-05-images-drops.css`.
   Content-Rendering (Bild + Songzeilen aus `content.json`) über
   `renderSection05()` + die gemeinsame `renderLyricsModule()`,
   Tropfen-Parallax in `initDropsParallax()`, beides in `script.js`.
@@ -235,7 +248,9 @@ bekommt das automatisch:
   `width`+`height` in `%`, damit sie sich nie verziehen, egal wie hoch der
   Container durch den Text tatsächlich wird.
 - Vögel: `pointer-events: none`, `user-select: none`,
-  `-webkit-user-drag: none` (rein dekorativ, nicht draggable/klickbar).
+  `-webkit-user-drag: none` (rein dekorativ, nicht draggable/klickbar;
+  seit dem globalen `img`-Drag-Reset in `styles.css` technisch redundant,
+  bleibt aber unschädlich stehen).
 - Mobile (≤768px): keine eigene Stack-Reihenfolge, sondern Vögel-Container
   und Textspalte liegen in **derselben Grid-Zelle übereinander**
   (`grid-column/row: 1`), Text mit `z-index: 1` über den Vögeln
@@ -274,8 +289,18 @@ bekommt das automatisch:
   klickbar, mit der globalen Hover-Convention aus `styles.css` als Basis,
   aber **verstärktem Blur (14px statt der globalen 4px)** speziell für
   dieses Modul. `href` kommt zur Laufzeit aus `content.json`
-  (`lyrics.song_link`, aktuell noch leer/Platzhalter für alle drei
-  Sektionen) -- fällt auf `#` zurück, falls das Feld leer bleibt.
+  (`lyrics.song_link`) -- fällt auf `#` zurück, falls das Feld leer bleibt.
+  Songzeilen und `song_title` sind für section-03/05/07 mittlerweile die
+  finalen Texte ("Trustfalling"/"Drizzle"/"Drown"); nur `song_link` ist in
+  allen drei Sektionen weiterhin leer/TODO (Streaming-Link folgt später).
+- **Anzahl der Songzeilen ist bewusst flexibel, kein Fixwert.**
+  `renderLyricsModule()` iteriert einfach über das `lines`-Array aus
+  `content.json` -- egal ob 4 oder 5 (oder mehr) Zeilen, jede wird als
+  eigener `<p>` mit `.fade-in-text` gerendert und staggert automatisch mit
+  ein. Das Modul selbst ist `width: fit-content` (siehe oben), wächst also
+  in der Breite mit der längsten Zeile, nicht in eine feste Zeilenzahl
+  hinein -- Til kann die Zeilenzahl pro Song in `content.json` frei
+  anpassen, ohne dass CSS oder JS angefasst werden müssen.
 - **`icon-play` ist als Inline-SVG direkt im Markup** (kein separates
   Asset) -- Nachbau des Figma-Icons (Play-Dreieck, `currentColor`), da der
   Original-Export aus Figma technisch nicht abrufbar war. Falls das
@@ -341,24 +366,37 @@ bekommt das automatisch:
   zweites Bild rechts, das Lyrics-Modul steht allein in seiner Spalte und
   wird beidachsig zentriert (`justify-content:center` zusätzlich zu
   `align-items:center` auf `.col-text-image`).
-- **`padding-bottom: 200px` auf `.image-container`** ist 1:1 aus Figma
-  (Node 1:3416) übernommen — bewusster Kompositions-Abstand, kein
-  Copy-Paste-Fehler aus section-03.
+- **Bandfoto-Update: `eatme-image-04.webp` (Querformat) ersetzt
+  `eatme-image-03.jpg` (Hochformat).** Design-Maß aus Figma jetzt 387×257
+  statt vorher 216×288 -- Seitenverhältnis 774/514 entspricht exakt der
+  neuen Asset-Datei (774×514px). Umgesetzt als `width: 100%; max-width:
+  387px; aspect-ratio: 774/514` statt fixer px (gleiches Prinzip wie
+  Bandfoto 2 in section-03), damit es zwischen 1280px und 768px fluid
+  mitskaliert statt zu überlaufen. Klassenname entsprechend von
+  `.eatme-image-03` auf `.eatme-image-04` umbenannt (CSS + `index.html`).
+- `padding-bottom: 200px` auf `.image-container` bleibt unverändert
+  korrekt: Bild (257px Design-Höhe) + 200px Padding ergibt weiterhin exakt
+  die 457px Spaltenhöhe aus Figma, kein Nachjustieren nötig.
 - **Tropfen-Layer (Eigenart dieser Sektion):** 19 Instanzen, in Figma
   **nicht** im Autolayout, sondern frei/absolut auf der Sektion platziert
-  (Node 1:3415, Referenz-Frame 1280×688). 4 Formen
-  (`assets/visuals/drops/01–04.png`) × 2 Größen (24px/40px). Positionen
-  1:1 aus Figma übernommen, als **% relativ zum 1280×688-Referenzrahmen**
-  (nicht relativ zu den Spalten) — Tropfen-Größe bewusst **nicht fluid**
-  (bleibt fix 24px/40px, anders als z.B. die blauen Vögel in section-02).
-  Rein dekorativ, **nicht** `content.json`-gesteuert — Positionen/Assets
-  fest im Markup, gleiches Prinzip wie die blauen Vögel in section-02.
+  (Node 1:3415). **Referenzrahmen hat sich mit dem Bildwechsel verschoben:
+  aktuell 1280×657 (vorher 1280×688)** -- alle `top`-%-Werte in
+  `index.html` wurden anhand der aktuellen Figma-Metadaten neu berechnet.
+  Die `left`-%-Werte blieben für 18 von 19 Tropfen unverändert (Rahmen-
+  breite 1280 ist gleich geblieben); **ein 40px-Tropfen ist laut Figma
+  zusätzlich deutlich weiter nach links gerückt (`left: 5.313%` statt
+  vorher `17.226%`)**. 4 Formen (`assets/visuals/drops/01–04.png`) × 2
+  Größen (24px/40px). Tropfen-Größe bewusst **nicht fluid** (bleibt fix
+  24px/40px, anders als z.B. die blauen Vögel in section-02). Rein
+  dekorativ, **nicht** `content.json`-gesteuert -- Positionen/Assets fest
+  im Markup, gleiches Prinzip wie die blauen Vögel in section-02.
 - **Tropfen-Parallax nach Größe** (`initDropsParallax()` in `script.js`):
   40px-Tropfen bekommen einen stärkeren Faktor (`0.09`) als 24px-Tropfen
   (`0.035`) — größere wirken dadurch näher/schneller, kleinere weiter
   weg/dezenter, simple Tiefenwirkung. Gleiches rAF-Muster wie alle
   übrigen Parallax-Effekte (kein Scroll-Event-Listener). Faktor kommt aus
-  `data-size` auf jedem `.tropfen`-Element.
+  `data-size` auf jedem `.tropfen`-Element. Von der Positions-Aktualisierung
+  unberührt, da rein größenbasiert.
 - **Zwei getrennte Tropfen-Sätze für Desktop/Mobile**, keine reine
   Ausblendung auf Mobile: `.tropfen--desktop` (die 19 %-positionierten)
   werden ab 768px per CSS ausgeblendet, dafür erscheint `.tropfen--mobile`
@@ -368,18 +406,21 @@ bekommt das automatisch:
 - **Mobile-Tropfen sind in px verankert, nicht in %** — anders als die
   Desktop-Tropfen. Begründung: Bild + Bild-Padding-Bottom (auf Mobile
   reduziert auf 48px) + Spalten-Gap (100px) ergeben auf Mobile eine feste,
-  von der Songtext-Länge unabhängige Höhe (Bild bleibt fix 216×288, siehe
-  section-03-Konvention) — px-Werte bleiben daher stabil, unabhängig
-  davon, wie lang der Songtext in der Spalte darunter wird. Verteilt auf
-  zwei Zonen: ~4 Tropfen oben rechts neben dem Bild (das oben links
-  sitzt, ca. y 100–380px), ~5 Tropfen im Gap zwischen Bild und
+  von der Songtext-Länge unabhängige Höhe -- px-Werte bleiben daher
+  stabil, unabhängig davon, wie lang der Songtext in der Spalte darunter
+  wird. Vom Bildwechsel unberührt (Mobile-Layout stapelt ohnehin, das
+  Querformat-Bild schrumpft dort automatisch mit der Spaltenbreite mit).
+  Verteilt auf zwei Zonen: ~4 Tropfen oben rechts neben dem Bild (das oben
+  links sitzt, ca. y 100–380px), ~5 Tropfen im Gap zwischen Bild und
   Lyrics-Modul (ca. y 400–560px), über die Breite verteilt.
 - Mobile (≤768px) sonst identisch zu section-03: rechte Spalte rutscht
   unter die linke, 100px Gap zwischen den Spalten (statt 12px Desktop),
   Bild-Bottom-Padding von 200px auf 48px reduziert.
-- Songzeilen (`content.json` → `section-05-images-drops.lyrics.lines`)
-  sind bereits die finalen Songzeilen (nicht mehr TODO-Platzhalter wie bei
-  section-03/07) — `song_title`/`song_link` sind weiterhin leer/TODO.
+- Songzeilen + `song_title` (`content.json` →
+  `section-05-images-drops.lyrics`) sind die finalen Texte für "Drizzle"
+  (4 Zeilen) — nur `song_link` ist weiterhin leer/TODO. Siehe auch die
+  Notiz zur flexiblen Zeilenanzahl bei section-03 oben: gilt identisch
+  für alle drei Lyrics-Module.
 
 ## Gelernte Lektionen (für alle künftigen Sektionen relevant)
 
@@ -423,6 +464,14 @@ bekommt das automatisch:
   ersetzt wurde. Faustregel: bei Unsicherheit erst nachfragen, ob sich
   die Änderung auf Desktop, Mobile oder beides beziehen soll, bevor die
   Basis-Werte (nicht nur die Mobile-Overrides) angefasst werden.
+- **Wenn sich ein Bild-Asset auf Quer-/Hochformat ändert, den
+  Figma-Referenzrahmen für alle %-positionierten Geschwister-Elemente neu
+  prüfen** (siehe section-05: Bildwechsel auf `eatme-image-04.webp`
+  Querformat hat den Tropfen-Referenzrahmen von 1280×688 auf 1280×657
+  verschoben) — nicht nur die Bildmaße selbst anpassen, sondern per
+  `get_metadata`/`get_design_context` gegenchecken, ob sich dadurch auch
+  die %-Positionen frei platzierter Deko-Elemente in derselben Sektion
+  verschoben haben.
 - **Live-Vorschau-Sandbox blockiert externe Requests** (z.B.
   `raw.githubusercontent.com` für Fonts/SVGs) — führt zu fehlenden
   Schriften und winzigen/kaputten Bildern, die leicht als "Vögel zu
@@ -469,6 +518,14 @@ HTML/Code. Struktur wird sektionsweise erweitert, sobald die jeweilige
 Sektion gebaut wird. Grundprinzip: fixe Layout-Slots (Positionen/Rotation
 bleiben Code, nicht editierbar), aber Text/Bild/Link-Inhalt editierbar.
 
+**Sonderfall section-07-footer:** `lyrics.song_title`/`lyrics.lines`
+("Drown") sind bereits final in `content.json` eingetragen, obwohl die
+Sektion selbst noch nicht gebaut ist (siehe Sektions-Status) — die
+Songtexte für alle drei Lyrics-Module (section-03/05/07) kamen gebündelt
+von Til. Sobald der section-07-Chat startet, greift `renderLyricsModule()`
+dort einfach auf die schon vorhandenen Daten zu, kein erneutes Content-
+Update nötig.
+
 ## Arbeitsweise / Workflow
 
 - Ein Chat pro Sektion (in diesem Projekt), um Kontext klein zu halten
@@ -486,8 +543,8 @@ bleiben Code, nicht editierbar), aber Text/Bild/Link-Inhalt editierbar.
   Schritt nachgereicht.
 - Mobile-Anpassungen werden im jeweiligen Sektions-Chat mitentschieden,
   kein separater Mobile-Chat
-- Neue globale Konventionen (Hover, Fade-In, künftige) gehören nach
-  `styles.css`, nicht in einzelne Sektions-Dateien — siehe Abschnitt
+- Neue globale Konventionen (Hover, Fade-In, Bild-Drag, künftige) gehören
+  nach `styles.css`, nicht in einzelne Sektions-Dateien — siehe Abschnitt
   "Globale Interaktions-Conventions" oben.
 
 ## Live-Vorschau während des Bauens einer Sektion

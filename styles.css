@@ -11,6 +11,22 @@
   padding: 0;
 }
 
+/* ---- Globale Bild-Convention ----
+   Kein Bild auf der Seite soll sich per Drag-and-Drop aus dem Browser
+   ziehen lassen -- weder Bandfotos noch reine Deko-Grafiken (Vögel,
+   Tropfen etc.). Zentral hier statt pro Sektion/Element, damit jedes
+   neue <img> in jeder künftigen Sektion automatisch geschützt ist.
+   Ersetzt die bisherigen Einzel-Regeln in section-02/section-05 (dort
+   auf .bird-blue-*/.tropfen beschränkt) -- die dortigen Deklarationen
+   bleiben unschädlich (Kaskade greift ohnehin), sind aber ab jetzt
+   redundant. Hinweis: verhindert nur das Draggen, nicht "Bild speichern
+   unter" per Rechtsklick -- das lässt sich browserseitig nicht
+   zuverlässig blocken. */
+img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
 html {
   scroll-behavior: smooth;
 }

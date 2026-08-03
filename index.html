@@ -119,7 +119,12 @@
     <section id="section-05-images-drops" class="section">
       <div class="col-image-left">
         <div class="image-container">
-          <img class="eatme-image-03" id="section-05-image-01" src="" alt="" />
+          <!--
+            eatme-image-04 (Querformat) ersetzt das bisherige eatme-image-03
+            (Hochformat) -- Klassenname + Bildmaße dazu angepasst, siehe
+            sections/section-05-images-drops.css und ARCHITECTURE.md.
+          -->
+          <img class="eatme-image-04" id="section-05-image-01" src="" alt="" />
         </div>
       </div>
       <div class="col-text-image">
@@ -142,78 +147,83 @@
         </a>
       </div>
 
-      <!-- ==== Desktop-Tropfen-Layer: 19 Instanzen, Positionen % von 1280x688
-           (Figma Node 1:3415). Rein dekorativ, nicht content.json-gesteuert
-           (wie die blauen Vögel in section-02) -- Positionen/Assets fest im
-           Markup, siehe ARCHITECTURE.md Details section-05. 4 Formen
+      <!-- ==== Desktop-Tropfen-Layer: 19 Instanzen, Positionen % relativ zum
+           aktuellen 1280x657-Referenzrahmen (Figma Node 1:3415 -- Update:
+           Rahmen war vorher 1280x688, hat sich mit dem eatme-image-04-
+           Wechsel verschoben, alle top%-Werte unten sind neu berechnet).
+           Rein dekorativ, nicht content.json-gesteuert -- Positionen/Assets
+           fest im Markup, siehe ARCHITECTURE.md Details section-05. 4 Formen
            (assets/visuals/drops/01-04.png) x 2 Größen (24px/40px).
            data-size steuert den Parallax-Faktor, siehe script.js
            initDropsParallax(). ==== -->
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:49.786%; top:25.799%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:49.786%; top:27.019%; width:24px; height:24px;">
         <img src="assets/visuals/drops/01.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:40.887%; top:55.977%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:40.887%; top:58.617%; width:24px; height:24px;">
         <img src="assets/visuals/drops/01.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="40" style="left:53.178%; top:29.079%; width:40px; height:40px;">
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:53.178%; top:30.454%; width:40px; height:40px;">
         <img src="assets/visuals/drops/01.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="40" style="left:42.516%; top:30.953%; width:40px; height:40px;">
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:42.516%; top:32.414%; width:40px; height:40px;">
         <img src="assets/visuals/drops/01.png" alt="" />
       </div>
 
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:63.465%; top:78.885%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:63.465%; top:82.620%; width:24px; height:24px;">
         <img src="assets/visuals/drops/02.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:53.379%; top:62.157%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:53.379%; top:65.090%; width:24px; height:24px;">
         <img src="assets/visuals/drops/02.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:53.222%; top:44.312%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:53.222%; top:46.400%; width:24px; height:24px;">
         <img src="assets/visuals/drops/02.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:48.433%; top:37.859%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:48.433%; top:39.647%; width:24px; height:24px;">
         <img src="assets/visuals/drops/02.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:32.260%; top:35.362%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:32.260%; top:37.033%; width:24px; height:24px;">
         <img src="assets/visuals/drops/02.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="40" style="left:32.805%; top:56.343%; width:40px; height:40px;">
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:32.805%; top:59.001%; width:40px; height:40px;">
         <img src="assets/visuals/drops/02.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="40" style="left:17.226%; top:25.410%; width:40px; height:40px;">
+      <!-- Update: dieser Tropfen (40px) ist laut aktuellem Figma-Stand
+           deutlich weiter nach links gerückt -- vorher left:17.226% -->
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:5.313%; top:34.857%; width:40px; height:40px;">
         <img src="assets/visuals/drops/02.png" alt="" />
       </div>
 
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:24.987%; top:65.142%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:24.987%; top:68.216%; width:24px; height:24px;">
         <img src="assets/visuals/drops/03.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="40" style="left:48.535%; top:68.184%; width:40px; height:40px;">
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:48.535%; top:71.401%; width:40px; height:40px;">
         <img src="assets/visuals/drops/03.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="40" style="left:65.613%; top:72.365%; width:40px; height:40px;">
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:65.613%; top:75.780%; width:40px; height:40px;">
         <img src="assets/visuals/drops/03.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="40" style="left:41.522%; top:43.657%; width:40px; height:40px;">
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:41.522%; top:45.717%; width:40px; height:40px;">
         <img src="assets/visuals/drops/03.png" alt="" />
       </div>
 
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:25.629%; top:11.769%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:25.629%; top:12.325%; width:24px; height:24px;">
         <img src="assets/visuals/drops/04.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:66.861%; top:39.951%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:66.861%; top:41.836%; width:24px; height:24px;">
         <img src="assets/visuals/drops/04.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="24" style="left:33.972%; top:42.850%; width:24px; height:24px;">
+      <div class="tropfen tropfen--desktop" data-size="24" style="left:33.972%; top:44.876%; width:24px; height:24px;">
         <img src="assets/visuals/drops/04.png" alt="" />
       </div>
-      <div class="tropfen tropfen--desktop" data-size="40" style="left:74.852%; top:64.828%; width:40px; height:40px;">
+      <div class="tropfen tropfen--desktop" data-size="40" style="left:74.852%; top:67.888%; width:40px; height:40px;">
         <img src="assets/visuals/drops/04.png" alt="" />
       </div>
 
       <!-- ==== Mobile-Tropfen-Layer: eigener, kleinerer Satz (9 Stück),
            in px verankert statt % (siehe ARCHITECTURE.md Details
            section-05 für die Begründung). Zone 1 oben rechts neben dem
-           Bild, Zone 2 im Gap zwischen Bild und Lyrics-Modul. ==== -->
+           Bild, Zone 2 im Gap zwischen Bild und Lyrics-Modul. Vom
+           eatme-image-04-Update unberührt. ==== -->
       <div class="tropfen tropfen--mobile" data-size="24" style="left:78%; top:110px; width:24px; height:24px;">
         <img src="assets/visuals/drops/01.png" alt="" />
       </div>

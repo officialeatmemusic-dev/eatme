@@ -32,12 +32,13 @@
     ],
     "lyrics": {
       "song_title": "Trustfalling",
-      "song_link": "https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg?si=kDi1YY0zTpa-iLCIUbmagw",
+      "song_link": "",
       "lines": [
         "Trustfalling in your eyes",
-        "Don’t wanna lose myself",
+        "Don't wanna lose myself",
         "But call you mine",
-        "And Im falling for the first time"
+        "And I'm falling for the first time",
+        "Will you catch me or step aside"
       ]
     }
   },
@@ -51,16 +52,16 @@
 
   "section-05-images-drops": {
     "images": [
-      { "src": "assets/images/eatme-image-03.jpg", "alt": "Platzhalter Alt-Text – Bandfoto 3" }
+      { "src": "assets/images/eatme-image-04.webp", "alt": "Platzhalter Alt-Text – Bandfoto 4" }
     ],
     "lyrics": {
-      "song_title": "",
+      "song_title": "Drizzle",
       "song_link": "",
       "lines": [
-        "I can make your dust turn to sparkle",
-        "Can do a lot for you if you take a chance on me",
-        "I can make your dust turn to sparkle",
-        "I can do a lot for you if you take a chance"
+        "Drizzle in my hair",
+        "Always good",
+        "Never feel when I'm soaking wet",
+        "Until it ends"
       ]
     }
   },
@@ -83,13 +84,14 @@
     "background_image": "assets/images/eatme-image-footer.jpg",
     "background_image_alt": "Platzhalter Alt-Text – Bandfoto Footer (Duoton)",
     "lyrics": {
-      "song_title": "",
+      "song_title": "Drown",
       "song_link": "",
       "lines": [
-        "TODO: echte Songzeile 1",
-        "TODO: echte Songzeile 2",
-        "TODO: echte Songzeile 3",
-        "TODO: echte Songzeile 4"
+        "Let me drown",
+        "But I might never",
+        "Hit the ground",
+        "Push me off",
+        "Oh how I love the fall"
       ]
     },
     "cta_text": "Open for Booking",
