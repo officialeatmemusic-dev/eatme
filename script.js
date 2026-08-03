@@ -13,23 +13,6 @@ async function loadContent() {
   return response.json();
 }
 
-// ==========================================================================
-// Globale Bild-Convention: kein Drag-and-Drop für <img>, browserübergreifend
-// ==========================================================================
-// -webkit-user-drag (styles.css) greift nur in WebKit-Browsern (Safari,
-// Chrome) -- Firefox ignoriert diese CSS-Property komplett und steuert das
-// Draggen von <img> stattdessen über das native HTML-Attribut "draggable"
-// (Standard bei <img> = true). Deshalb hier zusätzlich per JS auf false
-// gesetzt, einmalig beim Laden -- deckt auch alle Bilder ab, die bereits im
-// initialen Markup stehen und erst später ihren src aus content.json
-// bekommen (Nav-Logo, Bandfotos etc.), da nur das src-Attribut ausgetauscht
-// wird, nicht das <img>-Element selbst.
-document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("img").forEach((img) => {
-    img.setAttribute("draggable", "false");
-  });
-});
-
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     const content = await loadContent();
@@ -382,3 +365,311 @@ function initDropsParallax() {
 }
 
 initDropsParallax();
+
+// ==========================================================================
+// instagram-module — Insta-Post-Nachbildung (section-06-text-social)
+// Komponente: components/instagram-module.css. Übernimmt Handle/Caption/
+// Avatar/Follow-Link + Post-Bilder aus content.json
+// (section-06-text-social.instagram_module), danach:
+//   - Top-Bar draggable (bewegt das ganze Modul, kein Text-Select)
+//   - 8 unsichtbare Resize-Zonen (4 Kanten + 4 Ecken), gegenüberliegende
+//     Seite bleibt beim Ziehen exakt stehen
+//   - Content-Bereich scrollt "endlos" (3 Kopien der Post-Bilder, Scroll-
+//     Position wird beim Erreichen eines Rands unsichtbar zurückgesetzt)
+//   - Ab WIDE_BREAKPOINT Modul-Breite: 2 unabhängige Bilder-Spalten
+//     (echtes Masonry statt starrer Grid-Zeilen)
+// Bilder behalten ihr Original-Seitenverhältnis; einzige Ausnahme ist das
+// jeweils letzte Bild der kürzeren Spalte, das minimal gestreckt/gecropt
+// wird, damit beide Spalten pro "Set" bündig enden (siehe Kommentar bei
+// .insta-set in components/instagram-module.css).
+// ==========================================================================
+
+function initInstagramModule(data) {
+  const moduleEl = document.getElementById("instagram-module");
+  if (!moduleEl || !data) return;
+
+  const MIN_WIDTH = 260;
+  const MAX_WIDTH = 800;
+  const MIN_HEIGHT = 360;
+  const MAX_HEIGHT = 760;
+  const WIDE_BREAKPOINT = 460;
+
+  // ---- Header-Content aus content.json befüllen ----
+  const avatarEl = document.getElementById("instagram-avatar");
+  const nameEl = document.getElementById("instagram-handle-name");
+  const captionEl = document.getElementById("instagram-handle-caption");
+  const headerLinkEl = document.getElementById("instagram-header-link");
+  const scrollEl = document.getElementById("instagram-scroll");
+  const dragHandle = document.getElementById("instagram-drag-handle");
+  const grid = document.getElementById("instagram-grid");
+
+  if (avatarEl && data.avatar_image) avatarEl.src = data.avatar_image;
+  if (nameEl) nameEl.textContent = data.handle || "";
+  if (captionEl) captionEl.textContent = data.caption || "";
+  if (headerLinkEl && data.follow_url) headerLinkEl.href = data.follow_url;
+  if (scrollEl && data.follow_url) scrollEl.href = data.follow_url;
+
+  const postImages = (data.post_images || []).map((img) => img.src);
+  if (!postImages.length || !grid || !scrollEl || !dragHandle) return;
+
+  // ---- Position/Größe komplett als px verwaltet (kein zentrierender
+  // Container) -- dadurch wächst/schrumpft das Modul beim Resizen nur auf
+  // der gezogenen Seite, die gegenüberliegende Kante bleibt exakt stehen. ----
+  let state = { left: 0, top: 0, width: 340, height: 520 };
+
+  function applyState() {
+    moduleEl.style.left = `${state.left}px`;
+    moduleEl.style.top = `${state.top}px`;
+    moduleEl.style.width = `${state.width}px`;
+    moduleEl.style.height = `${state.height}px`;
+  }
+  applyState();
+
+  function makeImageEl(src, alt) {
+    const wrap = document.createElement("div");
+    wrap.className = "insta-image";
+    const img = document.createElement("img");
+    img.src = src;
+    img.alt = alt || "";
+    img.draggable = false;
+    wrap.appendChild(img);
+    return wrap;
+  }
+
+  // ---- Grid-Aufbau: 3 "Sets" (Kopien der Post-Bilder) für den Endlos-
+  // Loop. Schmal: jedes Set eine einzelne vertikale Liste. Breit: jedes
+  // Set eine Reihe aus 2 unabhängigen Spalten (Bilder wechselseitig
+  // verteilt) -- kein Bild zwingt das andere mehr in eine gemeinsame
+  // Zeilenhöhe. ----
+  let isWide = false;
+
+  function renderGrid() {
+    grid.innerHTML = "";
+    for (let copy = 0; copy < 3; copy++) {
+      const setEl = document.createElement("div");
+      setEl.className = "insta-set" + (isWide ? " is-row" : "");
+
+      if (isWide) {
+        const col0 = document.createElement("div");
+        col0.className = "insta-col";
+        const col1 = document.createElement("div");
+        col1.className = "insta-col";
+        (data.post_images || []).forEach((imgData, i) => {
+          (i % 2 === 0 ? col0 : col1).appendChild(makeImageEl(imgData.src, imgData.alt));
+        });
+        setEl.appendChild(col0);
+        setEl.appendChild(col1);
+      } else {
+        (data.post_images || []).forEach((imgData) => {
+          setEl.appendChild(makeImageEl(imgData.src, imgData.alt));
+        });
+      }
+
+      grid.appendChild(setEl);
+    }
+  }
+  renderGrid();
+
+  // ---- Gleicht pro Set die Gesamthöhe beider Spalten aus: NUR das
+  // letzte Bild der kürzeren Spalte wird um die fehlende Differenz
+  // gestreckt (object-fit:cover, siehe .is-stretched in der CSS) -- kein
+  // zusätzliches Spacer-Element, das würde den Gap am Set-Übergang
+  // aufblähen (siehe Kommentar in components/instagram-module.css). Vor
+  // jeder Neuberechnung wird eine vorherige Streckung zurückgesetzt
+  // (wichtig bei Live-Resize). ----
+  function resetStretch() {
+    grid.querySelectorAll(".insta-image.is-stretched").forEach((el) => {
+      el.classList.remove("is-stretched");
+      el.style.height = "";
+    });
+  }
+
+  function equalizeColumns() {
+    resetStretch();
+    if (!isWide) return;
+
+    grid.querySelectorAll(".insta-set.is-row").forEach((setEl) => {
+      const cols = setEl.querySelectorAll(".insta-col");
+      if (cols.length !== 2) return;
+
+      const h0 = cols[0].getBoundingClientRect().height;
+      const h1 = cols[1].getBoundingClientRect().height;
+      const diff = Math.round(Math.abs(h0 - h1));
+      if (diff <= 0) return;
+
+      const shorterCol = h0 < h1 ? cols[0] : cols[1];
+      const lastImg = shorterCol.lastElementChild;
+      if (!lastImg || !lastImg.classList.contains("insta-image")) return;
+
+      const currentHeight = lastImg.getBoundingClientRect().height;
+      lastImg.style.height = `${currentHeight + diff}px`;
+      lastImg.classList.add("is-stretched");
+    });
+  }
+
+  // ---- Endloser Scroll: Start-Position liegt am Anfang der mittleren der
+  // 3 Kopien. Nähert man sich oben/unten der Kante, wird die Scroll-
+  // Position per JS unsichtbar (kein smooth-behavior) um exakt eine
+  // Kopien-Höhe zurückgesetzt -> fühlt sich endlos an, ohne dass der DOM
+  // unendlich wächst. ----
+  let setHeight = 0;
+
+  function measureAndReset() {
+    setHeight = grid.scrollHeight / 3;
+    scrollEl.scrollTop = setHeight;
+  }
+
+  let rafPending = false;
+  function scheduleRefresh() {
+    if (rafPending) return;
+    rafPending = true;
+    requestAnimationFrame(() => {
+      rafPending = false;
+      const nowWide = moduleEl.getBoundingClientRect().width >= WIDE_BREAKPOINT;
+      if (nowWide !== isWide) {
+        isWide = nowWide;
+        renderGrid();
+      }
+      equalizeColumns();
+      measureAndReset();
+    });
+  }
+
+  const imgEls = Array.from(grid.querySelectorAll("img"));
+  Promise.all(
+    imgEls.map(
+      (img) =>
+        new Promise((resolve) => {
+          if (img.complete) resolve();
+          else {
+            img.addEventListener("load", resolve, { once: true });
+            img.addEventListener("error", resolve, { once: true });
+          }
+        })
+    )
+  ).then(() => scheduleRefresh());
+
+  scrollEl.addEventListener("scroll", () => {
+    if (!setHeight) return;
+    if (scrollEl.scrollTop <= 0) {
+      scrollEl.scrollTop += setHeight;
+    } else if (scrollEl.scrollTop >= setHeight * 2) {
+      scrollEl.scrollTop -= setHeight;
+    }
+  });
+
+  // Modul-Größe ändert sich durch Resize (siehe unten) oder z.B. eine
+  // Browser-Fenster-Änderung -> Spalten-Umbruch und Loop-Messung müssen
+  // neu berechnet werden.
+  const layoutObserver = new ResizeObserver(() => scheduleRefresh());
+  layoutObserver.observe(moduleEl);
+
+  // ---- Drag: nur über die Top-Bar, bewegt das Modul per left/top (px).
+  // preventDefault() im pointerdown verhindert zusätzlich, dass der
+  // Browser beim Ziehen über den Text eine Auswahl startet. ----
+  let dragState = null;
+
+  dragHandle.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    dragState = {
+      startX: e.clientX,
+      startY: e.clientY,
+      originLeft: state.left,
+      originTop: state.top,
+      pointerId: e.pointerId,
+    };
+    dragHandle.setPointerCapture(e.pointerId);
+    moduleEl.classList.add("is-dragging");
+  });
+
+  dragHandle.addEventListener("pointermove", (e) => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    state.left = dragState.originLeft + (e.clientX - dragState.startX);
+    state.top = dragState.originTop + (e.clientY - dragState.startY);
+    applyState();
+  });
+
+  function endDrag(e) {
+    if (!dragState || (e.pointerId !== undefined && e.pointerId !== dragState.pointerId)) return;
+    dragState = null;
+    moduleEl.classList.remove("is-dragging");
+  }
+
+  dragHandle.addEventListener("pointerup", endDrag);
+  dragHandle.addEventListener("pointercancel", endDrag);
+
+  // ---- Resize: 4 Kanten + 4 Ecken (siehe .resize-edge/.resize-corner in
+  // der CSS). Die gegenüberliegende Seite bleibt IMMER exakt an ihrer
+  // Bildschirmposition stehen -- auch bei MIN_/MAX_-Clamping, weil
+  // left/top aus der bereits geclampten Breite/Höhe zurückgerechnet
+  // werden (nicht aus dem rohen Maus-Delta). ----
+  function clamp(value, min, max) {
+    return Math.min(max, Math.max(min, value));
+  }
+
+  const resizeHandles = moduleEl.querySelectorAll(".resize-edge, .resize-corner");
+
+  resizeHandles.forEach((handle) => {
+    const dir = handle.dataset.dir;
+    let resizeState = null;
+
+    handle.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      resizeState = {
+        startX: e.clientX,
+        startY: e.clientY,
+        startLeft: state.left,
+        startTop: state.top,
+        startWidth: state.width,
+        startHeight: state.height,
+        pointerId: e.pointerId,
+      };
+      handle.setPointerCapture(e.pointerId);
+      moduleEl.classList.add("is-resizing");
+    });
+
+    handle.addEventListener("pointermove", (e) => {
+      if (!resizeState || e.pointerId !== resizeState.pointerId) return;
+      const dx = e.clientX - resizeState.startX;
+      const dy = e.clientY - resizeState.startY;
+
+      let { left, top, width, height } = {
+        left: resizeState.startLeft,
+        top: resizeState.startTop,
+        width: resizeState.startWidth,
+        height: resizeState.startHeight,
+      };
+
+      if (dir.includes("e")) {
+        width = clamp(resizeState.startWidth + dx, MIN_WIDTH, MAX_WIDTH);
+      }
+      if (dir.includes("w")) {
+        width = clamp(resizeState.startWidth - dx, MIN_WIDTH, MAX_WIDTH);
+        left = resizeState.startLeft + (resizeState.startWidth - width);
+      }
+      if (dir.includes("s")) {
+        height = clamp(resizeState.startHeight + dy, MIN_HEIGHT, MAX_HEIGHT);
+      }
+      if (dir.includes("n")) {
+        height = clamp(resizeState.startHeight - dy, MIN_HEIGHT, MAX_HEIGHT);
+        top = resizeState.startTop + (resizeState.startHeight - height);
+      }
+
+      state = { left, top, width, height };
+      applyState();
+    });
+
+    function endResize(e) {
+      if (!resizeState || (e.pointerId !== undefined && e.pointerId !== resizeState.pointerId)) return;
+      resizeState = null;
+      moduleEl.classList.remove("is-resizing");
+    }
+
+    handle.addEventListener("pointerup", endResize);
+    handle.addEventListener("pointercancel", endResize);
+  });
+}
+
+document.addEventListener("eatme:content-ready", (e) => {
+  initInstagramModule(e.detail["section-06-text-social"]?.instagram_module);
+});
