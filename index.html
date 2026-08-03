@@ -22,6 +22,7 @@
   <link rel="stylesheet" href="sections/section-03-images.css" />
   <link rel="stylesheet" href="sections/section-04-text-02.css" />
   <link rel="stylesheet" href="sections/section-05-images-drops.css" />
+  <link rel="stylesheet" href="sections/section-06-text-social.css" />
 </head>
 <body>
 
@@ -255,47 +256,54 @@
     </section>
 
     <section id="section-06-text-social" class="section">
-      <!-- Ankündigungstext folgt im section-06-Chat. Instagram-Modul
-           (Komponente, siehe components/instagram-module.css +
-           initInstagramModule() in script.js) ist hier schon eingebunden --
-           finale Platzierung/Ausrichtung neben dem Text wird im
-           section-06-Chat festgelegt (aktuell nur der technische
-           Mindest-Rahmen .instagram-module-stage). -->
-      <div class="instagram-module-stage" id="instagram-module-stage">
-        <div class="instagram-module" id="instagram-module">
-          <div class="insta-header">
-            <div class="insta-top-bar" id="instagram-drag-handle">
-              <p class="insta-top-bar-label">Instagram</p>
-              <span class="insta-fake-button"></span>
-              <span class="insta-fake-button"></span>
-              <span class="insta-fake-button"></span>
+      <!-- Zwei gleich breite Spalten: links Ankündigungstext, rechts das
+           Instagram-Modul (Komponente, siehe components/instagram-module.css
+           + initInstagramModule() in script.js). Details zum Hug-Verhalten
+           der rechten Spalte + z-index-Schichtung siehe ARCHITECTURE.md
+           Details section-06. -->
+      <div class="col-text">
+        <div class="text-06-copy" id="section-06-copy">
+          <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+        </div>
+      </div>
+      <div class="col-instagram">
+        <div class="instagram-module-stage" id="instagram-module-stage">
+          <div class="instagram-module" id="instagram-module">
+            <div class="insta-header">
+              <div class="insta-top-bar" id="instagram-drag-handle">
+                <p class="insta-top-bar-label">Instagram</p>
+                <span class="insta-fake-button"></span>
+                <span class="insta-fake-button"></span>
+                <span class="insta-fake-button"></span>
+              </div>
+              <a class="insta-header-link" id="instagram-header-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="Zu Instagram">
+                <div class="insta-avatar">
+                  <img id="instagram-avatar" src="" alt="" />
+                </div>
+                <div class="insta-handle">
+                  <p class="insta-handle-name" id="instagram-handle-name"></p>
+                  <p class="insta-handle-caption" id="instagram-handle-caption"></p>
+                </div>
+                <span class="eatme-button">Follow</span>
+              </a>
             </div>
-            <a class="insta-header-link" id="instagram-header-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="Zu Instagram">
-              <div class="insta-avatar">
-                <img id="instagram-avatar" src="" alt="" />
+
+            <a class="insta-content-scroll" id="instagram-scroll" href="#" target="_blank" rel="noopener noreferrer" aria-label="Zu Instagram">
+              <div class="insta-grid" id="instagram-grid">
+                <!-- wird zur Laufzeit aus assets/images/insta/ befüllt
+                     (GitHub Contents API), siehe script.js -->
               </div>
-              <div class="insta-handle">
-                <p class="insta-handle-name" id="instagram-handle-name"></p>
-                <p class="insta-handle-caption" id="instagram-handle-caption"></p>
-              </div>
-              <span class="eatme-button">Follow</span>
             </a>
+
+            <div class="resize-edge n" data-dir="n"></div>
+            <div class="resize-edge s" data-dir="s"></div>
+            <div class="resize-edge e" data-dir="e"></div>
+            <div class="resize-edge w" data-dir="w"></div>
+            <div class="resize-corner nw" data-dir="nw"></div>
+            <div class="resize-corner ne" data-dir="ne"></div>
+            <div class="resize-corner sw" data-dir="sw"></div>
+            <div class="resize-corner se" data-dir="se"></div>
           </div>
-
-          <a class="insta-content-scroll" id="instagram-scroll" href="#" target="_blank" rel="noopener noreferrer" aria-label="Zu Instagram">
-            <div class="insta-grid" id="instagram-grid">
-              <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
-            </div>
-          </a>
-
-          <div class="resize-edge n" data-dir="n"></div>
-          <div class="resize-edge s" data-dir="s"></div>
-          <div class="resize-edge e" data-dir="e"></div>
-          <div class="resize-edge w" data-dir="w"></div>
-          <div class="resize-corner nw" data-dir="nw"></div>
-          <div class="resize-corner ne" data-dir="ne"></div>
-          <div class="resize-corner sw" data-dir="sw"></div>
-          <div class="resize-corner se" data-dir="se"></div>
         </div>
       </div>
     </section>

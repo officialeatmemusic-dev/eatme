@@ -73,6 +73,14 @@ leichter für Til selbst nachvollziehbar/wartbar.
 │   ├── /images                 eatme-image-01/02.jpg, eatme-image-04.webp
 │   │                           (ersetzt eatme-image-03.jpg, siehe section-05
 │   │                           unten), -footer.jpg, insta-avatar.png
+│   │   └── /insta              Bilder + Videos fürs Instagram-Modul
+│   │                           (section-06) -- wird zur Laufzeit per
+│   │                           GitHub Contents API ausgelesen, NICHT über
+│   │                           content.json gepflegt. Einfach Dateien
+│   │                           hochladen/löschen, kein Code-/JSON-Edit
+│   │                           nötig. Bild vs. Video über Dateiendung
+│   │                           erkannt (.jpg/.jpeg/.png/.webp/.gif vs.
+│   │                           .mp4/.webm/.mov), siehe Details section-06.
 │   ├── /logo                   eatme_logo.png
 │   └── /visuals
 │       ├── birds-black.webp
@@ -232,8 +240,15 @@ bekommt das automatisch:
   Content-Rendering (Bild + Songzeilen aus `content.json`) über
   `renderSection05()` + die gemeinsame `renderLyricsModule()`,
   Tropfen-Parallax in `initDropsParallax()`, beides in `script.js`.
-- ⬜ section-06-text-social, section-07-footer — noch offen, siehe
-  Sektionsliste oben.
+- ✅ **section-06-text-social** — fertig (zwei gleich breite Spalten:
+  Ankündigungstext links, Instagram-Modul rechts, Details siehe eigener
+  Abschnitt unten). Eigene CSS: `sections/section-06-text-social.css`,
+  Content-Rendering in `script.js` (`renderSection06Text()`). Das
+  Instagram-Modul selbst (Komponente `components/instagram-module.css` +
+  `initInstagramModule()`/`setupInstagramInteraction()` in `script.js`)
+  wurde im Zuge dessen um Background-Blur, dynamisches Laden aus
+  `assets/images/insta/` und Mobile-Reset erweitert.
+- ⬜ section-07-footer — noch offen, siehe Sektionsliste oben.
 
 ### Details section-02-text-01 (für Anschluss-Kontext)
 
@@ -421,6 +436,82 @@ bekommt das automatisch:
   (4 Zeilen) — nur `song_link` ist weiterhin leer/TODO. Siehe auch die
   Notiz zur flexiblen Zeilenanzahl bei section-03 oben: gilt identisch
   für alle drei Lyrics-Module.
+
+### Details section-06-text-social (für Anschluss-Kontext)
+
+- Zwei-Spalten-Layout via **Flexbox**, beide Spalten `flex: 1 0 0` und
+  jeweils `align-items:center; justify-content:center` -- Textblock
+  links ist in der Spalte zentriert (Höhe + Breite), Instagram-Modul
+  rechts ebenso. 1:1 aus Figma-Node 1:3376 übernommen.
+- **Rechte Spalte ("Hug", wächst nie mit"):** `.instagram-module-stage`
+  hat eine FESTE `height: 520px` (entspricht der Default-Modulgröße, kein
+  `min-height` mehr). Das Modul selbst ist `position: absolute` innerhalb
+  dieser Stage -- zieht man es per Resize-Handles größer (bis 800x760),
+  ragt es rein visuell über die Stage hinaus, ohne dass Spalte/Sektion
+  mitwächst. Beim Laden wird das Modul zusätzlich automatisch **innerhalb
+  der Stage zentriert** (vorher stand es fix bei `left:0/top:0`) und
+  bleibt zentriert, solange man es noch nicht selbst gezogen/resized hat
+  (`hasInteracted`-Flag in `script.js`) -- danach respektiert es die
+  manuell gesetzte Position.
+- **z-index-Schichtung:** `.instagram-module` hat einen festen
+  `z-index: 2` (nicht mehr nur während Drag/Resize) -- damit liegt es
+  immer über benachbarten Sektionen, falls es beim Resizen dort
+  hineinragt, bleibt aber unter `#site-nav` (`z-index: 10`, siehe
+  `styles.css`). Während Drag/Resize kurzzeitig `z-index: 3`.
+- **Background-Blur:** `backdrop-filter: blur(16px)` (+ `-webkit-`-Präfix
+  für Safari/iOS) auf `.instagram-module` für einen Glass-Effekt --
+  reiner Effekt-Wert wie die Box-Shadows, kein Farb-Token, daher direkt
+  in `components/instagram-module.css` gesetzt statt in `tokens.css`.
+  Der bereits vorhandene, leicht transparente Hintergrund
+  (`--color-blue-05`) lässt den Blur durchscheinen.
+- **Bilder/Videos kommen NICHT mehr aus `content.json`**, sondern werden
+  zur Laufzeit aus `assets/images/insta/` geladen (GitHub Contents API,
+  `fetchInstaFolder()` in `script.js`) -- flexible Anzahl, Til muss nur
+  Dateien im Ordner hochladen/löschen, kein JSON-Edit nötig. Bild vs.
+  Video wird über die Dateiendung erkannt (`.jpg/.jpeg/.png/.webp/.gif`
+  vs. `.mp4/.webm/.mov`). `content.json` → `section-06-text-social.
+  instagram_module` enthält dadurch nur noch `handle`, `caption`,
+  `avatar_image`, `follow_url` -- das frühere `post_images`-Array wurde
+  entfernt.
+  - **Rate-Limit:** Die GitHub Contents API erlaubt unauthentifiziert
+    60 Requests/Stunde pro IP. Ergebnis wird deshalb 5 Minuten pro Tab in
+    `sessionStorage` gecacht (`INSTA_CACHE_KEY`/`INSTA_CACHE_TTL_MS`).
+    Bei viel gleichzeitigem Traffic aus derselben IP (z.B. Firmennetz)
+    könnte das Limit trotzdem greifen -- aktuell bewusst in Kauf
+    genommen, keine feste Fallback-Liste vorgesehen.
+  - **Empty-State:** Ist der Ordner leer oder die API nicht erreichbar,
+    erscheint im Grid ein kurzer Text-Hinweis (`.insta-empty-state`)
+    statt eines stillen Fehlers/leeren Moduls.
+  - Videos: `muted`, `loop`, `autoplay`, `playsinline` (Attribut UND
+    Property, wegen iOS-Safari), **keine Controls** -- laufen also
+    lautlos im Loop wie ein GIF. Da der Endlos-Loop alle Post-Elemente
+    3x dupliziert, laufen bei mehreren Videos im Ordner entsprechend
+    viele Video-Instanzen gleichzeitig im Autoplay (Performance im Blick
+    behalten, falls der Ordner stark wächst).
+- **Fade-in pro Medienelement:** Jedes Bild/Video ist zunächst
+  `opacity: 0` (Klasse `.insta-media`) und blendet **einzeln** ein
+  (`.is-loaded`, `opacity 0.4s ease`), sobald es geladen ist -- bei
+  Bildern via `load`, bei Videos via `loadeddata` (erster Frame steht,
+  kein schwarzes Flackern). Kein Warten auf die anderen Elemente im Set;
+  die weiße `.insta-image`-Hintergrundfarbe dient währenddessen als
+  simpler Ladeplatzhalter. Respektiert `prefers-reduced-motion`
+  (Transition wird dann übersprungen, Elemente erscheinen direkt).
+- **Mobile-Reset (≤768px):** Modul wird per `matchMedia`-Listener
+  automatisch auf die Default-Größe (340x520) zurückgesetzt und neu
+  zentriert (`applyMobileReset()`), sobald der 768px-Breakpoint
+  unterschritten wird -- inkl. Zurücksetzen von `hasInteracted`, damit es
+  beim Zurückwechseln zu Desktop wieder frisch zentriert startet.
+  Drag/Resize sind auf Mobile deaktiviert: JS-seitig über einen
+  `mobileQuery.matches`-Check am Anfang jedes `pointerdown`-Handlers,
+  zusätzlich `pointer-events: none` auf den Resize-Zonen in der CSS als
+  zweite Absicherung (verhindert versehentliches Ziehen auf
+  Touch-Geräten).
+- Modul-Breite/-Höhe-Grenzen (260-800 x 360-760), Endlos-Scroll,
+  Spalten-Ausgleich (`equalizeColumns()`) und der Wechsel auf
+  zwei Spalten ab `WIDE_BREAKPOINT` (460px Modul-Breite) sind
+  unverändert wie zuvor -- nur die Datenquelle (Ordner statt
+  `content.json`) und die Medien-Erzeugung (`makeMediaEl()` statt
+  `makeImageEl()`, jetzt mit Video-Unterstützung) haben sich geändert.
 
 ## Gelernte Lektionen (für alle künftigen Sektionen relevant)
 

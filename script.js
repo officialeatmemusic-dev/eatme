@@ -366,33 +366,121 @@ function initDropsParallax() {
 
 initDropsParallax();
 
+
+// ==========================================================================
+// section-06-text-social — Ankündigungstext aus content.json rendern.
+// Gleiches Muster wie renderSection04 (nur Absätze, keine Headline).
+// ==========================================================================
+
+function renderSection06Text(data) {
+  const container = document.querySelector("#section-06-copy");
+  if (!container || !data) return;
+
+  container.innerHTML = "";
+  (data.paragraphs || []).forEach((text) => {
+    const p = document.createElement("p");
+    p.textContent = text;
+    p.classList.add("fade-in-text");
+    container.appendChild(p);
+  });
+  initFadeInText(container);
+}
+
+document.addEventListener("eatme:content-ready", (e) => {
+  renderSection06Text(e.detail["section-06-text-social"]);
+});
+
 // ==========================================================================
 // instagram-module — Insta-Post-Nachbildung (section-06-text-social)
 // Komponente: components/instagram-module.css. Übernimmt Handle/Caption/
-// Avatar/Follow-Link + Post-Bilder aus content.json
-// (section-06-text-social.instagram_module), danach:
+// Avatar/Follow-Link aus content.json (section-06-text-social.
+// instagram_module), danach:
 //   - Top-Bar draggable (bewegt das ganze Modul, kein Text-Select)
 //   - 8 unsichtbare Resize-Zonen (4 Kanten + 4 Ecken), gegenüberliegende
 //     Seite bleibt beim Ziehen exakt stehen
-//   - Content-Bereich scrollt "endlos" (3 Kopien der Post-Bilder, Scroll-
+//   - Content-Bereich scrollt "endlos" (3 Kopien der Post-Elemente, Scroll-
 //     Position wird beim Erreichen eines Rands unsichtbar zurückgesetzt)
-//   - Ab WIDE_BREAKPOINT Modul-Breite: 2 unabhängige Bilder-Spalten
-//     (echtes Masonry statt starrer Grid-Zeilen)
-// Bilder behalten ihr Original-Seitenverhältnis; einzige Ausnahme ist das
-// jeweils letzte Bild der kürzeren Spalte, das minimal gestreckt/gecropt
-// wird, damit beide Spalten pro "Set" bündig enden (siehe Kommentar bei
-// .insta-set in components/instagram-module.css).
+//   - Ab WIDE_BREAKPOINT Modul-Breite: 2 unabhängige Spalten (echtes
+//     Masonry statt starrer Grid-Zeilen)
+//
+// UPDATE (siehe Chat-Verlauf):
+//   - Bilder/Videos kommen NICHT mehr aus content.json, sondern werden
+//     LIVE aus assets/images/insta/ geladen (GitHub Contents API) --
+//     flexible Anzahl, Til muss nur Dateien hochladen/löschen, kein
+//     JSON-Edit nötig. Bild vs. Video wird über die Dateiendung erkannt.
+//     Videos: muted/loop/autoplay/playsinline, KEINE Controls.
+//   - Ergebnis wird 5 Minuten pro Tab in sessionStorage gecacht, um bei
+//     mehreren Seitenaufrufen nicht sofort ins GitHub-Rate-Limit
+//     (60 Requests/Stunde, unauthentifiziert) zu laufen.
+//   - Bleibt die API einmal nicht erreichbar oder ist der Ordner leer,
+//     erscheint ein kurzer Empty-State-Hinweis statt eines stillen
+//     Fehlers (siehe .insta-empty-state in components/instagram-module.css).
+//   - Jedes Bild/Video blendet EINZELN ein, sobald es geladen ist
+//     (opacity 0 -> 1 über die Klasse .is-loaded, siehe CSS) -- kein
+//     Warten auf die anderen Elemente im Set.
+//   - Modul wird ab 768px (siehe tokens-notes.md-Breakpoint) automatisch
+//     auf Default-Größe/-Position zurückgesetzt, Drag/Resize deaktiviert
+//     (siehe applyMobileReset() unten + die pointer-events-Regel in der CSS).
 // ==========================================================================
+
+const INSTA_FOLDER_API = "https://api.github.com/repos/t-i-l/eatme/contents/assets/images/insta";
+const INSTA_CACHE_KEY = "eatme-insta-folder-cache";
+const INSTA_CACHE_TTL_MS = 5 * 60 * 1000;
+const INSTA_IMAGE_EXT = ["jpg", "jpeg", "png", "webp", "gif"];
+const INSTA_VIDEO_EXT = ["mp4", "webm", "mov"];
+
+// Fragt den Inhalt von assets/images/insta/ über die GitHub Contents API
+// ab (funktioniert nur auf einer echten gehosteten Seite bzw. in einem
+// normalen Browser-Tab, nicht in manchen Vorschau-Sandboxes -- siehe
+// "Gelernte Lektionen" in ARCHITECTURE.md). Liefert eine flache Liste aus
+// { type: "image"|"video", src, alt }, sortiert wie von der API geliefert
+// (alphabetisch nach Dateiname).
+async function fetchInstaFolder() {
+  try {
+    const cached = sessionStorage.getItem(INSTA_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.timestamp < INSTA_CACHE_TTL_MS) return parsed.items;
+    }
+  } catch (err) {
+    // sessionStorage kann in seltenen Kontexten fehlen/blockiert sein --
+    // dann einfach live laden, nur der Cache fällt aus.
+  }
+
+  const res = await fetch(INSTA_FOLDER_API);
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+  const listing = await res.json();
+
+  const items = listing
+    .filter((entry) => entry.type === "file")
+    .map((entry) => {
+      const ext = entry.name.split(".").pop().toLowerCase();
+      if (INSTA_IMAGE_EXT.includes(ext)) return { type: "image", src: entry.path, alt: entry.name };
+      if (INSTA_VIDEO_EXT.includes(ext)) return { type: "video", src: entry.path, alt: entry.name };
+      return null;
+    })
+    .filter(Boolean);
+
+  try {
+    sessionStorage.setItem(INSTA_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), items }));
+  } catch (err) {
+    // Speicher voll o.ä. -- nicht kritisch, betrifft nur den Cache.
+  }
+
+  return items;
+}
 
 function initInstagramModule(data) {
   const moduleEl = document.getElementById("instagram-module");
-  if (!moduleEl || !data) return;
+  const stageEl = document.getElementById("instagram-module-stage");
+  if (!moduleEl || !stageEl || !data) return;
 
   const MIN_WIDTH = 260;
   const MAX_WIDTH = 800;
   const MIN_HEIGHT = 360;
   const MAX_HEIGHT = 760;
   const WIDE_BREAKPOINT = 460;
+  const DEFAULT_STATE = { width: 340, height: 520 };
 
   // ---- Header-Content aus content.json befüllen ----
   const avatarEl = document.getElementById("instagram-avatar");
@@ -409,13 +497,52 @@ function initInstagramModule(data) {
   if (headerLinkEl && data.follow_url) headerLinkEl.href = data.follow_url;
   if (scrollEl && data.follow_url) scrollEl.href = data.follow_url;
 
-  const postImages = (data.post_images || []).map((img) => img.src);
-  if (!postImages.length || !grid || !scrollEl || !dragHandle) return;
+  if (!grid || !scrollEl || !dragHandle) return;
+
+  loadInstaPosts(grid, (items) => {
+    setupInstagramInteraction({ moduleEl, stageEl, scrollEl, dragHandle, grid, MIN_WIDTH, MAX_WIDTH, MIN_HEIGHT, MAX_HEIGHT, WIDE_BREAKPOINT, DEFAULT_STATE, postItems: items });
+  });
+}
+
+// Lädt die Post-Elemente (async, GitHub API) und ruft danach onReady()
+// auf -- getrennt von setupInstagramInteraction(), damit Drag/Resize/
+// Mobile-Reset auch dann korrekt initialisiert sind, wenn der Ordner
+// (noch) leer ist oder die API nicht erreichbar war (Empty-State statt
+// komplett fehlender Interaktion).
+async function loadInstaPosts(grid, onReady) {
+  let postItems = [];
+  try {
+    postItems = await fetchInstaFolder();
+  } catch (err) {
+    console.error("Insta-Ordner konnte nicht geladen werden (GitHub API):", err);
+  }
+
+  if (!postItems.length) {
+    grid.innerHTML = "";
+    const empty = document.createElement("div");
+    empty.className = "insta-empty-state";
+    empty.textContent = "Noch keine Instagram-Beiträge verfügbar.";
+    grid.appendChild(empty);
+    return;
+  }
+
+  onReady(postItems);
+}
+
+function setupInstagramInteraction({ moduleEl, stageEl, scrollEl, dragHandle, grid, MIN_WIDTH, MAX_WIDTH, MIN_HEIGHT, MAX_HEIGHT, WIDE_BREAKPOINT, DEFAULT_STATE, postItems: initialPostItems }) {
+  const mobileQuery = window.matchMedia("(max-width: 768px)");
 
   // ---- Position/Größe komplett als px verwaltet (kein zentrierender
   // Container) -- dadurch wächst/schrumpft das Modul beim Resizen nur auf
   // der gezogenen Seite, die gegenüberliegende Kante bleibt exakt stehen. ----
-  let state = { left: 0, top: 0, width: 340, height: 520 };
+  let state = { left: 0, top: 0, width: DEFAULT_STATE.width, height: DEFAULT_STATE.height };
+  let hasInteracted = false; // solange false: Modul bleibt bei Stage-Größenänderungen zentriert
+
+  function centerInStage() {
+    const stageRect = stageEl.getBoundingClientRect();
+    state.left = Math.round((stageRect.width - state.width) / 2);
+    state.top = Math.round((stageRect.height - state.height) / 2);
+  }
 
   function applyState() {
     moduleEl.style.left = `${state.left}px`;
@@ -423,25 +550,121 @@ function initInstagramModule(data) {
     moduleEl.style.width = `${state.width}px`;
     moduleEl.style.height = `${state.height}px`;
   }
-  applyState();
 
-  function makeImageEl(src, alt) {
+  // Mobile: Modul auf Default-Größe zurücksetzen + neu zentrieren.
+  // hasInteracted wird ebenfalls zurückgesetzt, damit es beim Zurück-
+  // wechseln zu Desktop wieder frisch zentriert startet.
+  function applyMobileReset() {
+    state.width = DEFAULT_STATE.width;
+    state.height = DEFAULT_STATE.height;
+    centerInStage();
+    applyState();
+    hasInteracted = false;
+  }
+
+  if (mobileQuery.matches) applyMobileReset();
+  else {
+    centerInStage();
+    applyState();
+  }
+
+  // Beim Über-/Unterschreiten des 768px-Breakpoints während der Sitzung
+  // (z.B. Fenster resizen, Gerät drehen).
+  mobileQuery.addEventListener("change", (e) => {
+    if (e.matches) applyMobileReset();
+    else {
+      centerInStage();
+      applyState();
+    }
+  });
+
+  // Sonstige Fenster-Größenänderungen (ohne Breakpoint-Wechsel): nur neu
+  // zentrieren, solange der Mensch das Modul noch nicht selbst bewegt/
+  // resized hat, und nicht im Mobile-Zustand (dort regelt applyMobileReset).
+  window.addEventListener("resize", () => {
+    if (hasInteracted || mobileQuery.matches) return;
+    centerInStage();
+    applyState();
+  });
+
+  // Erstellt ein Bild- oder Video-Element für den Endlos-Grid. Beide
+  // Medientypen bekommen die Klasse .insta-media (Basis-Fade-Styling,
+  // siehe CSS) und blenden individuell ein, sobald sie geladen sind --
+  // "load"/"error" bei <img>, "loadeddata"/"error" bei <video> (erst wenn
+  // der erste Frame steht, kein schwarzes Flackern).
+  function revealWhenLoaded(el) {
+    const reveal = () => el.classList.add("is-loaded");
+    if (el.tagName === "IMG") {
+      if (el.complete) reveal();
+      else {
+        el.addEventListener("load", reveal, { once: true });
+        el.addEventListener("error", reveal, { once: true });
+      }
+    } else if (el.tagName === "VIDEO") {
+      if (el.readyState >= 2) reveal(); // HAVE_CURRENT_DATA
+      else {
+        el.addEventListener("loadeddata", reveal, { once: true });
+        el.addEventListener("error", reveal, { once: true });
+      }
+    }
+  }
+
+  // Für die initiale Höhenmessung/Spalten-Ausgleich (measureAndReset/
+  // equalizeColumns) muss gewartet werden, bis alle Medien ihre
+  // intrinsischen Maße kennen -- unabhängig vom individuellen Fade-in.
+  function waitForMedia(el) {
+    return new Promise((resolve) => {
+      if (el.tagName === "IMG") {
+        if (el.complete) resolve();
+        else {
+          el.addEventListener("load", resolve, { once: true });
+          el.addEventListener("error", resolve, { once: true });
+        }
+      } else if (el.tagName === "VIDEO") {
+        if (el.readyState >= 1) resolve(); // HAVE_METADATA
+        else {
+          el.addEventListener("loadedmetadata", resolve, { once: true });
+          el.addEventListener("error", resolve, { once: true });
+        }
+      } else resolve();
+    });
+  }
+
+  function makeMediaEl(item) {
     const wrap = document.createElement("div");
     wrap.className = "insta-image";
-    const img = document.createElement("img");
-    img.src = src;
-    img.alt = alt || "";
-    img.draggable = false;
-    wrap.appendChild(img);
+
+    if (item.type === "video") {
+      const video = document.createElement("video");
+      video.className = "insta-media";
+      video.src = item.src;
+      video.muted = true;
+      video.loop = true;
+      video.autoplay = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", ""); // iOS-Safari braucht das Attribut zusätzlich zur Property
+      video.preload = "auto";
+      revealWhenLoaded(video);
+      wrap.appendChild(video);
+    } else {
+      const img = document.createElement("img");
+      img.className = "insta-media";
+      img.src = item.src;
+      img.alt = item.alt || "";
+      img.draggable = false;
+      revealWhenLoaded(img);
+      wrap.appendChild(img);
+    }
     return wrap;
   }
 
-  // ---- Grid-Aufbau: 3 "Sets" (Kopien der Post-Bilder) für den Endlos-
+  // ---- Grid-Aufbau: 3 "Sets" (Kopien der Post-Elemente) für den Endlos-
   // Loop. Schmal: jedes Set eine einzelne vertikale Liste. Breit: jedes
-  // Set eine Reihe aus 2 unabhängigen Spalten (Bilder wechselseitig
-  // verteilt) -- kein Bild zwingt das andere mehr in eine gemeinsame
+  // Set eine Reihe aus 2 unabhängigen Spalten (Elemente wechselseitig
+  // verteilt) -- kein Element zwingt das andere mehr in eine gemeinsame
   // Zeilenhöhe. ----
   let isWide = false;
+  let postItems = initialPostItems || [];
 
   function renderGrid() {
     grid.innerHTML = "";
@@ -454,29 +677,27 @@ function initInstagramModule(data) {
         col0.className = "insta-col";
         const col1 = document.createElement("div");
         col1.className = "insta-col";
-        (data.post_images || []).forEach((imgData, i) => {
-          (i % 2 === 0 ? col0 : col1).appendChild(makeImageEl(imgData.src, imgData.alt));
+        postItems.forEach((item, i) => {
+          (i % 2 === 0 ? col0 : col1).appendChild(makeMediaEl(item));
         });
         setEl.appendChild(col0);
         setEl.appendChild(col1);
       } else {
-        (data.post_images || []).forEach((imgData) => {
-          setEl.appendChild(makeImageEl(imgData.src, imgData.alt));
+        postItems.forEach((item) => {
+          setEl.appendChild(makeMediaEl(item));
         });
       }
 
       grid.appendChild(setEl);
     }
   }
-  renderGrid();
 
   // ---- Gleicht pro Set die Gesamthöhe beider Spalten aus: NUR das
-  // letzte Bild der kürzeren Spalte wird um die fehlende Differenz
+  // letzte Element der kürzeren Spalte wird um die fehlende Differenz
   // gestreckt (object-fit:cover, siehe .is-stretched in der CSS) -- kein
   // zusätzliches Spacer-Element, das würde den Gap am Set-Übergang
-  // aufblähen (siehe Kommentar in components/instagram-module.css). Vor
-  // jeder Neuberechnung wird eine vorherige Streckung zurückgesetzt
-  // (wichtig bei Live-Resize). ----
+  // aufblähen. Vor jeder Neuberechnung wird eine vorherige Streckung
+  // zurückgesetzt (wichtig bei Live-Resize). ----
   function resetStretch() {
     grid.querySelectorAll(".insta-image.is-stretched").forEach((el) => {
       el.classList.remove("is-stretched");
@@ -498,12 +719,12 @@ function initInstagramModule(data) {
       if (diff <= 0) return;
 
       const shorterCol = h0 < h1 ? cols[0] : cols[1];
-      const lastImg = shorterCol.lastElementChild;
-      if (!lastImg || !lastImg.classList.contains("insta-image")) return;
+      const lastEl = shorterCol.lastElementChild;
+      if (!lastEl || !lastEl.classList.contains("insta-image")) return;
 
-      const currentHeight = lastImg.getBoundingClientRect().height;
-      lastImg.style.height = `${currentHeight + diff}px`;
-      lastImg.classList.add("is-stretched");
+      const currentHeight = lastEl.getBoundingClientRect().height;
+      lastEl.style.height = `${currentHeight + diff}px`;
+      lastEl.classList.add("is-stretched");
     });
   }
 
@@ -535,19 +756,16 @@ function initInstagramModule(data) {
     });
   }
 
-  const imgEls = Array.from(grid.querySelectorAll("img"));
-  Promise.all(
-    imgEls.map(
-      (img) =>
-        new Promise((resolve) => {
-          if (img.complete) resolve();
-          else {
-            img.addEventListener("load", resolve, { once: true });
-            img.addEventListener("error", resolve, { once: true });
-          }
-        })
-    )
-  ).then(() => scheduleRefresh());
+  function bootstrapGrid(items) {
+    postItems = items;
+    renderGrid();
+
+    const mediaEls = Array.from(grid.querySelectorAll("img, video"));
+    Promise.all(mediaEls.map(waitForMedia)).then(() => scheduleRefresh());
+
+    const layoutObserver = new ResizeObserver(() => scheduleRefresh());
+    layoutObserver.observe(moduleEl);
+  }
 
   scrollEl.addEventListener("scroll", () => {
     if (!setHeight) return;
@@ -558,19 +776,18 @@ function initInstagramModule(data) {
     }
   });
 
-  // Modul-Größe ändert sich durch Resize (siehe unten) oder z.B. eine
-  // Browser-Fenster-Änderung -> Spalten-Umbruch und Loop-Messung müssen
-  // neu berechnet werden.
-  const layoutObserver = new ResizeObserver(() => scheduleRefresh());
-  layoutObserver.observe(moduleEl);
-
   // ---- Drag: nur über die Top-Bar, bewegt das Modul per left/top (px).
-  // preventDefault() im pointerdown verhindert zusätzlich, dass der
-  // Browser beim Ziehen über den Text eine Auswahl startet. ----
+  // Auf Mobile (<=768px) deaktiviert -- siehe mobileQuery-Check am Anfang
+  // jedes Handlers, zusätzlich zur pointer-events:none-Regel in der CSS
+  // für die Resize-Zonen. preventDefault() im pointerdown verhindert
+  // zusätzlich, dass der Browser beim Ziehen über den Text eine Auswahl
+  // startet. ----
   let dragState = null;
 
   dragHandle.addEventListener("pointerdown", (e) => {
+    if (mobileQuery.matches) return;
     e.preventDefault();
+    hasInteracted = true;
     dragState = {
       startX: e.clientX,
       startY: e.clientY,
@@ -599,10 +816,11 @@ function initInstagramModule(data) {
   dragHandle.addEventListener("pointercancel", endDrag);
 
   // ---- Resize: 4 Kanten + 4 Ecken (siehe .resize-edge/.resize-corner in
-  // der CSS). Die gegenüberliegende Seite bleibt IMMER exakt an ihrer
-  // Bildschirmposition stehen -- auch bei MIN_/MAX_-Clamping, weil
-  // left/top aus der bereits geclampten Breite/Höhe zurückgerechnet
-  // werden (nicht aus dem rohen Maus-Delta). ----
+  // der CSS). Auf Mobile ebenfalls deaktiviert (mobileQuery-Check). Die
+  // gegenüberliegende Seite bleibt IMMER exakt an ihrer Bildschirm-
+  // position stehen -- auch bei MIN_/MAX_-Clamping, weil left/top aus der
+  // bereits geclampten Breite/Höhe zurückgerechnet werden (nicht aus dem
+  // rohen Maus-Delta). ----
   function clamp(value, min, max) {
     return Math.min(max, Math.max(min, value));
   }
@@ -614,7 +832,9 @@ function initInstagramModule(data) {
     let resizeState = null;
 
     handle.addEventListener("pointerdown", (e) => {
+      if (mobileQuery.matches) return;
       e.preventDefault();
+      hasInteracted = true;
       resizeState = {
         startX: e.clientX,
         startY: e.clientY,
@@ -668,6 +888,8 @@ function initInstagramModule(data) {
     handle.addEventListener("pointerup", endResize);
     handle.addEventListener("pointercancel", endResize);
   });
+
+  bootstrapGrid(postItems);
 }
 
 document.addEventListener("eatme:content-ready", (e) => {
