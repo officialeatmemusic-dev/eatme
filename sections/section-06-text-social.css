@@ -1,0 +1,83 @@
+/* ==========================================================================
+   section-06-text-social — Ankündigungstext (2 Absätze) + Instagram-Modul,
+   zwei gleich breite Spalten (flex: 1 0 0), beide zentriert.
+   Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
+   Figma: node 1:3376.
+
+   Textstil identisch zu section-02/section-04 (.text-copy-l wird hier
+   nicht per Klasse genutzt, sondern wie bei section-04 direkt über
+   Michroma 14px / line-height 1.8 / letter-spacing 0 -- kein neuer
+   Font-Wert nötig, max-width: 320px wie bei den anderen Text-Sektionen.
+   ========================================================================== */
+
+#section-06-text-social {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  padding: 100px 32px;
+}
+
+/* ---- Linke Spalte: Textblock, in der Spalte zentriert (Höhe + Breite) ---- */
+#section-06-text-social .col-text {
+  display: flex;
+  flex: 1 0 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+#section-06-text-social .text-06-copy {
+  max-width: 320px;
+  width: 100%;
+}
+
+#section-06-text-social .text-06-copy p {
+  margin-bottom: 16px;
+}
+
+#section-06-text-social .text-06-copy p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- Rechte Spalte: Instagram-Modul, ebenfalls zentriert ----
+   Die Spalte selbst gibt keine feste Höhe vor (align-items:center sorgt
+   nur für vertikale Zentrierung relativ zur Zeilenhöhe, die z.B. vom
+   Textblock links vorgegeben werden kann) -- die eigentliche "Hug"-Höhe
+   (520px, exakt die initiale Modulhöhe) sitzt auf .instagram-module-stage
+   selbst, siehe components/instagram-module.css. Dadurch wächst diese
+   Spalte NIE mit, egal wie stark das Modul per Resize-Handles vergrößert
+   wird (das Modul ist position:absolute und ragt dann einfach visuell
+   über die Stage hinaus, siehe eigener Kommentar dort). */
+#section-06-text-social .col-instagram {
+  display: flex;
+  flex: 1 0 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* ---- Mobile (siehe tokens-notes.md: 768px ist der verbindliche,
+   fest verdrahtete Breakpoint für alle Sektionen) ----
+   Spalten stapeln sich, jeweils volle Breite. flex:1 0 0 wird im
+   Mobile-Query explizit auf flex:none zurückgesetzt (siehe
+   ARCHITECTURE.md "Gelernte Lektionen" -- die Flex-Shorthand würde sonst
+   mit width:100% kollidieren, wenn nur flex-direction umschaltet). Das
+   Instagram-Modul wird zusätzlich JS-seitig auf Default-Größe/-Position
+   zurückgesetzt und Drag/Resize deaktiviert, siehe script.js
+   (initInstagramModule -> applyMobileReset()) und die zugehörige
+   pointer-events-Regel in components/instagram-module.css. */
+@media (max-width: 768px) {
+  #section-06-text-social {
+    flex-direction: column;
+    gap: 100px;
+    padding: 100px 16px;
+  }
+
+  #section-06-text-social .col-text,
+  #section-06-text-social .col-instagram {
+    flex: none;
+    width: 100%;
+  }
+}
