@@ -4,13 +4,34 @@
    siehe Kommentar bei .insta-header unten). Referenziert nur Werte aus
    tokens.css, siehe ARCHITECTURE.md.
 
-   Referenz-Maße: 340 x 520 (Desktop-Referenz 1280px) -- das ist hier nur
-   der START-Zustand. Das Modul ist per 8 unsichtbaren Resize-Zonen (4
-   Kanten + 4 Ecken) frei in der Größe veränderbar:
-     min. 260 x 360, max. 800 x 760.
-   Position ist absolut (left/top in px, von script.js verwaltet), damit
-   beim Ziehen einer Kante/Ecke die GEGENÜBERLIEGENDE Seite exakt an ihrer
-   Bildschirmposition stehen bleibt (kein "zentriertes" Wachsen).
+   Referenz-Maße: 340 x 520 (Desktop-Referenz 1280px) -- das ist der
+   DEFAULT-Zustand, siehe DEFAULT_STATE in script.js. Das Modul ist per 8
+   unsichtbaren Resize-Zonen (4 Kanten + 4 Ecken) frei in der Größe
+   veränderbar: min. 260 x 360, max. 800 x 760. Position ist absolut
+   (left/top in px, von script.js verwaltet), damit beim Ziehen einer
+   Kante/Ecke die GEGENÜBERLIEGENDE Seite exakt an ihrer Bildschirm-
+   position stehen bleibt (kein "zentriertes" Wachsen).
+
+   Update (siehe Chat-Verlauf section-06):
+   - .instagram-module-stage hat jetzt eine FESTE height:520px ("Hug" --
+     entspricht exakt der initialen/Default-Modulhöhe aus script.js).
+     Dadurch wächst die umgebende Spalte in section-06-text-social.css NIE
+     mit, egal wie stark man das Modul reinzieht -- es ragt dann einfach
+     visuell über die Stage hinaus (Modul ist position:absolute).
+   - .instagram-module bekommt einen BASIS-z-index (2), nicht mehr nur
+     während Drag/Resize -- damit es immer über benachbarten Sektionen
+     liegt, falls es durch Resize dort hineinragt. Bleibt unter #site-nav
+     (z-index: 10, siehe styles.css).
+   - backdrop-filter: blur(16px) für einen Glass-Effekt -- reiner
+     Effekt-Wert (wie die Box-Shadows unten), kein Farb-Token, daher hier
+     direkt gesetzt statt in tokens.css. -webkit-Präfix für Safari/iOS.
+   - Bilder/Videos im Content-Bereich kommen jetzt LIVE aus
+     assets/images/insta/ (GitHub Contents API, siehe script.js) statt aus
+     content.json -- flexible Anzahl, Til muss nur Dateien im Ordner
+     hochladen/löschen. Videos: muted/loop/ohne Controls (siehe script.js).
+   - NEU: jedes Bild/Video blendet einzeln ein, sobald es geladen ist
+     (opacity 0 -> 1, siehe .insta-media/.is-loaded unten) statt instant
+     zu erscheinen.
 
    Aufbau:
    - insta-header: insta-top-bar (Drag-Griff fürs ganze Modul, dekorativ:
@@ -18,53 +39,49 @@
      Follow-Button, komplett klickbar -> Instagram-Profil aus
      content.json, OHNE Hover-Effekt)
    - insta-content-scroll (scrollbar, ebenfalls komplett klickbar ->
-     Instagram-Profil): Bilder behalten ihr Original-Seitenverhältnis,
-     endlos wirkender Loop (3 Kopien, script.js setzt die Scroll-Position
-     unsichtbar zurück, sobald ein Rand erreicht ist). Ab einer Modul-
-     Breite von ca. 460px brechen die Bilder in zwei unabhängige Spalten
-     um (echtes Masonry statt starrer Grid-Zeilen) -- siehe Kommentar bei
-     .insta-set/.insta-col weiter unten für die genaue Begründung.
-   - 8 unsichtbare Resize-Zonen (.resize-edge / .resize-corner)
+     Instagram-Profil): Bilder/Videos behalten ihr Original-
+     Seitenverhältnis, endlos wirkender Loop (3 Kopien, script.js setzt
+     die Scroll-Position unsichtbar zurück, sobald ein Rand erreicht ist).
+     Ab einer Modul-Breite von ca. 460px brechen die Elemente in zwei
+     unabhängige Spalten um (echtes Masonry statt starrer Grid-Zeilen).
+   - 8 unsichtbare Resize-Zonen (.resize-edge / .resize-corner) -- ab
+     768px per pointer-events:none stillgelegt, siehe unten.
    ========================================================================== */
 
 /* ---- Stage/Anker fürs Modul ----
    .instagram-module braucht einen position:relative-Elternrahmen, damit
    sein position:absolute (left/top in px, siehe script.js) relativ dazu
-   greift -- sonst würde es sich am Body orientieren. min-height verhindert,
-   dass der (sonst leere) Rahmen kollabiert, solange section-06 noch keine
-   eigene Layout-Höhe vorgibt.
-   PLATZHALTER: Breite/Höhe/Ausrichtung dieses Rahmens innerhalb von
-   section-06-text-social (z.B. neben dem Ankündigungstext) wird im
-   section-06-Chat final festgelegt -- hier nur das technische Minimum,
-   damit die Komponente eigenständig funktioniert. */
+   greift -- sonst würde es sich am Body orientieren. */
 .instagram-module-stage {
   position: relative;
   width: 100%;
-  min-height: 560px;
+  height: 520px; /* Hug: exakt die Default-Modulhöhe, siehe script.js */
 }
 
 .instagram-module {
   position: absolute; /* left/top/width/height werden von script.js
                           gesetzt, siehe initInstagramModule() */
   background: var(--color-blue-05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--color-grey-50);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   overflow: hidden;
+  z-index: 2; /* immer über anderen Sektionen, aber unter #site-nav (10) */
 }
 
 .instagram-module.is-dragging,
 .instagram-module.is-resizing {
-  z-index: 20; /* waehrend Drag/Resize ueber andere Inhalte legen */
+  z-index: 3; /* waehrend Drag/Resize minimal darüber, bleibt unter der Nav */
 }
 
 /* ---- Header ----
    BEWUSST KEIN eigener Hintergrund: im aktuellen Figma-Node 1:3583 ist
-   kein bg-white (mehr) gesetzt -- das Modul-Grau (--color-blue-05) scheint
-   absichtlich auch hinter dem Header durch. Diesen Kommentar bitte vor
-   dem erneuten Hinzufügen eines Hintergrunds beachten. */
+   kein bg-white (mehr) gesetzt -- das Modul-Grau (--color-blue-05) bzw.
+   jetzt der Blur scheinen absichtlich auch hinter dem Header durch. */
 .insta-header {
   display: flex;
   flex-direction: column;
@@ -79,7 +96,9 @@
 
 /* Drag-Griff fürs gesamte Modul (siehe initInstagramModule() in script.js).
    user-select:none + touch-action:none verhindern, dass der Browser beim
-   Ziehen über den Text eine Textauswahl startet (Maus UND Touch). */
+   Ziehen über den Text eine Textauswahl startet (Maus UND Touch). Ab
+   768px nur noch cursor:default (siehe Mobile-Regel unten) -- die
+   eigentliche Sperre passiert in script.js. */
 .insta-top-bar {
   display: flex;
   align-items: center;
@@ -107,10 +126,7 @@
 }
 
 /* Dekorative Punkte -- rein visuell (pointer-events:none), Teil der
-   drag-baren Top-Bar-Fläche, nicht einzeln klickbar. Der Inset-Shadow ist
-   ein reiner Effekt-Wert direkt aus dem Figma-Node (Glas-/Glossy-Look),
-   kein neuer Farb-Token -- siehe gleiche Begründung beim eatme-button
-   unten. */
+   drag-baren Top-Bar-Fläche, nicht einzeln klickbar. */
 .insta-fake-button {
   position: relative;
   width: 16px;
@@ -181,9 +197,7 @@
 }
 
 /* eatme-button (Figma-Komponente 1:3459), hier als Follow-Button.
-   Referenziert --gradient-buttons-footer wie in tokens.css dokumentiert.
-   Der innere Shadow ist ein reiner Effekt-Wert direkt aus dem Figma-Node
-   (Glas-/Glossy-Look), kein neuer Farb-Token. */
+   Referenziert --gradient-buttons-footer wie in tokens.css dokumentiert. */
 .eatme-button {
   position: relative;
   display: flex;
@@ -204,9 +218,7 @@
 
 /* ---- Content-Bereich: scrollbar, komplett klickbar -> Instagram-Profil
    (gleiches Link-Ziel wie der Header). Eigene Scrollbar ausgeblendet,
-   damit der Endlos-Loop nicht sichtbar "ruckelt". Kein eigener
-   Hintergrund (Absicht, 1:1 aus Figma) -- Modul-Grau scheint in den
-   4px-Gaps zwischen den Bildern durch. */
+   damit der Endlos-Loop nicht sichtbar "ruckelt". */
 .insta-content-scroll {
   flex: 1 0 0;
   min-height: 0;
@@ -221,27 +233,18 @@
   display: none;
 }
 
-/* .insta-grid hält die 3 "Sets" (Kopien der 8 Bilder) für den Endlos-Loop
-   übereinander gestapelt, einheitlicher 4px-Gap zwischen allen Ebenen --
-   auch am Set-Übergang, siehe .insta-col-Kommentar unten. */
+/* .insta-grid hält die 3 "Sets" (Kopien der geladenen Bilder/Videos) für
+   den Endlos-Loop übereinander gestapelt, einheitlicher 4px-Gap. */
 .insta-grid {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-/* Ein Set = eine der 3 Kopien der 8 Bilder.
-   Schmal (< WIDE_BREAKPOINT in script.js): normale vertikale Liste.
-   Breit (.is-row): zwei UNABHÄNGIGE Spalten nebeneinander -- der Grund,
-   warum das kein CSS-Grid ist: Grid zwingt beide Spalten in dieselbe
-   Zeilenhöhe (das kleinere Bild würde gestreckt/Lücken entstehen). Mit
-   zwei echten Flex-Spalten schließt das nächste Bild in seiner Spalte
-   direkt an, unabhängig von der Nachbarspalte. Damit beide Spalten eines
-   Sets trotzdem bündig enden (sonst wäre der Übergang zum nächsten Set
-   uneinheitlich hoch), wird NUR das letzte Bild der kürzeren Spalte per
-   JS (equalizeColumns() in script.js) um die fehlende Differenz gestreckt
-   (siehe .is-stretched unten) -- kein zusätzliches Spacer-Element, das
-   würde den Gap am Set-Übergang auf ~8px statt 4px aufblähen. */
+/* Ein Set = eine der 3 Kopien. Schmal (< WIDE_BREAKPOINT in script.js):
+   normale vertikale Liste. Breit (.is-row): zwei UNABHÄNGIGE Spalten
+   nebeneinander (kein CSS-Grid, siehe Begründung: Grid würde beide
+   Spalten in dieselbe Zeilenhöhe zwingen). */
 .insta-set {
   display: flex;
   flex-direction: column;
@@ -262,33 +265,49 @@
   min-width: 0;
 }
 
-/* Bilder behalten ihr Original-Format (kein erzwungener Square-Crop wie im
-   Figma-Mock) -- Höhe ergibt sich aus dem intrinsischen Seitenverhältnis
-   der jeweiligen Datei. */
+/* Bilder/Videos behalten ihr Original-Format (kein erzwungener
+   Square-Crop) -- Höhe ergibt sich aus dem intrinsischen
+   Seitenverhältnis der jeweiligen Datei. */
 .insta-image {
   position: relative;
   width: 100%;
   border-radius: 2px;
   overflow: hidden;
-  background: var(--color-white);
+  background: var(--color-white); /* scheint als "Ladeplatzhalter" durch,
+                                       solange .insta-media noch opacity:0 ist */
 }
 
-.insta-image img {
+/* NEU: jedes Bild/Video ist zunächst unsichtbar (opacity:0) und blendet
+   individuell ein, sobald es geladen ist (Klasse is-loaded wird von
+   script.js gesetzt, siehe waitForMedia()/makeMediaEl()) -- kein
+   Batch-Reveal, jedes Element für sich, kein Warten auf die anderen. */
+.insta-media {
   width: 100%;
   height: auto;
   display: block;
   -webkit-user-drag: none;
   user-select: none;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
 
-/* Einzige Ausnahme von "Original-Format": das jeweils letzte Bild einer
-   Spalte kann per JS auf eine explizite Höhe gestreckt werden, damit beide
-   Spalten eines Sets bündig enden (siehe .insta-set-Kommentar oben). NUR
-   dieses eine Bild bekommt object-fit:cover (leichter Crop statt
-   Letterboxing), alle anderen Bilder bleiben unangetastet. */
-.insta-image.is-stretched img {
+.insta-media.is-loaded {
+  opacity: 1;
+}
+
+/* Einzige Ausnahme von "Original-Format": das jeweils letzte Element
+   einer Spalte kann per JS auf eine explizite Höhe gestreckt werden,
+   damit beide Spalten eines Sets bündig enden. Gilt gleichermaßen für
+   Bilder und Videos. */
+.insta-image.is-stretched .insta-media {
   height: 100%;
   object-fit: cover;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .insta-media {
+    transition: none;
+  }
 }
 
 /* ---- Resize-Zonen: 4 Kanten + 4 Ecken, komplett unsichtbar (kein Icon --
@@ -310,3 +329,37 @@
 .resize-corner.ne { top: -4px; right: -4px; width: 14px; height: 14px; cursor: nesw-resize; z-index: 6; }
 .resize-corner.sw { bottom: -4px; left: -4px; width: 14px; height: 14px; cursor: nesw-resize; z-index: 6; }
 .resize-corner.se { bottom: -4px; right: -4px; width: 14px; height: 14px; cursor: nwse-resize; z-index: 6; }
+
+/* ---- Empty-State (siehe script.js: wird eingefügt, falls der
+   Insta-Ordner leer ist oder die GitHub-API nicht erreichbar war) ---- */
+.insta-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  text-align: center;
+  font-family: var(--font-copy-xs-family);
+  font-size: var(--font-copy-xs-size);
+  line-height: 1.6;
+  letter-spacing: var(--font-copy-xs-letter-spacing);
+  color: var(--color-black);
+}
+
+/* ---- Mobile (siehe tokens-notes.md: 768px ist der verbindliche,
+   fest verdrahtete Breakpoint für alle Sektionen) ----
+   Modul wird JS-seitig auf Default-Größe/-Position zurückgesetzt (siehe
+   script.js applyMobileReset()); hier zusätzlich die Interaktion
+   stillgelegt, damit auf Touch-Geräten kein versehentliches Ziehen/
+   Resizen an den (unsichtbaren) Zonen passiert. */
+@media (max-width: 768px) {
+  .instagram-module .resize-edge,
+  .instagram-module .resize-corner {
+    pointer-events: none;
+  }
+
+  .insta-top-bar {
+    cursor: default;
+  }
+}
