@@ -27,6 +27,23 @@ img {
   user-select: none;
 }
 
+/* ---- Globale Text-Auswahl-Convention (::selection) ----
+   Custom Markier-Farbe statt Browser-Standard-Blau, referenziert
+   ausschließlich Werte aus tokens.css (keine neuen Hex-Codes, siehe
+   tokens-notes.md-Konvention): Hintergrund = --color-blue-05,
+   Vordergrund/Textfarbe = --color-grey-50. ::-moz-selection zusätzlich
+   für ältere Firefox-Versionen, die das unpräfixte ::selection noch
+   nicht unterstützen (moderne Firefox-Versionen brauchen es nicht mehr,
+   schadet aber nicht). */
+::selection {
+  background-color: var(--color-blue-05);
+  color: var(--color-grey-50);
+}
+::-moz-selection {
+  background-color: var(--color-blue-05);
+  color: var(--color-grey-50);
+}
+
 html {
   scroll-behavior: smooth;
 }
