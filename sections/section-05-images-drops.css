@@ -2,7 +2,9 @@
    section-05-images-drops — Bandfoto links (oben-links) + Songtext-Modul
    rechts (zentriert), darüber 19 frei positionierte Wassertropfen
    Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
-   Figma: node 1:3415, Referenz-Frame 1280 x 688.
+   Figma: node 1:3415, Referenz-Frame aktuell 1280 x 657 (Update: war
+   vorher 1280 x 688, hat sich mit dem Bildwechsel auf eatme-image-04
+   verschoben — Tropfen-Positionen unten sind bereits neu berechnet).
 
    Struktur identisch zu section-03-images (Flexbox, zwei Spalten), das
    Songtext-Modul selbst kommt unverändert aus components/eatme-lyrics.css
@@ -24,8 +26,10 @@
    Gleiches Muster wie section-03 .col-image-left/.image-container:
    image-container ist h-full + items:flex-start -> Bild sitzt oben,
    unabhängig davon wie hoch die rechte Spalte durch das Lyrics-Modul
-   wird. Zusätzliches padding-bottom: 200px kommt 1:1 aus Figma (Node
-   1:3416) -- bewusster Kompositions-Abstand nach unten, kein Fehler. */
+   wird. padding-bottom: 200px kommt 1:1 aus Figma (Node 1:3416) -- der
+   Wert bleibt auch mit dem neuen Querformat-Bild korrekt: Bild (257px
+   Design-Höhe) + 200px Padding = exakt die 457px Spaltenhöhe aus Figma,
+   kein Nachjustieren nötig. */
 #section-05-images-drops .col-image-left {
   display: flex;
   flex: 1 0 0;
@@ -44,10 +48,18 @@
   position: relative;
 }
 
-#section-05-images-drops .eatme-image-03 {
+/* eatme-image-04 (Querformat, ersetzt das bisherige eatme-image-03,
+   Hochformat 216x288). Design-Maß aus Figma: 387x257 -- Seitenverhältnis
+   774/514 entspricht exakt der eatme-image-04.webp-Datei (774x514px).
+   width:100% + max-width + aspect-ratio statt fixer px, aus demselben
+   Grund wie bei den blauen Vögeln/eatme-image-02: die Spalte wird
+   zwischen 1280px und 768px irgendwann schmaler als 387px, ein reiner
+   Fixwert würde dann überlaufen (siehe tokens-notes.md Fluid-Regel). */
+#section-05-images-drops .eatme-image-04 {
   display: block;
-  width: 216px;
-  height: 288px;
+  width: 100%;
+  max-width: 387px;
+  aspect-ratio: 774 / 514;
   object-fit: cover;
   will-change: transform;
 }
@@ -66,16 +78,21 @@
 /* ==========================================================================
    Tropfen-Layer
    Absolute Kinder direkt der Sektion (nicht im Autolayout, 1:1 aus Figma
-   übernommen). Positionen als % relativ zum 1280x688-Referenzrahmen (Node
-   1:3415) -- Größe bewusst NICHT fluid (bleibt fix 24px/40px). 4 Formen
-   (assets/visuals/drops/01–04.png) x 2 Größen = 8 Varianten, insgesamt
-   19 Desktop-Instanzen.
+   übernommen). Positionen als % relativ zum aktuellen 1280x657-
+   Referenzrahmen (Node 1:3415) -- Größe bewusst NICHT fluid (bleibt fix
+   24px/40px). 4 Formen (assets/visuals/drops/01–04.png) x 2 Größen =
+   8 Varianten, insgesamt 19 Desktop-Instanzen.
+
+   Update (eatme-image-04-Wechsel): Referenzrahmen in Figma ist jetzt
+   1280x657 (vorher 1280x688) -- alle top%-Werte in index.html wurden
+   entsprechend neu berechnet. Zusätzlich ist ein 40px-Tropfen laut Figma
+   deutlich weiter nach links gerückt (5.313% statt vorher 17.226%).
 
    .tropfen--mobile ist ein zweiter, eigener Satz (9 Stück, weniger dicht)
    nur für den gestapelten Mobile-Zustand -- siehe Media-Query unten.
    In px statt % verankert, weil Bild + Bild-Padding + Gap auf Mobile eine
-   feste Höhe haben (Bild bleibt fix 216x288), unabhängig von der
-   Songtext-Länge weiter unten in der Spalte.
+   feste Höhe haben, unabhängig von der Songtext-Länge weiter unten in der
+   Spalte. Von diesem Update nicht betroffen.
 
    data-size steuert den Parallax-Faktor in script.js: größere Tropfen
    (40px) bewegen sich stärker (wirken näher), kleinere (24px) dezenter
