@@ -13,6 +13,23 @@ async function loadContent() {
   return response.json();
 }
 
+// ==========================================================================
+// Globale Bild-Convention: kein Drag-and-Drop für <img>, browserübergreifend
+// ==========================================================================
+// -webkit-user-drag (styles.css) greift nur in WebKit-Browsern (Safari,
+// Chrome) -- Firefox ignoriert diese CSS-Property komplett und steuert das
+// Draggen von <img> stattdessen über das native HTML-Attribut "draggable"
+// (Standard bei <img> = true). Deshalb hier zusätzlich per JS auf false
+// gesetzt, einmalig beim Laden -- deckt auch alle Bilder ab, die bereits im
+// initialen Markup stehen und erst später ihren src aus content.json
+// bekommen (Nav-Logo, Bandfotos etc.), da nur das src-Attribut ausgetauscht
+// wird, nicht das <img>-Element selbst.
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("img").forEach((img) => {
+    img.setAttribute("draggable", "false");
+  });
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     const content = await loadContent();
