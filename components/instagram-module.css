@@ -1,0 +1,312 @@
+/* ==========================================================================
+   instagram-module — Insta-Post-Nachbildung
+   Figma: node 1:3600 (Modul) / 1:3583 (Header, KEIN eigener Hintergrund --
+   siehe Kommentar bei .insta-header unten). Referenziert nur Werte aus
+   tokens.css, siehe ARCHITECTURE.md.
+
+   Referenz-Maße: 340 x 520 (Desktop-Referenz 1280px) -- das ist hier nur
+   der START-Zustand. Das Modul ist per 8 unsichtbaren Resize-Zonen (4
+   Kanten + 4 Ecken) frei in der Größe veränderbar:
+     min. 260 x 360, max. 800 x 760.
+   Position ist absolut (left/top in px, von script.js verwaltet), damit
+   beim Ziehen einer Kante/Ecke die GEGENÜBERLIEGENDE Seite exakt an ihrer
+   Bildschirmposition stehen bleibt (kein "zentriertes" Wachsen).
+
+   Aufbau:
+   - insta-header: insta-top-bar (Drag-Griff fürs ganze Modul, dekorativ:
+     "Instagram" + 3 Punkte) + insta-header-link (Avatar + Handle +
+     Follow-Button, komplett klickbar -> Instagram-Profil aus
+     content.json, OHNE Hover-Effekt)
+   - insta-content-scroll (scrollbar, ebenfalls komplett klickbar ->
+     Instagram-Profil): Bilder behalten ihr Original-Seitenverhältnis,
+     endlos wirkender Loop (3 Kopien, script.js setzt die Scroll-Position
+     unsichtbar zurück, sobald ein Rand erreicht ist). Ab einer Modul-
+     Breite von ca. 460px brechen die Bilder in zwei unabhängige Spalten
+     um (echtes Masonry statt starrer Grid-Zeilen) -- siehe Kommentar bei
+     .insta-set/.insta-col weiter unten für die genaue Begründung.
+   - 8 unsichtbare Resize-Zonen (.resize-edge / .resize-corner)
+   ========================================================================== */
+
+/* ---- Stage/Anker fürs Modul ----
+   .instagram-module braucht einen position:relative-Elternrahmen, damit
+   sein position:absolute (left/top in px, siehe script.js) relativ dazu
+   greift -- sonst würde es sich am Body orientieren. min-height verhindert,
+   dass der (sonst leere) Rahmen kollabiert, solange section-06 noch keine
+   eigene Layout-Höhe vorgibt.
+   PLATZHALTER: Breite/Höhe/Ausrichtung dieses Rahmens innerhalb von
+   section-06-text-social (z.B. neben dem Ankündigungstext) wird im
+   section-06-Chat final festgelegt -- hier nur das technische Minimum,
+   damit die Komponente eigenständig funktioniert. */
+.instagram-module-stage {
+  position: relative;
+  width: 100%;
+  min-height: 560px;
+}
+
+.instagram-module {
+  position: absolute; /* left/top/width/height werden von script.js
+                          gesetzt, siehe initInstagramModule() */
+  background: var(--color-blue-05);
+  border: 1px solid var(--color-grey-50);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
+}
+
+.instagram-module.is-dragging,
+.instagram-module.is-resizing {
+  z-index: 20; /* waehrend Drag/Resize ueber andere Inhalte legen */
+}
+
+/* ---- Header ----
+   BEWUSST KEIN eigener Hintergrund: im aktuellen Figma-Node 1:3583 ist
+   kein bg-white (mehr) gesetzt -- das Modul-Grau (--color-blue-05) scheint
+   absichtlich auch hinter dem Header durch. Diesen Kommentar bitte vor
+   dem erneuten Hinzufügen eines Hintergrunds beachten. */
+.insta-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  padding: 4px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* Drag-Griff fürs gesamte Modul (siehe initInstagramModule() in script.js).
+   user-select:none + touch-action:none verhindern, dass der Browser beim
+   Ziehen über den Text eine Textauswahl startet (Maus UND Touch). */
+.insta-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.insta-top-bar:active {
+  cursor: grabbing;
+}
+
+.insta-top-bar-label {
+  flex: 1 0 0;
+  min-width: 0;
+  padding: 0 4px;
+  font-family: var(--font-copy-xs-family);
+  font-size: var(--font-copy-xs-size);
+  line-height: var(--font-copy-xs-line-height);
+  letter-spacing: var(--font-copy-xs-letter-spacing);
+}
+
+/* Dekorative Punkte -- rein visuell (pointer-events:none), Teil der
+   drag-baren Top-Bar-Fläche, nicht einzeln klickbar. Der Inset-Shadow ist
+   ein reiner Effekt-Wert direkt aus dem Figma-Node (Glas-/Glossy-Look),
+   kein neuer Farb-Token -- siehe gleiche Begründung beim eatme-button
+   unten. */
+.insta-fake-button {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  border-radius: 24px;
+  background: var(--color-blue-05);
+  box-shadow: inset 2px -3px 3px 0 var(--color-white), inset 4px 2px 7px 0 rgba(0, 43, 72, 0.31);
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+/* Komplett klickbar -> Instagram-Profil (content.json follow_url).
+   Bewusst OHNE Hover-Effekt (weder globale Link-Convention noch Ersatz). */
+.insta-header-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 0 4px;
+  margin: 0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.insta-avatar {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.insta-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.insta-handle {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+.insta-handle p {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.insta-handle-name {
+  font-family: var(--font-copy-s-family);
+  font-size: var(--font-copy-s-size);
+  line-height: var(--font-copy-s-line-height);
+  letter-spacing: var(--font-copy-s-letter-spacing);
+}
+
+.insta-handle-caption {
+  font-family: var(--font-copy-xs-family);
+  font-size: var(--font-copy-xs-size);
+  line-height: var(--font-copy-xs-line-height);
+  letter-spacing: var(--font-copy-xs-letter-spacing);
+}
+
+/* eatme-button (Figma-Komponente 1:3459), hier als Follow-Button.
+   Referenziert --gradient-buttons-footer wie in tokens.css dokumentiert.
+   Der innere Shadow ist ein reiner Effekt-Wert direkt aus dem Figma-Node
+   (Glas-/Glossy-Look), kein neuer Farb-Token. */
+.eatme-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 16px 2px;
+  border-radius: 999px;
+  background: var(--gradient-buttons-footer);
+  box-shadow: inset 2px -3px 3px 0 var(--color-white), inset 4px 2px 7px 0 rgba(0, 43, 72, 0.31);
+  flex-shrink: 0;
+  font-family: var(--font-copy-s-family);
+  font-size: var(--font-copy-s-size);
+  line-height: var(--font-copy-s-line-height);
+  letter-spacing: var(--font-copy-s-letter-spacing);
+  white-space: nowrap;
+}
+
+/* ---- Content-Bereich: scrollbar, komplett klickbar -> Instagram-Profil
+   (gleiches Link-Ziel wie der Header). Eigene Scrollbar ausgeblendet,
+   damit der Endlos-Loop nicht sichtbar "ruckelt". Kein eigener
+   Hintergrund (Absicht, 1:1 aus Figma) -- Modul-Grau scheint in den
+   4px-Gaps zwischen den Bildern durch. */
+.insta-content-scroll {
+  flex: 1 0 0;
+  min-height: 0;
+  width: 100%;
+  padding: 0 4px 4px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  display: block;
+  scrollbar-width: none;
+}
+.insta-content-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* .insta-grid hält die 3 "Sets" (Kopien der 8 Bilder) für den Endlos-Loop
+   übereinander gestapelt, einheitlicher 4px-Gap zwischen allen Ebenen --
+   auch am Set-Übergang, siehe .insta-col-Kommentar unten. */
+.insta-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Ein Set = eine der 3 Kopien der 8 Bilder.
+   Schmal (< WIDE_BREAKPOINT in script.js): normale vertikale Liste.
+   Breit (.is-row): zwei UNABHÄNGIGE Spalten nebeneinander -- der Grund,
+   warum das kein CSS-Grid ist: Grid zwingt beide Spalten in dieselbe
+   Zeilenhöhe (das kleinere Bild würde gestreckt/Lücken entstehen). Mit
+   zwei echten Flex-Spalten schließt das nächste Bild in seiner Spalte
+   direkt an, unabhängig von der Nachbarspalte. Damit beide Spalten eines
+   Sets trotzdem bündig enden (sonst wäre der Übergang zum nächsten Set
+   uneinheitlich hoch), wird NUR das letzte Bild der kürzeren Spalte per
+   JS (equalizeColumns() in script.js) um die fehlende Differenz gestreckt
+   (siehe .is-stretched unten) -- kein zusätzliches Spacer-Element, das
+   würde den Gap am Set-Übergang auf ~8px statt 4px aufblähen. */
+.insta-set {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.insta-set.is-row {
+  flex-direction: row;
+  align-items: flex-start;
+}
+
+.insta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+/* Bilder behalten ihr Original-Format (kein erzwungener Square-Crop wie im
+   Figma-Mock) -- Höhe ergibt sich aus dem intrinsischen Seitenverhältnis
+   der jeweiligen Datei. */
+.insta-image {
+  position: relative;
+  width: 100%;
+  border-radius: 2px;
+  overflow: hidden;
+  background: var(--color-white);
+}
+
+.insta-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+/* Einzige Ausnahme von "Original-Format": das jeweils letzte Bild einer
+   Spalte kann per JS auf eine explizite Höhe gestreckt werden, damit beide
+   Spalten eines Sets bündig enden (siehe .insta-set-Kommentar oben). NUR
+   dieses eine Bild bekommt object-fit:cover (leichter Crop statt
+   Letterboxing), alle anderen Bilder bleiben unangetastet. */
+.insta-image.is-stretched img {
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ---- Resize-Zonen: 4 Kanten + 4 Ecken, komplett unsichtbar (kein Icon --
+   nur der Cursor zeigt an, dass hier gezogen werden kann). Ecken liegen
+   über den Kanten (höherer z-index), damit dort die diagonalen Cursor
+   greifen statt der Kanten-Cursor. ---- */
+.resize-edge,
+.resize-corner {
+  position: absolute;
+  touch-action: none;
+}
+
+.resize-edge.n { top: -4px; left: 8px; right: 8px; height: 8px; cursor: ns-resize; z-index: 5; }
+.resize-edge.s { bottom: -4px; left: 8px; right: 8px; height: 8px; cursor: ns-resize; z-index: 5; }
+.resize-edge.e { right: -4px; top: 8px; bottom: 8px; width: 8px; cursor: ew-resize; z-index: 5; }
+.resize-edge.w { left: -4px; top: 8px; bottom: 8px; width: 8px; cursor: ew-resize; z-index: 5; }
+
+.resize-corner.nw { top: -4px; left: -4px; width: 14px; height: 14px; cursor: nwse-resize; z-index: 6; }
+.resize-corner.ne { top: -4px; right: -4px; width: 14px; height: 14px; cursor: nesw-resize; z-index: 6; }
+.resize-corner.sw { bottom: -4px; left: -4px; width: 14px; height: 14px; cursor: nesw-resize; z-index: 6; }
+.resize-corner.se { bottom: -4px; right: -4px; width: 14px; height: 14px; cursor: nwse-resize; z-index: 6; }
