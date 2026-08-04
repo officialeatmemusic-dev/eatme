@@ -439,6 +439,26 @@ bekommt das automatisch:
 
 ### Details section-06-text-social (für Anschluss-Kontext)
 
+- **Bugfix-Runde (siehe Chat):** `.insta-content-scroll` fehlte ein
+  eigenes `margin: 0` -- dadurch griff die globale `a`-Konvention
+  (`margin: -10px -6px`) durch und hat das Element unter den Header
+  geschoben (wirkte wie "Avatar überlappt den Header") sowie Bilder
+  links über den Modul-Rand hinaus verschoben. Zusätzlich fehlte ein
+  `:hover`-Override für `.insta-header-link`/`.insta-content-scroll`,
+  wodurch der globale Link-Hover (Blur+Opacity) sichtbar wurde, obwohl
+  beide Flächen bewusst ohne Hover-Effekt sein sollten. Beides jetzt
+  gefixt, siehe Kommentare in `components/instagram-module.css` und die
+  neue Lektion oben ("`<a>`-Elemente als Fläche/Block").
+- **Padding-Restrukturierung (Figma-Update, Node 1:3600):** Til hat in
+  Figma die Innenabstände von der äußeren Ebene (`.insta-header`, hatte
+  vorher `padding:4px; gap:4px`) in die interaktiven Kind-Ebenen
+  verschoben: `.insta-top-bar` hat jetzt `padding: 4px 4px 0` (kein
+  padding-bottom), `.insta-header-link` hat `padding: 4px 8px`.
+  `.insta-header` selbst hat gar kein padding/gap mehr. Ziel: kein
+  "toter" Zwischenraum zwischen Drag-Griff (Top-Bar) und Klick-Fläche
+  (Header-Link) -- jeder Pixel Abstand gehört jetzt zu genau einer
+  interaktiven Fläche.
+
 - Zwei-Spalten-Layout via **Flexbox**, beide Spalten `flex: 1 0 0` und
   jeweils `align-items:center; justify-content:center` -- Textblock
   links ist in der Spalte zentriert (Höhe + Breite), Instagram-Modul
@@ -515,6 +535,18 @@ bekommt das automatisch:
 
 ## Gelernte Lektionen (für alle künftigen Sektionen relevant)
 
+- **`<a>`-Elemente, die als Fläche/Block genutzt werden** (nicht als
+  Inline-Text-Link) — z.B. eine ganze Karte oder ein scrollbarer Bereich,
+  der komplett anklickbar ist — **müssen `margin`, `padding`, `display`
+  UND `:hover` explizit selbst setzen**, sonst greift die globale
+  Link-Konvention aus `styles.css` (`padding:10px 6px; margin:-10px -6px;
+  a:hover{opacity:0.6; filter:blur(4px)}`, gedacht für Inline-Text-Links)
+  ungewollt durch. Fehlt auch nur eine dieser vier Eigenschaften am
+  eigenen Klassen-Selektor, wirkt der globale Wert trotzdem (z.B. hat ein
+  vergessenes `margin:0` beim Instagram-Modul das Element per negativem
+  Margin verschoben/verbreitert und unter den Header geschoben — siehe
+  Details section-06 unten). Faustregel: bei jedem "Fläche-als-Link"-Case
+  eine kurze Checkliste durchgehen — margin, padding, display, :hover.
 - **Sektions-CSS gehört zwingend nach `/sections`**, exakt unter dem Pfad,
   den `index.html` per `<link>` referenziert — eine Datei am falschen Ort
   (z.B. im Root) lädt nicht (404), ohne dass es einen Fehler im Code selbst
