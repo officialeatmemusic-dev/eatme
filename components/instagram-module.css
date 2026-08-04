@@ -33,6 +33,20 @@
      (opacity 0 -> 1, siehe .insta-media/.is-loaded unten) statt instant
      zu erscheinen.
 
+   Update 2 (Bugfixes + Figma-Padding-Anpassung, siehe Chat):
+   - BUGFIX: .insta-content-scroll fehlte margin:0 -- dadurch griff die
+     globale a-Konvention (margin:-10px -6px, styles.css) durch und schob
+     das Element unter den Header + ließ Bilder links über den Rand
+     hinausragen. Siehe ausführlicher Kommentar bei .insta-content-scroll.
+   - BUGFIX: .insta-header-link und .insta-content-scroll bekommen jetzt
+     einen expliziten :hover-Override (opacity:1, filter:none), weil die
+     globale a:hover-Konvention (Blur+Opacity) sonst ungewollt durchgriff.
+   - Padding umstrukturiert (Figma-Node 1:3600 aktualisiert): .insta-header
+     hat kein eigenes padding/gap mehr -- die Abstände wandern in die
+     interaktiven Kind-Ebenen selbst (.insta-top-bar: pt/px 4px, kein pb;
+     .insta-header-link: py 4px/px 8px), damit es keine "toten" Zonen
+     zwischen Drag-Griff und Klick-Fläche gibt.
+
    Aufbau:
    - insta-header: insta-top-bar (Drag-Griff fürs ganze Modul, dekorativ:
      "Instagram" + 3 Punkte) + insta-header-link (Avatar + Handle +
@@ -82,13 +96,17 @@
    BEWUSST KEIN eigener Hintergrund: im aktuellen Figma-Node 1:3583 ist
    kein bg-white (mehr) gesetzt -- das Modul-Grau (--color-blue-05) bzw.
    jetzt der Blur scheinen absichtlich auch hinter dem Header durch. */
+/* Update (Figma-Anpassung, siehe Chat): kein padding/gap mehr HIER --
+   Til hat die Abstände in Figma bewusst von der äußeren Ebene in die
+   interaktiven Kind-Ebenen (Top-Bar/Header-Link) verschoben, damit es
+   keine "toten" Zonen zwischen Drag-Griff und Klick-Fläche gibt --
+   jeder Pixel Innenabstand gehört jetzt zu genau einer interaktiven
+   Fläche statt zu einem neutralen Zwischenraum. */
 .insta-header {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
   width: 100%;
-  padding: 4px;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
@@ -98,13 +116,16 @@
    user-select:none + touch-action:none verhindern, dass der Browser beim
    Ziehen über den Text eine Textauswahl startet (Maus UND Touch). Ab
    768px nur noch cursor:default (siehe Mobile-Regel unten) -- die
-   eigentliche Sperre passiert in script.js. */
+   eigentliche Sperre passiert in script.js.
+   Padding oben/links/rechts (kein unten) -- schließt direkt an
+   .insta-header-link an, kein Gap dazwischen (siehe Kommentar oben). */
 .insta-top-bar {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   width: 100%;
+  padding: 4px 4px 0;
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
@@ -139,13 +160,18 @@
 }
 
 /* Komplett klickbar -> Instagram-Profil (content.json follow_url).
-   Bewusst OHNE Hover-Effekt (weder globale Link-Convention noch Ersatz). */
+   Bewusst OHNE Hover-Effekt -- die globale a:hover-Konvention
+   (opacity:0.6 + blur(4px), siehe styles.css) ist für Inline-Text-Links
+   gedacht und wird hier über den :hover-Block unten explizit
+   neutralisiert (siehe Bugfix-Kommentar dort). Padding jetzt py-4/px-8
+   (Figma-Update: Abstand zur Top-Bar entsteht durch DIESES padding-top,
+   nicht mehr durch einen Gap auf .insta-header). */
 .insta-header-link {
   display: inline-flex;
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 0 4px;
+  padding: 4px 8px;
   margin: 0;
   border-radius: 2px;
   overflow: hidden;
@@ -218,11 +244,22 @@
 
 /* ---- Content-Bereich: scrollbar, komplett klickbar -> Instagram-Profil
    (gleiches Link-Ziel wie der Header). Eigene Scrollbar ausgeblendet,
-   damit der Endlos-Loop nicht sichtbar "ruckelt". */
+   damit der Endlos-Loop nicht sichtbar "ruckelt".
+
+   BUGFIX (siehe Chat): margin:0 fehlte hier -- dadurch griff die globale
+   a-Konvention aus styles.css (margin: -10px -6px, für Inline-Text-Links
+   gedacht) ungebremst durch und hat das Element 10px nach oben (unter
+   den Header) und 6px nach links/rechts verschoben/verbreitert -> Ursache
+   für den Header-Überlapp UND das linksseitige Bild-Bleeding. Jedes
+   <a>-Element, das hier als Fläche/Block genutzt wird (nicht als
+   Inline-Text-Link), braucht IMMER ein eigenes margin:0 (oder einen
+   anderen expliziten Wert), sonst wirkt die globale Konvention ungewollt
+   nach. Gleiche Regel gilt für :hover, siehe unten. */
 .insta-content-scroll {
   flex: 1 0 0;
   min-height: 0;
   width: 100%;
+  margin: 0;
   padding: 0 4px 4px;
   overflow-y: scroll;
   overflow-x: hidden;
@@ -231,6 +268,19 @@
 }
 .insta-content-scroll::-webkit-scrollbar {
   display: none;
+}
+
+/* BUGFIX (siehe Chat): die globale a:hover-Konvention (opacity:0.6 +
+   blur(4px), siehe styles.css) hatte hier gegriffen, weil bisher keine
+   spezifischere :hover-Regel existierte, die sie überschreibt -- Klick-
+   Flächen wie diese sollen aber ausdrücklich OHNE den Hover-Effekt
+   bleiben. transition wird mit auf "none" gesetzt, damit auch kein
+   kurzes Auf-/Abblenden beim Hinein-/Heraushovern sichtbar wird. */
+.insta-header-link:hover,
+.insta-content-scroll:hover {
+  opacity: 1;
+  filter: none;
+  transition: none;
 }
 
 /* .insta-grid hält die 3 "Sets" (Kopien der geladenen Bilder/Videos) für
