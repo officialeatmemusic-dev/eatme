@@ -120,9 +120,8 @@
    anfühlte. Der CTA bekommt daher nur den eigenen Hover, keinen
    Scroll-Reveal.
 
-   will-change kombiniert filter (Hover-Blur) UND transform (Parallax aus
-   script.js) in einer Deklaration -- separate will-change-Regeln würden
-   sich sonst gegenseitig überschreiben statt zu ergänzen. */
+   Kein Parallax mehr auf diesem Element (ursprünglich vorhanden, auf
+   Wunsch wieder entfernt -- fühlte sich ruckelig/laggy an). */
 #section-07-footer .footer-cta {
   position: absolute;
   left: 50%;
@@ -131,7 +130,7 @@
   white-space: nowrap;
   text-align: center;
   z-index: 1;
-  will-change: filter, transform;
+  will-change: filter;
   transition: opacity 0.6s ease, filter 0.6s ease;
 }
 #section-07-footer .footer-cta:hover {
@@ -164,17 +163,28 @@
 }
 
 /* ---- Mobile (768px-Breakpoint, siehe tokens-notes.md) ----
-   Layout bleibt horizontal (kein Stack) -- einzige Anpassungen:
-   1) Songzeilen dürfen umbrechen (white-space:normal statt dem globalen
+   Layout bleibt horizontal (kein Stack) -- Anpassungen:
+   1) Padding: 40px oben/unten (eigener, engerer Wert nur für diese
+      Sektion, Wunsch), 16px links/rechts -- das horizontale Padding
+      entspricht bewusst dem site-weiten Mobile-Standard (siehe
+      section-02/03/04/05/06), damit z.B. das Lyrics-Modul denselben
+      Randabstand hat wie auf allen anderen Sektionen. (Zwischenstand war
+      kurz 8px, wirkte dadurch inkonsistent zum Rest der Seite -- zurück
+      auf 16px korrigiert.)
+   2) Songzeilen dürfen umbrechen (white-space:normal statt dem globalen
       nowrap aus components/eatme-lyrics.css), sonst würden lange Zeilen die
       schmale Spalte horizontal sprengen.
-   2) Linke Spalte: fixer 32px-Gap zwischen Lyrics und scribble-sm statt der
+   3) Linke Spalte: fixer 32px-Gap zwischen Lyrics und scribble-sm statt der
       Desktop-"Height Fill" (justify-content:space-between) -- auf den
       schmalen Mobile-Spalten soll der Abstand nicht bis auf Zeilenhöhe
       auseinandergezogen werden.
-   3) Booking-CTA bricht nach dem ersten Wort um (siehe .footer-cta-break
+   4) Booking-CTA bricht nach dem ersten Wort um (siehe .footer-cta-break
       oben + renderFooterCta() in script.js). */
 @media (max-width: 768px) {
+  #section-07-footer {
+    padding: 40px 16px;
+  }
+
   #section-07-footer .eatme-lyrics-link .lyrics-lines p {
     white-space: normal;
   }
