@@ -973,30 +973,6 @@ document.addEventListener("eatme:content-ready", (e) => {
   renderSection07(e.detail["section-07-footer"]);
 });
 
-// Subtiler Scroll-Parallax auf den Booking-CTA -- gleiches rAF-Muster wie
-// überall sonst (kein Scroll-Event-Listener). Da der CTA per CSS über
-// bottom:50vh + transform:translate(-50%, 50%) zentriert ist (siehe
-// sections/section-07-footer.css für die Begründung, warum bottom statt
-// top), wird der Parallax-Versatz in genau diesen Transform-String
-// hineingerechnet (translate(-50%, calc(50% + Npx))) statt ihn zu
-// überschreiben -- sonst würde die Zentrierung beim Scrollen kaputtgehen.
-// Faktor bewusst niedrig gehalten (0.08) -- ein stärkerer Wert liess den
-// Effekt zwischen Frames sichtbar "springen" statt gleichmäßig zu wirken.
-const section07El = document.querySelector("#section-07-footer");
-const section07CtaEl = document.querySelector("#section-07-footer .footer-cta");
-
-if (section07El && section07CtaEl) {
-  const CTA_PARALLAX = 0.08;
-
-  const section07ParallaxLoop = () => {
-    const rect = section07El.getBoundingClientRect();
-    const offset = rect.top * CTA_PARALLAX;
-    section07CtaEl.style.transform = `translate(-50%, calc(50% + ${offset}px))`;
-    requestAnimationFrame(section07ParallaxLoop);
-  };
-  requestAnimationFrame(section07ParallaxLoop);
-}
-
 // ==========================================================================
 // eatme-footer — Mailto (links) + Link zur Imprint/Datenschutz-Seite
 // (rechts) aus content.json befüllen. Rein statisch, kein Parallax/Fade-In
