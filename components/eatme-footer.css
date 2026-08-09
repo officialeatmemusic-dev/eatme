@@ -1,0 +1,34 @@
+/* ==========================================================================
+   eatme-footer — Pill-Bar mit Kontakt-Mailto (links) + Link zur
+   Imprint/Datenschutz-Seite (rechts). Figma-Node 1:3461.
+   Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
+   Gradient/Inset-Shadow sind identisch zu .eatme-button
+   (components/instagram-module.css) -- gleiche Figma-Komponentenfamilie
+   ("Button/Footer"-Gradient laut tokens.css-Kommentar).
+   ========================================================================== */
+
+/* Beide Texte sind bewusst "Hug" (shrink-0, whitespace-nowrap), NICHT
+   flex:1 0 0 -- der Abstand zwischen ihnen kommt ausschließlich über
+   justify-content:space-between auf der Pill. So ist nur der sichtbare
+   Text selbst hover-/klickbar, nicht die gesamte Fläche dazwischen
+   (Figma-Update von Til, ursprünglich war der Mailto-Link fill-width). */
+.eatme-footer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 28px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--gradient-buttons-footer);
+  box-shadow:
+    inset 2px -3px 3px 0 var(--color-white),
+    inset 4px 2px 7px 0 rgba(0, 43, 72, 0.31);
+}
+
+.eatme-footer-contact,
+.eatme-footer-legal {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
