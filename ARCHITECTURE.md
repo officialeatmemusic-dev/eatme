@@ -116,10 +116,12 @@ Direkt aus Figma übernommen (Section-Namen im File), 7 Sektionen:
 5. **section-05-images-drops** — weiteres Bandfoto, Wassertropfen-Grafiken,
    Songzeile 2
 6. **section-06-text-social** — Ankündigungstext (neues Album) + Instagram-Modul
-7. **section-07-footer** — Songzeile, Booking-CTA, Kontakt, Footer-Links
-   (Imprint, Datenschutz). Die `eatme-footer`-Pill (Mailto + Link zur
-   zusammengelegten Imprint/Datenschutz-Seite) ist bereits fertig, siehe
-   Komponenten-Liste oben — Rest der Sektion noch offen.
+7. **section-07-footer** — Songzeile (Lyrics-Komponente), zwei Scribble-
+   Grafiken (sm/lg), Booking-CTA (Mailto), Footer-Links (Imprint,
+   Datenschutz). Fertig, Details siehe eigener Abschnitt unten. Ein
+   Hintergrundbild (Duoton-Bandfoto) ist für diese Sektion vorgesehen,
+   kommt aber in einem eigenen, späteren Chat dazu — siehe Sektions-Status
+   unten.
 
 Jede Sektion bekommt einen eigenen Chat innerhalb dieses Projekts, um
 Kontext-Bleed zu vermeiden.
@@ -144,9 +146,8 @@ referenziert von den Sektionen, die sie brauchen:
 - `eatme-lyrics` — ✅ **implementiert** (`components/eatme-lyrics.css`,
   Rendering über `renderLyricsModule()` in `script.js`). Songzeilen-Block
   (nutzt `.text-lyrics` aus tokens.css), komplett klickbar, Link-Ziel kommt
-  aus `content.json` (`lyrics.song_link`). Aktuell in section-03-images
-  verbaut, wird unverändert für section-05-images-drops und
-  section-07-footer wiederverwendet, sobald diese gebaut werden.
+  aus `content.json` (`lyrics.song_link`). In section-03-images,
+  section-05-images-drops und section-07-footer verbaut (alle drei fertig).
 - `icon-play` — Play-Icon für Songzeilen. Aktuell als Inline-SVG direkt im
   Markup jeder Sektion (kein separates Asset), siehe Details
   section-03-images unten.
@@ -159,9 +160,10 @@ referenziert von den Sektionen, die sie brauchen:
   `justify-content:space-between` auf der Pill, damit nur der sichtbare
   Text klickbar/hover-fähig ist (ursprünglich war der Mailto-Link
   fill-width, in Figma korrigiert). Content-Rendering über
-  `renderFooterBar()` in `script.js`. Sitzt in `section-07-footer` in
-  einem eigenen 12px-Padding-Wrapper (`sections/section-07-footer.css`),
-  restliche Sektion (Songzeile, Bandfoto, CTA) noch offen.
+  `renderFooterBar()` in `script.js`. Sitzt in `section-07-footer`
+  **nicht mehr** in einem eigenen Padding-Wrapper, sondern direkt absolut
+  positioniert (`left/right/bottom:12px`) relativ zur gesamten Sektion,
+  siehe Details section-07-footer unten.
 - `instagram-module` — Insta-Post-Nachbildung (eigener Chat, siehe Verlauf)
 - `tropfen` (4 Shape-Varianten) — Wassertropfen-Grafiken
 - `sound-toggle` — **noch offen, eigener Chat geplant.** An/Aus-Button für
@@ -263,11 +265,16 @@ bekommt das automatisch:
   `initInstagramModule()`/`setupInstagramInteraction()` in `script.js`)
   wurde im Zuge dessen um Background-Blur, dynamisches Laden aus
   `assets/images/insta/` und Mobile-Reset erweitert.
-- ⬜ section-07-footer — Songzeile, Bandfoto, Booking-CTA noch offen,
-  siehe Sektionsliste oben. Die `eatme-footer`-Pill (Mailto + Link zur
-  Imprint/Datenschutz-Seite) ist bereits fertig (siehe Komponenten-Liste
-  oben), inkl. eigenem 12px-Padding-Wrapper
-  (`sections/section-07-footer.css`).
+- ✅ **section-07-footer** — fertig (Songzeile links oben, scribble-sm
+  links unten, scribble-lg rechts, mittig absolut zentrierter
+  Booking-CTA, Details siehe eigener Abschnitt unten). Eigene CSS:
+  `sections/section-07-footer.css`, Content-Rendering (Lyrics + CTA-Text)
+  in `script.js` (`renderSection07()` + `renderFooterCta()`).
+  **Offen (eigener, späterer Chat):** Hintergrundbild (Duoton-Bandfoto).
+  `content.json` → `section-07-footer.background_image` ist bereits
+  befüllt, aber aktuell **ungenutzt** — bewusst noch nicht ins Layout
+  eingebaut, kein zusätzliches Feld in `content.json` nötig, wenn es so
+  weit ist.
 
 ### Details section-02-text-01 (für Anschluss-Kontext)
 
@@ -552,6 +559,68 @@ bekommt das automatisch:
   `content.json`) und die Medien-Erzeugung (`makeMediaEl()` statt
   `makeImageEl()`, jetzt mit Video-Unterstützung) haben sich geändert.
 
+### Details section-07-footer (für Anschluss-Kontext)
+
+- Zwei-Spalten-Layout via **CSS Grid** (nicht Flexbox wie section-03/05/06)
+  -- bewusste Abweichung, weil die linke Spalte zuverlässig "Height Fill"
+  (`height:100%` + `justify-content:space-between`) bekommen sollte,
+  während die rechte Spalte (scribble-lg) als höchstes Element die
+  Zeilenhöhe selbst vorgibt und nur ihren eigenen Inhalt "hugged". Grid
+  stretcht Items per Default auf die vom Inhalt bestimmte Row-Höhe --
+  robuster als der bekannte Flexbox-Fall aus den "Gelernten Lektionen"
+  unten (%-Höhen bei `align-self:stretch` ohne explizite Parent-Höhe).
+  Kein `max-width` auf Sektion/Spalten -- Inhalt reicht bis zum
+  Viewport-Rand, nur 32px/100px Padding + die Größe der Grafiken selbst
+  begrenzen.
+- `eatme-lyrics` (Songzeile "Drown") oben in der linken Spalte, Breite hier
+  abweichend von section-03/05 auf `width:100%; max-width:320px`
+  überschrieben (Figma-Vorgabe für diese Sektion) statt der
+  komponenteneigenen `width:fit-content`.
+- **scribble-sm/scribble-lg bewusst NICHT responsiv** (fixe px-Maße, 1:1
+  aus Figma: 117px / 416px) -- anders als die meisten anderen
+  Deko-Grafiken der Seite. `scribble-lg` darf dadurch bei schmalen
+  Viewports über den rechten Rand hinauslaufen (Bleed-Effekt); das erzeugt
+  kein horizontales Scrollen, weil `body { overflow-x: hidden; }` bereits
+  global in `styles.css` gesetzt ist.
+- **`eatme-footer`-Pille ist jetzt absolut positioniert**
+  (`left/right/bottom:12px`) statt wie ursprünglich in einem eigenen
+  Padding-Wrapper -- Komponente selbst setzt `width:100%`
+  (`components/eatme-footer.css`), das kollidiert mit den Insets, daher
+  `width:auto`-Override in `sections/section-07-footer.css`.
+- **Booking-CTA ("Open for Booking") ist mit `bottom:50vh` statt `top:50%`
+  zentriert.** Grund: die Sektion kann durch die fixen Scribble-Größen
+  höher werden als der Viewport (scribble-lg allein 784px + 200px
+  vertikales Padding). `top:50%` wäre relativ zur ggf. zu hohen
+  Sektion zentriert und läge dann sichtbar zu weit oben, sobald ganz nach
+  unten gescrollt ist. Der untere Rand der Sektion fällt dagegen -- weil
+  dies die letzte Sektion der Seite ist -- am Ende immer exakt mit dem
+  unteren Viewport-Rand zusammen; `bottom:50vh` (gemessen vom unteren
+  Sektionsrand) trifft dadurch zuverlässig die Bildschirmmitte, egal wie
+  hoch die Sektion durch ihren Inhalt tatsächlich wird. Siehe auch
+  "Gelernte Lektionen" unten -- gilt für jede künftige Sektion, die exakt
+  Bildschirmmitte treffen soll.
+- Subtiler Scroll-Parallax **nur auf dem Booking-CTA** (Faktor `0.05`
+  war spürbar, `0.15` "sprang" sichtbar zwischen Frames -- `0.08` als
+  Kompromiss final verwendet), nicht auf den Scribbles (ursprünglich dort
+  geplant, auf Wunsch entfernt). Da der CTA gleichzeitig zentriert ist,
+  wird der Scroll-Versatz in den bestehenden `transform`-String
+  hineingerechnet (`translate(-50%, calc(50% + Npx))`), nicht per
+  eigenständigem `translateY` überschrieben.
+- **CTA bekommt bewusst KEIN `.fade-in-text`** -- siehe "Gelernte
+  Lektionen" unten (IntersectionObserver-Stagger via Inline-Style bricht
+  sonst den eigenen, schnelleren Hover).
+- **Mobile: bewusst KEIN Stack/Umbruch** -- einzige Sektion, die auf
+  allen Breiten horizontal (zwei Spalten) bleibt, anders als
+  section-03/05/06. Nur drei Mobile-Anpassungen: (1) Songzeilen dürfen
+  umbrechen (`white-space:normal` statt dem komponenteneigenen `nowrap`),
+  sonst sprengen lange Zeilen die schmale Spalte; (2) linke Spalte bekommt
+  einen fixen `32px`-Gap zwischen Lyrics und scribble-sm statt der
+  Desktop-"Height Fill"; (3) Booking-CTA bricht nach dem ersten Wort um
+  (aktuell "Open" / "for Booking") über ein `<br class="footer-cta-break">`,
+  das per CSS nur ab dem 768px-Breakpoint sichtbar wird -- Rendering
+  splittet generisch am ersten Leerzeichen im Text, nicht hart am String
+  "Open", bleibt also gültig, falls `cta_text` sich später ändert.
+
 ## Gelernte Lektionen (für alle künftigen Sektionen relevant)
 
 - **`<a>`-Elemente, die als Fläche/Block genutzt werden** (nicht als
@@ -622,6 +691,43 @@ bekommt das automatisch:
   `data:font/woff2;base64,...`, SVGs als `data:image/svg+xml;base64,...`).
   Betrifft nur die Vorschau-Datei, nicht die Produktionsversion (die nutzt
   die echten relativen Repo-Pfade).
+- **`.fade-in-text` + eigener Hover auf demselben Element verträgt sich
+  nicht ohne Weiteres.** Der gemeinsame `IntersectionObserver`
+  (`initFadeInText()`) setzt pro Element zusätzlich ein individuelles
+  `transitionDelay` **per Inline-Style** (für den Stagger-Effekt) --
+  Inline-Style schlägt IMMER jede Stylesheet-Regel, unabhängig von deren
+  Selektor-Spezifität. Ein Element, das gleichzeitig `.fade-in-text` UND
+  einen eigenen, schnelleren Hover-Effekt haben soll, bekommt dadurch
+  einen spürbar "verzögerten"/"verbuggten" Hover, selbst wenn die
+  `transition-duration` in der eigenen Regel korrekt überschrieben wurde
+  (siehe section-07-footer, Booking-CTA). Faustregel: Elemente mit
+  eigenem, prominentem Hover (nicht nur die globale Link-Convention)
+  bekommen KEIN `.fade-in-text` -- Scroll-Reveal und individueller Hover
+  auf demselben Element sauber trennen, nicht kombinieren.
+- **Zentrierung "exakt Bildschirmmitte" bei variabler Sektionshöhe:
+  `bottom:50vh` statt `top:50%` verwenden, wenn es die LETZTE Sektion der
+  Seite ist und ihr Inhalt höher werden kann als der Viewport.** `top:50%`
+  zentriert relativ zur GESAMTEN (ggf. zu hohen) Sektion -- ist die Sektion
+  höher als der Viewport, liegt ihr oberer Rand beim finalen Scrollstand
+  bereits über dem sichtbaren Bereich, wodurch `top:50%` sichtbar zu weit
+  oben landet. Der untere Rand der letzten Sektion fällt dagegen am Ende
+  immer exakt mit dem unteren Viewport-Rand zusammen (man kann nicht weiter
+  scrollen) -- `bottom:50vh` (vom unteren Sektionsrand gemessen) trifft
+  dadurch zuverlässig die Bildschirmmitte, unabhängig von der tatsächlichen
+  Sektionshöhe. Braucht `transform:translate(-50%, 50%)` statt `(-50%,
+  -50%)` (das `50%` statt `-50%` auf der Y-Achse verschiebt das Element von
+  seiner Unterkante aus wieder um die halbe eigene Höhe nach unten).
+- **Text mit bedingtem, per Breakpoint umschaltbarem `<br>`: das
+  Leerzeichen gehört ans Ende des vorherigen Textknotens, nicht an den
+  Anfang des nächsten.** Soll ein `<br>` nur ab einem bestimmten
+  Breakpoint sichtbar werden (`display:none` → `display:inline`, siehe
+  `.footer-cta-break` in section-07-footer) und der Text davor/danach ein
+  normales Leerzeichen behalten, muss das Leerzeichen als Teil des ERSTEN
+  Textknotens gerendert werden. Sitzt es stattdessen am Anfang des
+  zweiten Knotens, geht es beim `display:none` des `<br>` optisch
+  komplett verloren (Wörter kleben ohne Space aneinander) und erzeugt
+  zusätzlich einen unschönen Einzug am Zeilenanfang, sobald der `<br>`
+  aktiv wird.
 
 ## Design-Tokens
 
@@ -660,13 +766,12 @@ HTML/Code. Struktur wird sektionsweise erweitert, sobald die jeweilige
 Sektion gebaut wird. Grundprinzip: fixe Layout-Slots (Positionen/Rotation
 bleiben Code, nicht editierbar), aber Text/Bild/Link-Inhalt editierbar.
 
-**Sonderfall section-07-footer:** `lyrics.song_title`/`lyrics.lines`
-("Drown") sind bereits final in `content.json` eingetragen, obwohl die
-Sektion selbst noch nicht gebaut ist (siehe Sektions-Status) — die
-Songtexte für alle drei Lyrics-Module (section-03/05/07) kamen gebündelt
-von Til. Sobald der section-07-Chat startet, greift `renderLyricsModule()`
-dort einfach auf die schon vorhandenen Daten zu, kein erneutes Content-
-Update nötig.
+**Sonderfall section-07-footer:** `background_image`/`background_image_alt`
+sind in `content.json` bereits befüllt (Duoton-Bandfoto für den Footer),
+werden aktuell aber bewusst **nicht** ins Layout eingebaut — kommt in
+einem eigenen, späteren Chat dazu (siehe Sektions-Status). Kein
+zusätzliches Content-Update nötig, wenn es so weit ist, die Felder sind
+schon da.
 
 ## Arbeitsweise / Workflow
 

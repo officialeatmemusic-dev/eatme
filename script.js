@@ -897,6 +897,107 @@ document.addEventListener("eatme:content-ready", (e) => {
 });
 
 // ==========================================================================
+// section-07-footer — Songtext-Modul über die gemeinsame
+// renderLyricsModule() befüllen (siehe section-03/05 oben), Booking-CTA
+// (Mailto-Text-Link) aus content.json (cta_text/cta_link) setzen,
+// Fade-In-Registrierung. scribble-sm/scribble-lg sind NICHT
+// content.json-gesteuert (rein dekorativ, fixe Pfade direkt im Markup,
+// gleiches Prinzip wie die blauen Vögel/Tropfen in section-02/05) -- kein
+// Parallax für die Scribbles, da für diese Sektion nicht gewünscht.
+// ==========================================================================
+
+// Rendert den Booking-CTA-Text mit einem <br class="footer-cta-break">
+// GENAU nach dem ersten Wort ("Open" bei "Open for Booking") -- der Umbruch
+// selbst ist per CSS standardmäßig unsichtbar (display:none) und wird erst
+// ab dem 768px-Breakpoint aktiv (display:inline), siehe
+// sections/section-07-footer.css. Bewusst am ersten Wort statt hart am
+// String "Open" -- funktioniert dadurch unverändert weiter, falls der
+// CTA-Text in content.json später mal geändert wird.
+function renderFooterCta(ctaEl, text) {
+  ctaEl.innerHTML = "";
+  if (!text) return;
+
+  const firstSpaceIndex = text.indexOf(" ");
+  if (firstSpaceIndex === -1) {
+    ctaEl.textContent = text;
+    return;
+  }
+
+  // Leerzeichen bewusst am ENDE des ersten Textknotens (statt am Anfang
+  // des zweiten) -- Bugfix: bei display:none auf .footer-cta-break (Desktop)
+  // hätte ein am Anfang des zweiten Knotens sitzendes Leerzeichen zwischen
+  // "Open" und "for" gefehlt (der Space wurde beim Splitten sonst nur an
+  // den <br> "verschoben", der auf Desktop unsichtbar ist -- Leerzeichen
+  // ging dadurch optisch komplett verloren). So bleibt der Space auch bei
+  // ausgeblendetem <br> erhalten, UND es entsteht auf Mobile kein
+  // unschöner eingerückter Zeilenanfang bei "for Booking".
+  ctaEl.appendChild(document.createTextNode(text.slice(0, firstSpaceIndex + 1)));
+  const breakEl = document.createElement("br");
+  breakEl.className = "footer-cta-break";
+  ctaEl.appendChild(breakEl);
+  ctaEl.appendChild(document.createTextNode(text.slice(firstSpaceIndex + 1)));
+}
+
+function renderSection07(data) {
+  if (!data) return;
+
+  const sectionEl = document.querySelector("#section-07-footer");
+  const ctaEl = document.querySelector("#section-07-cta");
+  if (!sectionEl || !ctaEl) return;
+
+  renderLyricsModule(
+    {
+      linkEl: document.querySelector("#section-07-lyrics-link"),
+      linesContainerEl: document.querySelector("#section-07-lyrics-lines"),
+      songTitleEl: document.querySelector("#section-07-song-title"),
+      songLinkRowEl: document.querySelector("#section-07-footer .song-link"),
+    },
+    data.lyrics
+  );
+
+  ctaEl.href = data.cta_link || "#";
+  renderFooterCta(ctaEl, data.cta_text);
+  // Bewusst KEIN .fade-in-text auf dem CTA (siehe Feedback-Verlauf): der
+  // gemeinsame IntersectionObserver (initFadeInText()) setzt pro Element
+  // zusätzlich per Inline-Style ein individuelles transitionDelay (Stagger),
+  // das JEDE CSS-Transition-Regel schlägt -- unabhängig von Spezifität,
+  // Inline-Style gewinnt immer. Das war der eigentliche Grund für den
+  // "verzögerten"/"verbuggten" Hover, nicht nur die transition-duration.
+  // Der CTA bekommt daher nur den eigenen Hover (siehe
+  // sections/section-07-footer.css), keinen Scroll-Reveal.
+
+  initFadeInText(sectionEl);
+}
+
+document.addEventListener("eatme:content-ready", (e) => {
+  renderSection07(e.detail["section-07-footer"]);
+});
+
+// Subtiler Scroll-Parallax auf den Booking-CTA -- gleiches rAF-Muster wie
+// überall sonst (kein Scroll-Event-Listener). Da der CTA per CSS über
+// bottom:50vh + transform:translate(-50%, 50%) zentriert ist (siehe
+// sections/section-07-footer.css für die Begründung, warum bottom statt
+// top), wird der Parallax-Versatz in genau diesen Transform-String
+// hineingerechnet (translate(-50%, calc(50% + Npx))) statt ihn zu
+// überschreiben -- sonst würde die Zentrierung beim Scrollen kaputtgehen.
+// Faktor bewusst niedrig gehalten (0.08) -- ein stärkerer Wert liess den
+// Effekt zwischen Frames sichtbar "springen" statt gleichmäßig zu wirken.
+const section07El = document.querySelector("#section-07-footer");
+const section07CtaEl = document.querySelector("#section-07-footer .footer-cta");
+
+if (section07El && section07CtaEl) {
+  const CTA_PARALLAX = 0.08;
+
+  const section07ParallaxLoop = () => {
+    const rect = section07El.getBoundingClientRect();
+    const offset = rect.top * CTA_PARALLAX;
+    section07CtaEl.style.transform = `translate(-50%, calc(50% + ${offset}px))`;
+    requestAnimationFrame(section07ParallaxLoop);
+  };
+  requestAnimationFrame(section07ParallaxLoop);
+}
+
+// ==========================================================================
 // eatme-footer — Mailto (links) + Link zur Imprint/Datenschutz-Seite
 // (rechts) aus content.json befüllen. Rein statisch, kein Parallax/Fade-In
 // nötig -- kleine Pill-Bar ohne eigene Sichtbarkeits-Logik.
