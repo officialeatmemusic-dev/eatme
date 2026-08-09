@@ -1,0 +1,11 @@
+/* ==========================================================================
+   section-07-footer — bislang NUR der Padding-Wrapper für die
+   eatme-footer-Pill (siehe components/eatme-footer.css). Songzeile,
+   Bandfoto, Booking-CTA folgen in einem eigenen späteren Sektions-Chat,
+   siehe ARCHITECTURE.md.
+   ========================================================================== */
+
+#section-07-footer {
+  width: 100%;
+  padding: 12px;
+}
