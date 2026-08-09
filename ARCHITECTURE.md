@@ -599,27 +599,33 @@ bekommt das automatisch:
   hoch die Sektion durch ihren Inhalt tatsächlich wird. Siehe auch
   "Gelernte Lektionen" unten -- gilt für jede künftige Sektion, die exakt
   Bildschirmmitte treffen soll.
-- Subtiler Scroll-Parallax **nur auf dem Booking-CTA** (Faktor `0.05`
-  war spürbar, `0.15` "sprang" sichtbar zwischen Frames -- `0.08` als
-  Kompromiss final verwendet), nicht auf den Scribbles (ursprünglich dort
-  geplant, auf Wunsch entfernt). Da der CTA gleichzeitig zentriert ist,
-  wird der Scroll-Versatz in den bestehenden `transform`-String
-  hineingerechnet (`translate(-50%, calc(50% + Npx))`), nicht per
-  eigenständigem `translateY` überschrieben.
+- **Kein Scroll-Parallax auf dem Booking-CTA** -- ursprünglich vorhanden
+  (verschiedene Faktoren durchprobiert: `0.05`/`0.15`/`0.08`), fühlte sich
+  aber ruckelig/laggy an und wurde auf Wunsch komplett wieder entfernt.
+  Falls später erneut gewünscht: der CTA ist gleichzeitig zentriert
+  (`bottom:50vh` + `transform`), ein Scroll-Versatz müsste in den
+  bestehenden `transform`-String hineingerechnet werden (`translate(-50%,
+  calc(50% + Npx))`), nicht per eigenständigem `translateY` überschrieben.
 - **CTA bekommt bewusst KEIN `.fade-in-text`** -- siehe "Gelernte
   Lektionen" unten (IntersectionObserver-Stagger via Inline-Style bricht
   sonst den eigenen, schnelleren Hover).
 - **Mobile: bewusst KEIN Stack/Umbruch** -- einzige Sektion, die auf
   allen Breiten horizontal (zwei Spalten) bleibt, anders als
-  section-03/05/06. Nur drei Mobile-Anpassungen: (1) Songzeilen dürfen
-  umbrechen (`white-space:normal` statt dem komponenteneigenen `nowrap`),
-  sonst sprengen lange Zeilen die schmale Spalte; (2) linke Spalte bekommt
-  einen fixen `32px`-Gap zwischen Lyrics und scribble-sm statt der
-  Desktop-"Height Fill"; (3) Booking-CTA bricht nach dem ersten Wort um
-  (aktuell "Open" / "for Booking") über ein `<br class="footer-cta-break">`,
-  das per CSS nur ab dem 768px-Breakpoint sichtbar wird -- Rendering
-  splittet generisch am ersten Leerzeichen im Text, nicht hart am String
-  "Open", bleibt also gültig, falls `cta_text` sich später ändert.
+  section-03/05/06. **Eigener, engerer vertikaler Mobile-Padding-Wert**
+  (Wunsch): `40px` oben/unten statt der sonst üblichen 100px. Horizontal
+  bewusst `16px` -- **kein** von den anderen Sektionen abweichender Wert
+  (ein kurzer Zwischenstand mit 8px wirkte inkonsistent, z.B. lag das
+  Lyrics-Modul dadurch näher am Rand als in allen anderen Sektionen --
+  zurück auf den site-weiten 16px-Mobile-Standard korrigiert). Weitere
+  Mobile-Anpassungen: (1) Songzeilen dürfen umbrechen
+  (`white-space:normal` statt dem komponenteneigenen `nowrap`), sonst
+  sprengen lange Zeilen die schmale Spalte; (2) linke Spalte bekommt einen
+  fixen `32px`-Gap zwischen Lyrics und scribble-sm statt der Desktop-
+  "Height Fill"; (3) Booking-CTA bricht nach dem ersten Wort um (aktuell
+  "Open" / "for Booking") über ein `<br class="footer-cta-break">`, das
+  per CSS nur ab dem 768px-Breakpoint sichtbar wird -- Rendering splittet
+  generisch am ersten Leerzeichen im Text, nicht hart am String "Open",
+  bleibt also gültig, falls `cta_text` sich später ändert.
 
 ## Gelernte Lektionen (für alle künftigen Sektionen relevant)
 
