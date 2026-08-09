@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="components/eatme-navigation.css" />
   <link rel="stylesheet" href="components/eatme-lyrics.css" />
   <link rel="stylesheet" href="components/instagram-module.css" />
+  <link rel="stylesheet" href="components/eatme-footer.css" />
 
   <!-- Sektions-CSS: eine Datei pro Sektion, siehe ARCHITECTURE.md -->
   <link rel="stylesheet" href="sections/section-01-stage.css" />
@@ -23,6 +24,7 @@
   <link rel="stylesheet" href="sections/section-04-text-02.css" />
   <link rel="stylesheet" href="sections/section-05-images-drops.css" />
   <link rel="stylesheet" href="sections/section-06-text-social.css" />
+  <link rel="stylesheet" href="sections/section-07-footer.css" />
 </head>
 <body>
 
@@ -309,7 +311,15 @@
     </section>
 
     <section id="section-07-footer" class="section">
-      <!-- Songzeile, Booking-CTA, Kontakt, Footer-Links -->
+      <!-- Songzeile, Booking-CTA, Kontakt: folgt in einem eigenen
+           Sektions-Chat. Die eatme-footer-Pill unten ist bereits final,
+           siehe components/eatme-footer.css. -->
+
+      <!-- component: eatme-footer -->
+      <nav class="eatme-footer" aria-label="Footer">
+        <a href="#" id="footer-contact-link" class="eatme-footer-contact text-copy-s"></a>
+        <a href="#" id="footer-legal-link" class="eatme-footer-legal text-copy-s"></a>
+      </nav>
     </section>
   </main>
 

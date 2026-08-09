@@ -895,3 +895,33 @@ function setupInstagramInteraction({ moduleEl, stageEl, scrollEl, dragHandle, gr
 document.addEventListener("eatme:content-ready", (e) => {
   initInstagramModule(e.detail["section-06-text-social"]?.instagram_module);
 });
+
+// ==========================================================================
+// eatme-footer — Mailto (links) + Link zur Imprint/Datenschutz-Seite
+// (rechts) aus content.json befüllen. Rein statisch, kein Parallax/Fade-In
+// nötig -- kleine Pill-Bar ohne eigene Sichtbarkeits-Logik.
+// ==========================================================================
+
+function renderFooterBar(data) {
+  if (!data) return;
+
+  const contactLink = document.querySelector("#footer-contact-link");
+  const legalLink = document.querySelector("#footer-legal-link");
+  if (!contactLink || !legalLink) return;
+
+  if (data.contact_email) {
+    contactLink.href = `mailto:${data.contact_email}`;
+    contactLink.textContent = data.contact_email;
+  }
+
+  if (data.footer_link_href) {
+    legalLink.href = data.footer_link_href;
+  }
+  if (data.footer_link_label) {
+    legalLink.textContent = data.footer_link_label;
+  }
+}
+
+document.addEventListener("eatme:content-ready", (e) => {
+  renderFooterBar(e.detail["section-07-footer"]);
+});

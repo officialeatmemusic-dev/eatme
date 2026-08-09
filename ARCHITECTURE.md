@@ -65,8 +65,8 @@ leichter für Til selbst nachvollziehbar/wartbar.
 ├── script.js                   ← globale Logik + eine Sektion pro Kommentarblock
 ├── background-and-motion.md    ← Himmel-Hintergrund + Parallax/Animation-Logik (separat)
 ├── content.json                ← alle Texte, Bildpfade, Links
-├── imprint.html                ← einfache statische Seite
-├── datenschutz.html             ← einfache statische Seite
+├── imprint.html                ← einfache statische Seite (Imprint +
+│                                  Datenschutz zusammen, siehe unten)
 ├── /sound                      xyz.mp3 — Hintergrund-Song, an/aus schaltbar
 ├── /assets
 │   ├── /fonts                  Michroma-Regular.woff2, EBGaramond-Italic.woff2
@@ -117,18 +117,23 @@ Direkt aus Figma übernommen (Section-Namen im File), 7 Sektionen:
    Songzeile 2
 6. **section-06-text-social** — Ankündigungstext (neues Album) + Instagram-Modul
 7. **section-07-footer** — Songzeile, Booking-CTA, Kontakt, Footer-Links
-   (Imprint, Datenschutz)
+   (Imprint, Datenschutz). Die `eatme-footer`-Pill (Mailto + Link zur
+   zusammengelegten Imprint/Datenschutz-Seite) ist bereits fertig, siehe
+   Komponenten-Liste oben — Rest der Sektion noch offen.
 
 Jede Sektion bekommt einen eigenen Chat innerhalb dieses Projekts, um
 Kontext-Bleed zu vermeiden.
 
 ## Zusätzliche Seiten (kein eigener Sektions-Chat nötig)
 
-- `imprint.html` — einfache statische Seite, minimaler Aufwand
-- `datenschutz.html` — einfache statische Seite, minimaler Aufwand
+- `imprint.html` — einfache statische Seite, minimaler Aufwand.
+  **Update:** enthält Imprint- UND Datenschutz-Inhalt zusammen — Til hat
+  entschieden, sich die zweite Seite (`datenschutz.html`, ursprünglich
+  separat geplant) zu sparen. Der Footer-Link ("Imprint and data" in der
+  `eatme-footer`-Pill) zeigt entsprechend nur noch auf diese eine Seite.
 
-Beide nutzen dieselben Tokens (Fonts/Farben) wie die Hauptseite, aber ohne
-Parallax/Animation — reine Textseiten.
+Nutzt dieselben Tokens (Fonts/Farben) wie die Hauptseite, aber ohne
+Parallax/Animation — reine Textseite.
 
 ## Komponenten (aus Figma bekannt)
 
@@ -146,7 +151,17 @@ referenziert von den Sektionen, die sie brauchen:
   Markup jeder Sektion (kein separates Asset), siehe Details
   section-03-images unten.
 - `eatme-button` — Button (nutzt `--gradient-buttons-footer`)
-- `eatme-footer` — Footer-Leiste
+- `eatme-footer` — ✅ **implementiert** (`components/eatme-footer.css`).
+  Pill-Bar (Figma-Node 1:3461), nutzt `--gradient-buttons-footer` +
+  denselben Inset-Shadow wie `.eatme-button`. Zwei Links: Mailto links,
+  Link zur zusammengelegten Imprint/Datenschutz-Seite rechts — beide
+  bewusst "Hug" (nicht `flex:1 0 0`), Abstand kommt über
+  `justify-content:space-between` auf der Pill, damit nur der sichtbare
+  Text klickbar/hover-fähig ist (ursprünglich war der Mailto-Link
+  fill-width, in Figma korrigiert). Content-Rendering über
+  `renderFooterBar()` in `script.js`. Sitzt in `section-07-footer` in
+  einem eigenen 12px-Padding-Wrapper (`sections/section-07-footer.css`),
+  restliche Sektion (Songzeile, Bandfoto, CTA) noch offen.
 - `instagram-module` — Insta-Post-Nachbildung (eigener Chat, siehe Verlauf)
 - `tropfen` (4 Shape-Varianten) — Wassertropfen-Grafiken
 - `sound-toggle` — **noch offen, eigener Chat geplant.** An/Aus-Button für
@@ -248,7 +263,11 @@ bekommt das automatisch:
   `initInstagramModule()`/`setupInstagramInteraction()` in `script.js`)
   wurde im Zuge dessen um Background-Blur, dynamisches Laden aus
   `assets/images/insta/` und Mobile-Reset erweitert.
-- ⬜ section-07-footer — noch offen, siehe Sektionsliste oben.
+- ⬜ section-07-footer — Songzeile, Bandfoto, Booking-CTA noch offen,
+  siehe Sektionsliste oben. Die `eatme-footer`-Pill (Mailto + Link zur
+  Imprint/Datenschutz-Seite) ist bereits fertig (siehe Komponenten-Liste
+  oben), inkl. eigenem 12px-Padding-Wrapper
+  (`sections/section-07-footer.css`).
 
 ### Details section-02-text-01 (für Anschluss-Kontext)
 
