@@ -1,11 +1,190 @@
 /* ==========================================================================
-   section-07-footer — bislang NUR der Padding-Wrapper für die
-   eatme-footer-Pill (siehe components/eatme-footer.css). Songzeile,
-   Bandfoto, Booking-CTA folgen in einem eigenen späteren Sektions-Chat,
-   siehe ARCHITECTURE.md.
+   section-07-footer — Songzeile (eatme-lyrics) + scribble-sm links,
+   scribble-lg rechts, mittig absolut positionierter Booking-CTA (Mailto),
+   unten die bereits fertige eatme-footer-Pill. Figma-Node 1:3397.
+   Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
+
+   Layout-Prinzip: CSS GRID statt Flexbox für die Spalten-Reihe -- linke
+   Spalte bekommt zuverlässig height:100% + justify-content:space-between
+   ("Height Fill"), rechte Spalte bestimmt als höchstes Element (scribble-lg)
+   die Zeilenhöhe und "hugged" nur ihren eigenen Inhalt. Bewusst KEIN
+   max-width auf Sektion/Spalten -- Inhalt reicht bis zum Viewport-Rand, nur
+   32px/100px Padding + die Größe der Grafiken selbst begrenzen.
    ========================================================================== */
 
+/* min-height:100vh -> die Sektion ist immer mindestens so hoch wie der
+   Viewport. */
 #section-07-footer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  gap: 12px;
   width: 100%;
-  padding: 12px;
+  min-height: 100vh;
+  padding: 100px 32px;
+}
+
+/* ---- Linke Spalte: eatme-lyrics oben, scribble-sm unten, "Height Fill" ----
+   height:100% resolved zuverlässig gegen die von Grid berechnete Zeilenhöhe
+   (Grid-Items werden per Default auf die vom Inhalt bestimmte Row-Höhe
+   gestreckt -- robuster als der Flexbox-Fall aus den "Gelernten Lektionen"
+   in ARCHITECTURE.md, wo %-Höhen bei align-self:stretch nicht zuverlässig
+   funktionieren). justify-content:space-between verteilt den Abstand
+   zwischen Lyrics und scribble-sm auf Desktop automatisch ("gap auf auto") --
+   auf Mobile wird das durch einen fixen 32px-Gap ersetzt, siehe Mobile-Block
+   unten. */
+#section-07-footer .footer-col-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: 100%;
+  min-width: 0;
+}
+
+/* eatme-lyrics ist als Komponente width:fit-content (siehe
+   components/eatme-lyrics.css), hier laut Figma aber width:100% mit
+   max-width:320px -- Override bewusst hier in der Sektions-CSS, nicht in
+   der Komponente selbst (Positionierung/Sizing pro Sektion bleibt Aufgabe
+   der jeweiligen Sektions-Datei, siehe ARCHITECTURE.md). */
+#section-07-footer .eatme-lyrics-link {
+  width: 100%;
+  max-width: 320px;
+}
+
+/* scribble-sm: bewusst NICHT fluid (fixe px-Maße, 1:1 aus Figma), gleiches
+   Prinzip wie die Tropfen-Grafiken in section-05 -- rein dekorativ.
+   Seitenverhältnis kommt aus der intrinsischen SVG-viewBox (120/395),
+   damit die Grafik nie verzieht. */
+#section-07-footer .footer-scribble-sm {
+  display: block;
+  width: 117px;
+  height: auto;
+  aspect-ratio: 120 / 395;
+  flex-shrink: 0;
+}
+
+/* ---- Rechte Spalte: scribble-lg, rechtsbündig + vertikal zentriert ---- */
+#section-07-footer .footer-col-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* scribble-lg: bewusst NICHT fluid/responsiv (fixe px-Maße, 1:1 aus Figma,
+   analog zu scribble-sm) -- läuft bei schmalen Viewports bewusst über den
+   rechten Viewport-Rand hinaus (Bleed-Effekt), statt zu schrumpfen. Führt
+   NICHT zu horizontalem Scrollen, weil `body { overflow-x: hidden; }`
+   bereits global in styles.css gesetzt ist -- überstehender Inhalt wird
+   dort geclippt, kein zusätzliches overflow:hidden hier nötig. */
+#section-07-footer .footer-scribble-lg {
+  display: block;
+  width: 416px;
+  height: auto;
+  aspect-ratio: 418 / 784;
+  flex-shrink: 0;
+}
+
+/* ---- Booking-CTA: immer exakt in der Bildschirmmitte ----
+   WARUM bottom:50vh statt top:50%: top:50% wäre relativ zur GESAMTEN
+   Sektionshöhe zentriert -- die kann aber höher sein als der Viewport
+   (scribble-lg ist jetzt fix 784px hoch, + 200px vertikales Padding macht
+   die Sektion allein dadurch ~984px, auf vielen Laptop-Displays (~800-900px
+   Viewport-Höhe) also höher als der Bildschirm). Ist die Sektion höher als
+   der Viewport, liegt ihr oberer Rand beim finalen Scroll-Stand (Seitenende
+   erreicht) bereits ÜBER dem sichtbaren Bereich -- top:50% der Sektion
+   landet dann sichtbar zu weit oben (genau der gemeldete Bug).
+   Der UNTERE Rand der Sektion fällt dagegen -- weil dies die letzte Sektion
+   der Seite ist -- am Ende immer exakt mit dem unteren Viewport-Rand
+   zusammen (man kann nicht weiter scrollen). bottom:50vh (= halbe
+   Viewport-Höhe, vom UNTEREN Sektionsrand aus gemessen) trifft dadurch
+   zuverlässig die Bildschirmmitte, unabhängig davon, wie hoch die Sektion
+   durch ihren Inhalt tatsächlich wird. transform:translate(-50%, 50%) --
+   die 50% (statt -50%) auf der Y-Achse verschieben das Element wieder um
+   die halbe eigene Höhe nach UNTEN, weil bottom das Element von seiner
+   Unterkante aus positioniert (nicht von der Mitte).
+
+   Reiner Inline-Text-Link -> Basis kommt aus der globalen a-Convention
+   (display:inline-block, padding/margin-Paar) aus styles.css. Eigener,
+   verstärkter Hover (Blur 14px statt der globalen 4px) -- gleiches Prinzip
+   wie beim eatme-lyrics-link-Modul, da dieser CTA ein visuell prominentes,
+   eigenständiges Klick-Element ist (kein Fließtext-Link).
+
+   BEWUSST KEIN .fade-in-text auf diesem Element (siehe script.js,
+   renderSection07()) -- der gemeinsame IntersectionObserver
+   (initFadeInText()) setzt pro Element zusätzlich ein individuelles
+   transitionDelay per Inline-Style (Stagger-Effekt). Inline-Style schlägt
+   IMMER jede Stylesheet-Regel, unabhängig von deren Spezifität -- das war
+   der eigentliche Grund, warum sich der Hover zuvor verzögert/verbuggt
+   anfühlte. Der CTA bekommt daher nur den eigenen Hover, keinen
+   Scroll-Reveal.
+
+   will-change kombiniert filter (Hover-Blur) UND transform (Parallax aus
+   script.js) in einer Deklaration -- separate will-change-Regeln würden
+   sich sonst gegenseitig überschreiben statt zu ergänzen. */
+#section-07-footer .footer-cta {
+  position: absolute;
+  left: 50%;
+  bottom: 50vh;
+  transform: translate(-50%, 50%);
+  white-space: nowrap;
+  text-align: center;
+  z-index: 1;
+  will-change: filter, transform;
+  transition: opacity 0.6s ease, filter 0.6s ease;
+}
+#section-07-footer .footer-cta:hover {
+  opacity: 0.6;
+  filter: blur(14px);
+}
+
+/* Manueller Umbruch NACH dem ersten Wort (aktuell "Open" von "Open for
+   Booking") -- nur auf Mobile aktiv. Rendering in script.js
+   (renderFooterCta()) fügt dafür ein <br class="footer-cta-break"> exakt
+   nach dem ersten Wort ein, hier nur per display umschaltbar. Bewusst kein
+   normales Weich-Umbruch-CSS (white-space:normal + Breite), weil der Bruch
+   an einer FESTEN Stelle sitzen soll, unabhängig von der Spaltenbreite. */
+#section-07-footer .footer-cta-break {
+  display: none;
+}
+
+/* ---- eatme-footer-Pille: absolut über die volle Breite, 12px Inset ----
+   Die Komponente selbst setzt width:100% (siehe components/eatme-footer.css,
+   gedacht für den Fall, dass sie normal im Fluss steht) -- hier wird sie
+   stattdessen absolut positioniert (left/right/bottom:12px), width daher
+   explizit auf auto zurückgesetzt, sonst kollidiert width:100% mit den
+   gesetzten Insets. */
+#section-07-footer .eatme-footer {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: auto;
+}
+
+/* ---- Mobile (768px-Breakpoint, siehe tokens-notes.md) ----
+   Layout bleibt horizontal (kein Stack) -- einzige Anpassungen:
+   1) Songzeilen dürfen umbrechen (white-space:normal statt dem globalen
+      nowrap aus components/eatme-lyrics.css), sonst würden lange Zeilen die
+      schmale Spalte horizontal sprengen.
+   2) Linke Spalte: fixer 32px-Gap zwischen Lyrics und scribble-sm statt der
+      Desktop-"Height Fill" (justify-content:space-between) -- auf den
+      schmalen Mobile-Spalten soll der Abstand nicht bis auf Zeilenhöhe
+      auseinandergezogen werden.
+   3) Booking-CTA bricht nach dem ersten Wort um (siehe .footer-cta-break
+      oben + renderFooterCta() in script.js). */
+@media (max-width: 768px) {
+  #section-07-footer .eatme-lyrics-link .lyrics-lines p {
+    white-space: normal;
+  }
+
+  #section-07-footer .footer-col-left {
+    justify-content: flex-start;
+    gap: 32px;
+  }
+
+  #section-07-footer .footer-cta-break {
+    display: inline;
+  }
 }
