@@ -135,9 +135,11 @@ body {
   transform: translate3d(-50%, 0, 0);
   z-index: 0;
   will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  contain: layout paint;
+  /* KEIN contain/backface-visibility mehr -- beide wurden als
+     Safari-Compositing-Hints ergaenzt, haben aber offenbar genau das
+     Gegenteil bewirkt (Flicker/kurzes Verschwinden beim Scrollen in
+     Safari, bekanntes WebKit-Verhalten bei dieser Kombination mit
+     transform auf grossen Bildern). Ersatzlos entfernt. */
 }
 
 /* Footer: Hoehe eingefroren ab Referenzbreite 1080px. 1080 * 1.172
@@ -153,7 +155,6 @@ body {
   height: min(117.2vw, 1266px);
   transform: translate3d(-50%, 0, 0);
   z-index: 1; /* liegt ueber der Cloud */
-  contain: layout paint;
 }
 
 /* ---- Mobile (768px-Breakpoint, siehe tokens-notes.md) ----

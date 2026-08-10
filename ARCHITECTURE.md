@@ -606,7 +606,9 @@ bekommt das automatisch:
   Sektionsrand) trifft dadurch zuverlässig die Bildschirmmitte, egal wie
   hoch die Sektion durch ihren Inhalt tatsächlich wird. Siehe auch
   "Gelernte Lektionen" unten -- gilt für jede künftige Sektion, die exakt
-  Bildschirmmitte treffen soll.
+  Bildschirmmitte treffen soll. **Textklasse: `text-highlight`** (30px,
+  passt zur 36px-Höhe des Figma-Textknotens für diesen CTA — nicht
+  `text-copy-l`, das war ein falscher Zwischenstand).
 - **Kein Scroll-Parallax auf dem Booking-CTA** -- ursprünglich vorhanden
   (verschiedene Faktoren durchprobiert: `0.05`/`0.15`/`0.08`), fühlte sich
   aber ruckelig/laggy an und wurde auf Wunsch komplett wieder entfernt.
@@ -826,13 +828,17 @@ verschachtelten Lese-/Schreibzyklen mehr.
 Weitere Perf-Maßnahmen aus demselben Anlass:
 - Tropfen-Parallax überspringt unsichtbare Elemente (`el.offsetParent ===
   null`, greift für die jeweils andere Breakpoint-Variante).
-- `.bg-cloud`/`.bg-footer` haben `contain: layout paint` +
-  `-webkit-backface-visibility: hidden` als zusätzliche
-  Compositing-Hints.
 - Cloud-Asset von PNG (1,24MB, 2000×4658px) auf WebP (260KB,
   1200×2794px) verkleinert — Dateiformat/-größe wirkt sich vor allem auf
   die Ladezeit aus, die **Pixel-Auflösung** ist der eigentliche Hebel für
   die Compositing-Kosten pro Frame.
+- **Ausprobiert, wieder verworfen:** `contain: layout paint` +
+  `-webkit-backface-visibility: hidden` auf `.bg-cloud`/`.bg-footer` als
+  Safari-Compositing-Hints — verursachten in der Praxis genau das
+  Gegenteil (kurzes Flackern/Verschwinden der Cloud beim Scrollen in
+  Safari, bekanntes WebKit-Verhalten bei dieser Kombination mit
+  `transform` auf großen Bildern). Ersatzlos entfernt, falls jemand
+  denselben Ansatz nochmal probieren will.
 
 **Bewusste Reihenfolge (historisch):** Erst alle 7 Sektionen strukturell
 gebaut (Layout, Content, Responsive), das durchgehende Hintergrund-System
