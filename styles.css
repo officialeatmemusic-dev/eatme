@@ -58,10 +58,8 @@ body {
 
 /* ---- Hintergrund-Layer ----
    Liegt fixed hinter dem gesamten Seiteninhalt, erstreckt sich über die
-   komplette Scroll-Höhe. Farben/Verlauf/Textur/Parallax-Logik werden in
-   background-and-motion.md spezifiziert und hier ergänzt, sobald geklärt.
-   Platzhalter aktuell: einfaches Weiß, bis die finale Logik aus
-   background-and-motion.md kommt. */
+   komplette Scroll-Höhe. Enthält den durchgehenden Himmel-Hintergrund
+   (Cloud + Footer-Bild), siehe Abschnitt weiter unten. */
 .page-background {
   position: absolute;
   top: 0;
@@ -71,6 +69,112 @@ body {
   z-index: -1;
   background: var(--color-white);
   pointer-events: none;
+  overflow: hidden; /* Crop-Container fuer den Mobile-Anschnitt links/rechts, siehe unten */
+}
+
+/* ==========================================================================
+   Sitewide Himmel-Hintergrund — Cloud + Footer Layer
+   .bg-cloud/.bg-footer sind Wrapper-DIVs mit einem <img> drin (Markup
+   siehe index.html), Positionierung/Parallax siehe script.js.
+   - Cloud (assets/visuals/backgrounds/clouds.webp): KEIN CSS-Fade (kein
+     mask-image, kein Gradient-Overlay) -- das Asset hat bereits einen
+     eingebauten Alpha-Fade oben UND unten (WebP mit Transparenz-Kanal,
+     Alpha faedet bereits im Bild selbst weich von 0 auf 255 in den
+     ersten ~500px von 4658px Original-Bildhoehe, siehe Chat-Notizen zum
+     Background-Feature). Ein zusaetzlicher CSS-Fade waere nicht nur
+     unnoetig, sondern hat in einer frueheren Version bei jedem
+     Parallax-Frame zusaetzliche Transparenz-Berechnung auf einem sehr
+     grossen animierten Bild erzwungen -> sichtbares Ruckeln (v.a.
+     Safari). Ersatzlos gestrichen.
+   - Footer (assets/images/eatme-image-footer.jpg): bekommt eine echte
+     mask-image fuer den weichen oberen Rand, weil das Bild ein JPG ohne
+     Alpha-Kanal ist (braucht daher einen echten CSS-Fade). Unproblematisch
+     fuer Performance, da der Footer NICHT animiert wird (kein Parallax,
+     haengt fix an bottom:0 -- "scrollt normal" mit der Seite mit).
+   Kein eigenes Opacity-Fade-in mehr (war zwischenzeitlich per
+   IntersectionObserver geplant, aber wieder verworfen -- Timing-Probleme,
+   siehe Chat-Notizen). Die Cloud ist permanent sichtbar (opacity:1 per
+   Default), ihre Sichtbarkeit ergibt sich rein aus der Scroll-Position:
+   sie sitzt erst deutlich unterhalb von section-02 (siehe
+   CLOUD_ANCHOR_FRACTION in script.js), ist beim Laden der Seite also
+   ohnehin ausserhalb des Viewports.
+   ========================================================================== */
+
+.bg-cloud,
+.bg-footer {
+  position: absolute;
+  left: 50%;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-cloud img,
+.bg-footer img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Footer: echte Alpha-Maske (JPG hat keinen eigenen Alpha-Kanal).
+   object-position: die Gesichter auf dem Bandfoto sitzen bei ca. 40-49%
+   der Bildhoehe (nicht im oberen Drittel, wie zunaechst angenommen) --
+   36% als Kompromisswert, der den sichtbaren Ausschnitt ueber den
+   gesamten Cropping-Bereich (1080px bis Ultra-Wide) mittig auf die
+   Gesichter haelt. */
+.bg-footer img {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 220px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 220px);
+  object-position: center 36%;
+}
+
+.bg-cloud {
+  top: 0; /* wird per JS ueberschrieben, siehe measureCloudAnchor() in script.js */
+  aspect-ratio: 2000 / 4658;
+  transform: translate3d(-50%, 0, 0);
+  z-index: 0;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  contain: layout paint;
+}
+
+/* Footer: Hoehe eingefroren ab Referenzbreite 1080px. 1080 * 1.172
+   (= 2344/2000, das Bildverhaeltnis) = 1265.76 =~ 1266px. Bis 1080px
+   Viewport-Breite unveraendert (volle Aspect-Ratio, komplettes Foto wie
+   im Original-Design). Darueber waechst nur noch die Breite weiter, die
+   Hoehe bleibt bei 1266px stehen -> Bild wird angeschnitten statt endlos
+   hoeher zu werden (was auf grossen Screens sonst die Gesichter aus dem
+   sichtbaren Bereich schieben wuerde), object-position (oben) haelt die
+   Gesichter dabei im Blick. */
+.bg-footer {
+  bottom: 0;
+  height: min(117.2vw, 1266px);
+  transform: translate3d(-50%, 0, 0);
+  z-index: 1; /* liegt ueber der Cloud */
+  contain: layout paint;
+}
+
+/* ---- Mobile (768px-Breakpoint, siehe tokens-notes.md) ----
+   Beide Bilder schrumpfen NICHT unter die Groesse, die sie bei exakt
+   768px Viewport-Breite haetten -- stattdessen bleibt die Breite auf
+   768px fixiert und wird links/rechts angeschnitten (Crop passiert
+   automatisch durch .page-background { overflow:hidden } + zentrierte
+   Position). Footer-Hoehe wird hier explizit auf den 768px-Aspect-Ratio-
+   Wert gesetzt (768 * 1.172 = 900px), weil der vw-basierte min()-Wert
+   oben sich auf die echte Viewport-Breite bezieht, nicht auf die hier
+   fixierte 768px-Elementbreite. */
+@media (max-width: 768px) {
+  .bg-cloud,
+  .bg-footer {
+    width: 768px;
+    max-width: none;
+  }
+
+  .bg-footer {
+    height: 900px;
+  }
 }
 
 /* ---- Globale Link-Convention ----

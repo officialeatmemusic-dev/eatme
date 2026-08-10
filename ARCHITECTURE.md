@@ -32,9 +32,8 @@ leichter für Til selbst nachvollziehbar/wartbar.
   Unterordner, keine reine `username.github.io`-Hauptseite), zeigt ein
   Pfad mit führendem `/` von der Domain-Wurzel aus und würde am
   Unterordner vorbeizeigen → 404. Betraf ursprünglich die Font-Pfade in
-  `tokens.css`, wurde gefixt. Gilt für alle künftigen Asset-Referenzen
-  (Sektions-CSS, `background-and-motion.md` etc.) — siehe auch
-  `tokens-notes.md`.
+  `tokens.css`, wurde gefixt. Gilt für alle Asset-Referenzen (Sektions-CSS,
+  `styles.css` etc.) — siehe auch `tokens-notes.md`.
 
 ### Übergabe an den Kunden (später)
 
@@ -63,7 +62,6 @@ leichter für Til selbst nachvollziehbar/wartbar.
 ├── tokens-notes.md             ← offene Punkte/Herkunft der Tokens
 ├── styles.css                  ← globales Grundgerüst + globale Konventionen (Hover, Fade-In, Bild-Drag)
 ├── script.js                   ← globale Logik + eine Sektion pro Kommentarblock
-├── background-and-motion.md    ← Himmel-Hintergrund + Parallax/Animation-Logik (separat)
 ├── content.json                ← alle Texte, Bildpfade, Links
 ├── imprint.html                ← einfache statische Seite (Imprint +
 │                                  Datenschutz zusammen, siehe unten)
@@ -89,7 +87,11 @@ leichter für Til selbst nachvollziehbar/wartbar.
 │       ├── /birds-blue         bird-blue-sm.svg, bird-blue-lg.svg (section-02)
 │       ├── /drops              01–04.png
 │       ├── /scribble           scribble-sm.svg, scribble-lg.svg
-│       └── /backgrounds        cloud-stage-background.jpg, clouds.png
+│       └── /backgrounds        cloud-stage-background.jpg, clouds.webp
+│                                (ersetzt cloud.png/clouds.png aus früheren
+│                                Chat-Ständen; verkleinert auf
+│                                1200×2794px/~260KB, siehe "Hintergrund &
+│                                Motion" unten)
 ├── /components                 wiederverwendbare Bausteine, siehe unten
 └── /sections                   eine Datei pro Sektion, siehe unten
 ```
@@ -201,14 +203,20 @@ bekommt das automatisch:
 - **Scroll-Fade-In für Texte (`.fade-in-text`):** Klasse auf beliebige
   Text-Elemente setzen → startet unsichtbar + leicht geblurred (`filter:
   blur(10px)`), wird beim Reinscrollen scharf/sichtbar
-  (`transition: opacity 2s ease, filter 0.6s ease`) und beim Rausscrollen
-  (in beide Richtungen) wieder unsichtbar/unscharf. **Keine
+  (`transition: opacity 2s ease, filter 0.6s ease`). **Keine
   Positionsverschiebung** — bewusst nur opacity + filter, kein
   translateY. Erkennung läuft über einen einzigen globalen
-  `IntersectionObserver` in `script.js` (`initFadeInText()`), der bei
-  jeder Intersection-Änderung `is-visible` togglet (kein einmaliges
-  `unobserve`, damit es beim Rausscrollen auch wieder ausblendet).
-  Respektiert `prefers-reduced-motion`.
+  `IntersectionObserver` in `script.js` (`initFadeInText()`). Respektiert
+  `prefers-reduced-motion`.
+  **Update (Richtungsabhängig, ersetzt die frühere beidseitige Version):**
+  Einblenden nur beim Runterscrollen, Ausblenden nur beim Hochscrollen.
+  Konkret: Runterscrollen + Element kommt in den Viewport → einblenden;
+  Runterscrollen + Element verlässt den Viewport oben → nichts tun (bleibt
+  sichtbar); Hochscrollen + Element verlässt den Viewport → ausblenden;
+  Hochscrollen + Element kommt von oben in den Viewport → nichts tun (kein
+  erneutes Einblenden beim Zurückscrollen). Scroll-Richtung wird über
+  `window.scrollY`-Vergleich zwischen zwei Observer-Callbacks bestimmt
+  (kein Layout-Read, unproblematisch im Callback).
   **Für neue Sektionen:** Klasse `fade-in-text` auf die Text-Elemente
   setzen, danach einmal `initFadeInText(containerElement)` aufrufen
   (wichtig bei dynamisch aus `content.json` gerendertem Content — muss
@@ -752,18 +760,83 @@ rechtlich riskant).
 Zwei getrennte Hintergrund-Systeme, nicht verwechseln:
 
 1. **Stage-Hintergrund** (section-01 only) — eigenes Bild/Asset, gehört
-   zur Sektion selbst, kein Bezug zu `background-and-motion.md`.
-2. **Durchgehender, seitenweiter Himmel-Hintergrund** — startet ab
-   section-02 (jetzt fertig), zieht sich über alle weiteren Sektionen.
-   Wird **separat** in `background-and-motion.md` behandelt (Verlauf,
-   Textur, Parallax-/Animationsverhalten). **Noch offen** — aktuell nutzt
-   `styles.css` weiterhin einfaches Weiß (`--color-white`) als
-   Platzhalter über die ganze Seite, bis diese Logik kommt.
+   zur Sektion selbst, unabhängig vom sitewide System unten.
+2. **Durchgehender, seitenweiter Himmel-Hintergrund** (Cloud + Footer) —
+   ✅ **fertig**, siehe Details unten.
 
-**Bewusste Reihenfolge:** Erst alle 7 Sektionen strukturell bauen (Layout,
-Content, Responsive), das durchgehende Hintergrund-System zuletzt. Til
-möchte die Struktur sichtbar haben, bevor der seitenweite Hintergrund
-reinkommt.
+### Details sitewide Hintergrund (Cloud + Footer)
+
+Zwei Bild-Ebenen im `.page-background`-Layer (`index.html`), CSS in
+`styles.css` (Kommentarblock "Sitewide Himmel-Hintergrund"),
+Positionierung/Parallax im konsolidierten Loop in `script.js` (siehe
+"Parallax-Konsolidierung" unten).
+
+- **Cloud** (`assets/visuals/backgrounds/clouds.webp`): Startet bei
+  `CLOUD_ANCHOR_FRACTION = 1.2` (120% der section-02-Höhe, dynamisch aus
+  `offsetTop + offsetHeight` berechnet — nicht der feste Figma-Pixelwert,
+  da die reale Seite nie exakt die Figma-Canvas-Höhe hat). Parallax-Faktor
+  `0.5` (scrollt halb so schnell wie die Seite), berechnet aus
+  `window.scrollY` (kein `getBoundingClientRect()`, siehe
+  Performance-Abschnitt unten). Kein CSS-Fade/Maske nötig — das WebP hat
+  bereits einen eingebauten Alpha-Fade oben UND unten (Transparenz-Kanal
+  fädet im Asset selbst weich von 0 auf 255 über die ersten ~500px von
+  4658px Original-Höhe). Kein Opacity-Fade-in (war zwischenzeitlich per
+  `IntersectionObserver` geplant, aber wegen Timing-Problemen — Observer
+  wurde vor dem `eatme:content-ready`-Rendering aufgesetzt, erste
+  Intersection-Messung fiel dadurch fälschlich früh "true" aus — wieder
+  verworfen). Cloud ist permanent sichtbar, ihre Sichtbarkeit ergibt sich
+  rein aus der Scroll-Position (sitzt initial ohnehin außerhalb des
+  Viewports).
+- **Footer** (`assets/images/eatme-image-footer.jpg`): `position:
+  absolute; bottom: 0` im Hintergrund-Layer → hängt immer exakt am
+  Dokumentende, unabhängig von der realen Seitenhöhe. Kein Parallax
+  ("scrollt normal"). Höhe eingefroren ab Referenzbreite 1080px (`height:
+  min(117.2vw, 1266px)` — 1080 × 1.172, das Bildverhältnis), damit das
+  Bild auf großen Screens nicht endlos höher wächst (sonst rutschen die
+  Gesichter auf dem Bandfoto aus dem sichtbaren Bereich, da die Box vom
+  unteren Rand aus nach oben wächst). `object-position: center 36%` hält
+  den sichtbaren Ausschnitt über den gesamten Crop-Bereich (1080px bis
+  Ultra-Wide) auf den Gesichtern (sitzen bei ca. 40–49% der Bildhöhe,
+  nicht im oberen Drittel, wie zunächst angenommen). Bekommt eine echte
+  `mask-image` für den weichen oberen Rand (JPG hat keinen Alpha-Kanal,
+  im Gegensatz zur Cloud) — unproblematisch für Performance, da der
+  Footer nie animiert wird.
+- **Mobile (≤768px):** Beide Bilder frieren ihre Breite auf `768px` ein
+  (kein weiteres Schrumpfen), `.page-background` hat `overflow: hidden` →
+  werden links/rechts angeschnitten statt zu skalieren. Footer-Höhe hier
+  explizit `900px` (768 × 1.172).
+
+### Parallax-Konsolidierung (Performance)
+
+Alle Scroll-Parallax-Effekte der Seite (Stage-Wolken/-Vögel,
+section-02-Vögel, section-03-Bandfotos, section-05-Tropfen, jetzt auch
+die sitewide Cloud) laufen in **einem einzigen** `requestAnimationFrame`-
+Loop am Ende von `script.js` — nicht mehr in fünf unabhängigen Loops wie
+in früheren Sektions-Ständen. Grund: jeder einzelne Loop rief für sich
+`getBoundingClientRect()` auf und schrieb direkt danach ein
+`style.transform` — mehrere solcher Lese-Schreib-Paare **innerhalb
+desselben Frames** zwingen den Browser wiederholt zu synchronen
+Layout-Reflows. Chrome verkraftet das gut, **Safari deutlich schlechter**
+(sichtbares Ruckeln dort, obwohl Chrome smooth blieb). Der konsolidierte
+Loop liest zuerst **alle** Positionen (`getBoundingClientRect()` je
+Sektion + `window.scrollY` für die Cloud), schreibt danach **alle**
+Transforms — pro Frame maximal ein Layout-Read-Durchgang, keine
+verschachtelten Lese-/Schreibzyklen mehr.
+
+Weitere Perf-Maßnahmen aus demselben Anlass:
+- Tropfen-Parallax überspringt unsichtbare Elemente (`el.offsetParent ===
+  null`, greift für die jeweils andere Breakpoint-Variante).
+- `.bg-cloud`/`.bg-footer` haben `contain: layout paint` +
+  `-webkit-backface-visibility: hidden` als zusätzliche
+  Compositing-Hints.
+- Cloud-Asset von PNG (1,24MB, 2000×4658px) auf WebP (260KB,
+  1200×2794px) verkleinert — Dateiformat/-größe wirkt sich vor allem auf
+  die Ladezeit aus, die **Pixel-Auflösung** ist der eigentliche Hebel für
+  die Compositing-Kosten pro Frame.
+
+**Bewusste Reihenfolge (historisch):** Erst alle 7 Sektionen strukturell
+gebaut (Layout, Content, Responsive), das durchgehende Hintergrund-System
+zuletzt.
 
 ## Content-Struktur
 
@@ -783,7 +856,7 @@ schon da.
 
 - Ein Chat pro Sektion (in diesem Projekt), um Kontext klein zu halten
 - Jeder Sektions-Chat referenziert: `tokens.css`, `content.json`,
-  `styles.css` (globale Konventionen!), `background-and-motion.md`,
+  `styles.css` (globale Konventionen, inkl. sitewide Hintergrund),
   ggf. betroffene `/components`-Dateien
 - Screenshot-Vergleich als Feedback-Loop: bauen → Screenshot → neben
   Referenzbild legen → Abweichungen benennen (konkrete Werte statt

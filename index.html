@@ -29,12 +29,20 @@
 <body>
 
   <!--
-    Durchgehender Himmel-Hintergrund über alle Sektionen.
-    Verhalten (Verlauf, Textur, evtl. Parallax) wird separat in
-    background-and-motion.md spezifiziert und hier per CSS/JS befüllt,
-    sobald das geklärt ist. Liegt hinter allen Sektionen (z-index).
+    Durchgehender Himmel-Hintergrund über alle Sektionen: Cloud (startet
+    unterhalb section-02, langsamerer Parallax) + Footer-Bandfoto (hängt
+    am Dokumentende, kein Parallax). Details/Begründung siehe styles.css
+    (Kommentarblock "Sitewide Himmel-Hintergrund") und script.js
+    (Positionierung/Parallax-Loop). Liegt hinter allen Sektionen (z-index).
   -->
-  <div class="page-background" aria-hidden="true"></div>
+  <div class="page-background" aria-hidden="true">
+    <div class="bg-cloud">
+      <img src="assets/visuals/backgrounds/clouds.webp" alt="" aria-hidden="true" />
+    </div>
+    <div class="bg-footer">
+      <img src="assets/images/eatme-image-footer.jpg" alt="" aria-hidden="true" />
+    </div>
+  </div>
 
   <!--
     Wiederkehrende Navigation (Logo, Social-Links, Sound-Toggle später).
@@ -311,44 +319,9 @@
     </section>
 
     <section id="section-07-footer" class="section">
-      <div class="footer-col-left">
-        <!--
-          Songtext-Modul: identisch zu section-03/05 (siehe dort), komplett
-          klickbar (siehe components/eatme-lyrics.css für Styling +
-          verstärkten Blur). href wird zur Laufzeit aus content.json
-          (lyrics.song_link) gesetzt, siehe script.js. Breite hier per
-          Sektions-CSS auf width:100%/max-width:320px überschrieben (Figma),
-          siehe sections/section-07-footer.css.
-        -->
-        <a href="#" class="eatme-lyrics-link" id="section-07-lyrics-link" aria-label="Song abspielen">
-          <div class="lyrics-lines text-lyrics" id="section-07-lyrics-lines">
-            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
-          </div>
-          <div class="song-link">
-            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
-            </svg>
-            <span class="text-copy-xs" id="section-07-song-title"></span>
-          </div>
-        </a>
-        <img class="footer-scribble-sm" src="assets/visuals/scribble/scribble-sm.svg" alt="" />
-      </div>
-
-      <!--
-        Booking-CTA: reiner Mailto-Link, Text + href kommen aus content.json
-        (cta_text/cta_link), siehe script.js (renderSection07() +
-        renderFooterCta()). Steht im Markup bewusst zwischen den beiden
-        Spalten -- Layout bleibt auf allen Breiten horizontal (kein
-        Mobile-Stack), der CTA ist per CSS absolut zentriert
-        (bottom:50vh, siehe sections/section-07-footer.css für die
-        Begründung). Der eigentliche Text (inkl. Umbruch-<br> nach dem
-        ersten Wort für Mobile) wird zur Laufzeit per JS eingefügt.
-      -->
-      <a href="#" class="footer-cta text-highlight" id="section-07-cta"></a>
-
-      <div class="footer-col-right">
-        <img class="footer-scribble-lg" src="assets/visuals/scribble/scribble-lg.svg" alt="" />
-      </div>
+      <!-- Songzeile, Booking-CTA, Kontakt: folgt in einem eigenen
+           Sektions-Chat. Die eatme-footer-Pill unten ist bereits final,
+           siehe components/eatme-footer.css. -->
 
       <!-- component: eatme-footer -->
       <nav class="eatme-footer" aria-label="Footer">

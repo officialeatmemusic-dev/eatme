@@ -31,15 +31,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 // müssen dafür nichts Eigenes bauen: einfach die Klasse .fade-in-text auf
 // die gewünschten Text-Elemente setzen und initFadeInText() nach dem
 // Einfügen neuer Elemente (z.B. nach dynamischem content.json-Rendering)
-// aufrufen. Text blendet beim Reinscrollen ein UND beim Rausscrollen
-// (in beide Richtungen) wieder aus -> is-visible wird bei jeder
-// Intersection-Änderung neu gesetzt, kein einmaliges unobserve mehr.
+// aufrufen.
+//
+// Richtungsabhängig (Update, ersetzt die frühere beidseitige Version):
+// - Runterscrollen + Element kommt in den Viewport -> einblenden.
+// - Runterscrollen + Element verlässt den Viewport oben -> NICHTS tun
+//   (bleibt sichtbar, kein Ausfaden während man weiter runterscrollt).
+// - Hochscrollen + Element verlässt den Viewport -> ausblenden.
+// - Hochscrollen + Element kommt (von oben) in den Viewport -> NICHTS
+//   tun (kein erneutes Einblenden während man zurückscrollt).
+// window.scrollY ist ein reiner Scroll-Offset-Wert, kein Layout-Read --
+// unproblematisch hier im Callback (im Gegensatz zu
+// getBoundingClientRect(), siehe Parallax-Loop weiter unten).
 // ==========================================================================
+
+let fadeLastScrollY = window.scrollY;
 
 const fadeInObserver = new IntersectionObserver(
   (entries) => {
+    const currentScrollY = window.scrollY;
+    const scrollingDown = currentScrollY >= fadeLastScrollY;
+    fadeLastScrollY = currentScrollY;
+
     entries.forEach((entry) => {
-      entry.target.classList.toggle("is-visible", entry.isIntersecting);
+      if (scrollingDown && entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+      } else if (!scrollingDown && !entry.isIntersecting) {
+        entry.target.classList.remove("is-visible");
+      }
     });
   },
   { threshold: 0.15, rootMargin: "0px 0px -10% 0px" }
@@ -78,26 +97,9 @@ if (soundToggleBtn) {
   });
 }
 
-// Parallax: Wolken (Hintergrund) bewegen sich langsamer als die Vögel
-// (Vordergrund) -> Tiefeneffekt statt einer flachen Fläche. Kein
-// Scroll-Event-Listener (feuert unregelmäßig -> ruckelt), stattdessen ein
-// durchgehender rAF-Loop, der jeden Frame den exakten Wert direkt setzt.
-const stageEl = document.querySelector("#section-01-stage .stage");
-const stageBirdsEl = document.querySelector("#section-01-stage .stage-birds");
-const stageCloudEl = document.querySelector("#section-01-stage .stage-bg");
-
-if (stageEl && stageBirdsEl && stageCloudEl) {
-  const BIRDS_SPEED = 0.6; // Vordergrund: mehr Eigenbewegung
-  const CLOUD_SPEED = 0.3; // Hintergrund: deutlich träger/ruhiger
-
-  const parallaxLoop = () => {
-    const rect = stageEl.getBoundingClientRect();
-    stageBirdsEl.style.transform = `translateY(${-rect.top * (1 - BIRDS_SPEED)}px)`;
-    stageCloudEl.style.transform = `translateY(${-rect.top * (1 - CLOUD_SPEED)}px)`;
-    requestAnimationFrame(parallaxLoop);
-  };
-  requestAnimationFrame(parallaxLoop);
-}
+// Parallax: siehe der EINE konsolidierte Loop weiter unten in dieser
+// Datei ("KONSOLIDIERTER Parallax-Loop"), der Stage-, section-02-,
+// section-03-, Tropfen- und Cloud-Parallax gemeinsam behandelt.
 
 // ==========================================================================
 // section-02-text-01 — Text aus content.json rendern + subtiler Parallax
@@ -161,25 +163,8 @@ document.addEventListener("eatme:content-ready", (e) => {
   renderNav(e.detail);
 });
 
-// Subtiler Scroll-Parallax für die blauen Vögel: die größere/vordere Vogel
-// bewegt sich etwas schneller als die kleinere/hintere. Gleiches rAF-Muster
-// wie section-01 (kein Scroll-Listener, stattdessen durchgehender Loop).
-const section02El = document.querySelector("#section-02-text-01");
-const birdLgEl = document.querySelector("#section-02-text-01 .bird-blue-lg");
-const birdSmEl = document.querySelector("#section-02-text-01 .bird-blue-sm");
-
-if (section02El && birdLgEl && birdSmEl) {
-  const BIRD_LG_PARALLAX = 0.06; // vordere, größere Vogel — etwas schneller
-  const BIRD_SM_PARALLAX = 0.025; // hintere, kleinere Vogel — langsamer
-
-  const section02ParallaxLoop = () => {
-    const rect = section02El.getBoundingClientRect();
-    birdLgEl.style.transform = `translateY(${rect.top * BIRD_LG_PARALLAX}px)`;
-    birdSmEl.style.transform = `translateY(${rect.top * BIRD_SM_PARALLAX}px)`;
-    requestAnimationFrame(section02ParallaxLoop);
-  };
-  requestAnimationFrame(section02ParallaxLoop);
-}
+// Subtiler Scroll-Parallax für die blauen Vögel: siehe der EINE
+// konsolidierte Loop weiter unten in dieser Datei.
 
 // ==========================================================================
 // eatme-lyrics — gemeinsame Render-Funktion für das Songtext-Modul
@@ -254,25 +239,8 @@ document.addEventListener("eatme:content-ready", (e) => {
   renderSection03(e.detail["section-03-images"]);
 });
 
-// Subtiler Scroll-Parallax auf beide Bandfotos, bewusst UNTERSCHIEDLICHE
-// Faktoren (kein identisches Bewegungsmuster) -- gleiches rAF-Muster wie
-// section-01/section-02 (kein Scroll-Event-Listener).
-const section03El = document.querySelector("#section-03-images");
-const section03Img1El = document.querySelector("#section-03-image-01");
-const section03Img2El = document.querySelector("#section-03-image-02");
-
-if (section03El && section03Img1El && section03Img2El) {
-  const IMG1_PARALLAX = 0.05;
-  const IMG2_PARALLAX = 0.09;
-
-  const section03ParallaxLoop = () => {
-    const rect = section03El.getBoundingClientRect();
-    section03Img1El.style.transform = `translateY(${rect.top * IMG1_PARALLAX}px)`;
-    section03Img2El.style.transform = `translateY(${rect.top * IMG2_PARALLAX}px)`;
-    requestAnimationFrame(section03ParallaxLoop);
-  };
-  requestAnimationFrame(section03ParallaxLoop);
-}
+// Subtiler Scroll-Parallax auf beide Bandfotos: siehe der EINE
+// konsolidierte Loop weiter unten in dieser Datei.
 
 // ==========================================================================
 // section-04-text-02 — Fließtext (2 Absätze) aus content.json rendern.
@@ -337,34 +305,8 @@ document.addEventListener("eatme:content-ready", (e) => {
   renderSection05(e.detail["section-05-images-drops"]);
 });
 
-// Tropfen-Parallax: Faktor abhängig von der Tropfen-Größe (data-size,
-// siehe sections/section-05-images-drops.css) -- größere Tropfen (40px)
-// bewegen sich stärker/wirken näher, kleinere (24px) dezenter/wirken
-// weiter weg. Gilt für Desktop- UND Mobile-Tropfen gleichermaßen (welcher
-// Satz sichtbar ist, steuert allein das CSS über den 768px-Breakpoint).
-// Gleiches rAF-Muster wie alle übrigen Parallax-Effekte auf der Seite.
-function initDropsParallax() {
-  const section = document.querySelector("#section-05-images-drops");
-  const drops = document.querySelectorAll("#section-05-images-drops .tropfen");
-  if (!section || !drops.length) return;
-
-  const DROP_PARALLAX_BY_SIZE = {
-    "24": 0.035,
-    "40": 0.09,
-  };
-
-  const loop = () => {
-    const rect = section.getBoundingClientRect();
-    drops.forEach((el) => {
-      const factor = DROP_PARALLAX_BY_SIZE[el.dataset.size] || 0.05;
-      el.style.transform = `translateY(${rect.top * factor}px)`;
-    });
-    requestAnimationFrame(loop);
-  };
-  requestAnimationFrame(loop);
-}
-
-initDropsParallax();
+// Tropfen-Parallax: siehe der EINE konsolidierte Loop weiter unten in
+// dieser Datei.
 
 
 // ==========================================================================
@@ -1002,3 +944,111 @@ function renderFooterBar(data) {
 document.addEventListener("eatme:content-ready", (e) => {
   renderFooterBar(e.detail["section-07-footer"]);
 });
+
+// ==========================================================================
+// KONSOLIDIERTER Parallax-Loop -- ersetzt die vorher getrennten rAF-Loops
+// (Stage, section-02-Vögel, section-03-Bilder, Tropfen, Cloud).
+// Grund: jeder einzelne Loop rief für sich getBoundingClientRect() auf und
+// schrieb direkt danach einen style.transform -- mehrere solcher
+// Lese-Schreib-Paare INNERHALB DESSELBEN Frames zwingen den Browser
+// wiederholt zu synchronen Layout-Reflows (Chrome verkraftet das
+// offenbar gut, Safari deutlich schlechter -> sichtbares Ruckeln dort,
+// obwohl Chrome smooth blieb). Fix: ALLE Reads zuerst (in einem Block),
+// DANN alle Writes -- pro Frame maximal ein Layout-Read-Durchgang, keine
+// verschachtelten Lese-/Schreibzyklen mehr.
+// ==========================================================================
+
+(function () {
+  const stageEl = document.querySelector("#section-01-stage .stage");
+  const stageBirdsEl = document.querySelector("#section-01-stage .stage-birds");
+  const stageCloudEl = document.querySelector("#section-01-stage .stage-bg");
+
+  const section02El = document.querySelector("#section-02-text-01");
+  const birdLgEl = document.querySelector("#section-02-text-01 .bird-blue-lg");
+  const birdSmEl = document.querySelector("#section-02-text-01 .bird-blue-sm");
+
+  const section03El = document.querySelector("#section-03-images");
+  const section03Img1El = document.querySelector("#section-03-image-01");
+  const section03Img2El = document.querySelector("#section-03-image-02");
+
+  const section05El = document.querySelector("#section-05-images-drops");
+  const dropEls = document.querySelectorAll("#section-05-images-drops .tropfen");
+
+  const bgCloudEl = document.querySelector(".bg-cloud");
+
+  const BIRDS_SPEED = 0.6;
+  const CLOUD_SPEED = 0.3;
+  const BIRD_LG_PARALLAX = 0.06;
+  const BIRD_SM_PARALLAX = 0.025;
+  const IMG1_PARALLAX = 0.05;
+  const IMG2_PARALLAX = 0.09;
+  const DROP_PARALLAX_BY_SIZE = { "24": 0.035, "40": 0.09 };
+  const CLOUD_PARALLAX_SPEED = 0.5; // 0 = steht fest, 1 = scrollt normal
+  const CLOUD_ANCHOR_FRACTION = 1.2; // 120% der section-02-Höhe, reicht leicht in section-03 hinein. Bei Bedarf leicht anpassbar.
+
+  let cloudAnchorDocTop = 0;
+  function measureCloudAnchor() {
+    if (!bgCloudEl || !section02El) return;
+    cloudAnchorDocTop = section02El.offsetTop + section02El.offsetHeight * CLOUD_ANCHOR_FRACTION;
+    bgCloudEl.style.top = `${cloudAnchorDocTop}px`;
+  }
+
+  // Anker einmal sofort setzen (Fallback, falls Content-Ready schon
+  // gefeuert war) UND nach echtem Content-Rendering neu messen -- vorher
+  // (direkt beim Script-Start) kann section-02 noch leer/kollabiert sein,
+  // weil der Text erst async über "eatme:content-ready" eingefügt wird,
+  // was die Höhe (und damit den Anker) verfälschen würde. Kein
+  // Opacity-Fade -- die Cloud ist schlicht permanent sichtbar, ihre
+  // Sichtbarkeit ergibt sich rein aus der Scroll-Position/Dokumentfluss
+  // (sie sitzt ja erst deutlich unterhalb von section-02).
+  if (bgCloudEl && section02El) {
+    measureCloudAnchor();
+    window.addEventListener("resize", measureCloudAnchor);
+    document.addEventListener("eatme:content-ready", () => {
+      requestAnimationFrame(() => requestAnimationFrame(measureCloudAnchor));
+    });
+  }
+
+  function parallaxLoop() {
+    // ---- 1) ALLE READS ZUERST (ein Layout-Durchgang, keine Writes dazwischen) ----
+    const stageRect = stageEl ? stageEl.getBoundingClientRect() : null;
+    const section02Rect = section02El ? section02El.getBoundingClientRect() : null;
+    const section03Rect = section03El ? section03El.getBoundingClientRect() : null;
+    const section05Rect = section05El ? section05El.getBoundingClientRect() : null;
+    const scrollY = window.scrollY; // kein Layout-Read, daher hier unproblematisch
+
+    // ---- 2) ALLE WRITES DANACH (kein Read mehr bis zum nächsten Frame) ----
+    if (stageRect && stageBirdsEl && stageCloudEl) {
+      stageBirdsEl.style.transform = `translateY(${-stageRect.top * (1 - BIRDS_SPEED)}px)`;
+      stageCloudEl.style.transform = `translateY(${-stageRect.top * (1 - CLOUD_SPEED)}px)`;
+    }
+    if (section02Rect && birdLgEl && birdSmEl) {
+      birdLgEl.style.transform = `translateY(${section02Rect.top * BIRD_LG_PARALLAX}px)`;
+      birdSmEl.style.transform = `translateY(${section02Rect.top * BIRD_SM_PARALLAX}px)`;
+    }
+    if (section03Rect && section03Img1El && section03Img2El) {
+      section03Img1El.style.transform = `translateY(${section03Rect.top * IMG1_PARALLAX}px)`;
+      section03Img2El.style.transform = `translateY(${section03Rect.top * IMG2_PARALLAX}px)`;
+    }
+    if (section05Rect && dropEls.length) {
+      dropEls.forEach((el) => {
+        // offsetParent ist null, wenn das Element (oder ein Vorfahre)
+        // display:none hat -- z.B. die jeweils andere Breakpoint-Variante
+        // (Desktop-/Mobile-Tropfen-Satz, siehe section-05-images-drops.css).
+        // Unnötige Style-Writes auf unsichtbaren Elementen sparen, kleiner
+        // zusätzlicher Perf-Gewinn v.a. in Safari.
+        if (el.offsetParent === null) return;
+        const factor = DROP_PARALLAX_BY_SIZE[el.dataset.size] || 0.05;
+        el.style.transform = `translateY(${section05Rect.top * factor}px)`;
+      });
+    }
+    if (bgCloudEl) {
+      const scrollDelta = scrollY - cloudAnchorDocTop;
+      const offset = scrollDelta * (1 - CLOUD_PARALLAX_SPEED);
+      bgCloudEl.style.transform = `translate3d(-50%, ${offset}px, 0)`;
+    }
+
+    requestAnimationFrame(parallaxLoop);
+  }
+  requestAnimationFrame(parallaxLoop);
+})();
