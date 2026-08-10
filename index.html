@@ -319,9 +319,33 @@
     </section>
 
     <section id="section-07-footer" class="section">
-      <!-- Songzeile, Booking-CTA, Kontakt: folgt in einem eigenen
-           Sektions-Chat. Die eatme-footer-Pill unten ist bereits final,
-           siehe components/eatme-footer.css. -->
+      <!-- Zwei-Spalten-Grid: links eatme-lyrics + scribble-sm ("Height
+           Fill"), rechts scribble-lg (vertikal zentriert, rechtsbündig).
+           Mittig absolut zentrierter Booking-CTA. eatme-footer-Pille
+           unten, absolut positioniert. Details siehe ARCHITECTURE.md
+           ("Details section-07-footer") und sections/section-07-footer.css. -->
+      <div class="footer-col-left">
+        <!-- component: eatme-lyrics (identisches Markup wie section-03/05) -->
+        <a href="#" class="eatme-lyrics-link" id="section-07-lyrics-link" aria-label="Song abspielen">
+          <div class="lyrics-lines text-lyrics" id="section-07-lyrics-lines">
+            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+          </div>
+          <div class="song-link">
+            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
+            </svg>
+            <span class="text-copy-xs" id="section-07-song-title"></span>
+          </div>
+        </a>
+        <img class="footer-scribble-sm" src="assets/visuals/scribble/scribble-sm.svg" alt="" aria-hidden="true" />
+      </div>
+      <div class="footer-col-right">
+        <img class="footer-scribble-lg" src="assets/visuals/scribble/scribble-lg.svg" alt="" aria-hidden="true" />
+      </div>
+
+      <!-- Booking-CTA: Text + Umbruch nach dem ersten Wort wird zur
+           Laufzeit über renderFooterCta() in script.js eingefügt. -->
+      <a href="#" class="footer-cta text-copy-l" id="section-07-cta"></a>
 
       <!-- component: eatme-footer -->
       <nav class="eatme-footer" aria-label="Footer">
