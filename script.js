@@ -1001,9 +1001,28 @@ document.addEventListener("eatme:content-ready", (e) => {
   // Opacity-Fade -- die Cloud ist schlicht permanent sichtbar, ihre
   // Sichtbarkeit ergibt sich rein aus der Scroll-Position/Dokumentfluss
   // (sie sitzt ja erst deutlich unterhalb von section-02).
+  //
+  // WICHTIG (Safari-Fix): Safari feuert "resize"-Events, wenn beim
+  // Scrollen die Adressleiste/Toolbar ein-/ausblendet -- KEINE echte
+  // Breiten-/Layout-Aenderung, nur die sichtbare Viewport-Hoehe aendert
+  // sich kurzzeitig. Ein naiver resize-Listener wuerde dadurch MITTEN
+  // IM SCROLLEN wiederholt offsetTop/offsetHeight neu auslesen
+  // (erzwingt synchrones Layout) UND bgCloudEl.style.top ueberschreiben
+  // -- das kollidiert mit dem laufenden Parallax-Transform und erzeugt
+  // genau das gemeldete Springen/kurze Verschwinden der Cloud in Safari.
+  // Fix: nur auf echte Breiten-Aenderungen reagieren (Rotation,
+  // Fenster-Resize), Hoehen-Aenderungen durch die Safari-Toolbar
+  // ignorieren.
+  let lastViewportWidth = window.innerWidth;
+  function handleResize() {
+    if (window.innerWidth === lastViewportWidth) return; // nur Hoehe geaendert (Safari-Toolbar) -> ignorieren
+    lastViewportWidth = window.innerWidth;
+    measureCloudAnchor();
+  }
+
   if (bgCloudEl && section02El) {
     measureCloudAnchor();
-    window.addEventListener("resize", measureCloudAnchor);
+    window.addEventListener("resize", handleResize);
     document.addEventListener("eatme:content-ready", () => {
       requestAnimationFrame(() => requestAnimationFrame(measureCloudAnchor));
     });
