@@ -1262,15 +1262,20 @@ const BG_CLOUD_PARAMS = {
 };
 
 const bgCloudCanvas = document.getElementById("bg-cloud-canvas");
-// renderScale 0.45 (weiter runter von 0.6, siehe Chat-Feedback "ruckelt
-// immer noch"): der Canvas deckt den kompletten Viewport ab und wird
-// JEDEN Frame mit mehreren verschachtelten 6-Oktaven-fBm-Durchlaeufen neu
-// gerechnet -- bei voller Aufloesung (dpr x 2) ist das auf schwaecheren
-// GPUs/mobile Safari spuerbar teuer (siehe Chat-Feedback: "ruckelt immer
-// noch ein wenig"). 45% interne Aufloesung, per CSS wieder hochskaliert,
-// ist bei einer weichen, unscharfen Wolkentextur optisch praktisch nicht
-// unterscheidbar, senkt die Pixel-Anzahl pro Frame aber deutlich.
-const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PARAMS, true, 0.45) : null;
+// renderScale zurueck auf volle Aufloesung (1): Til testet auf einem
+// MacBook Pro M1, dessen GPU einen einzelnen Fullscreen-Noise-Shader
+// muehelos in voller Aufloesung schafft -- die vorherige Reduktion (0.45)
+// basierte auf einer GPU-Last-Theorie, die durch Tils praezisere
+// Beobachtung widerlegt wird: NUR die Wolken-Bewegung selbst wirkt
+// ruckelig, alle anderen JS-Parallax-Ebenen (selber rAF-Loop, selbes
+// scrollY) bleiben butterweich. Waere es ein Framerate-/Timing-Problem,
+// wuerde das gleichermaessig ALLES betreffen. Sehr wahrscheinlicher Grund
+// stattdessen: bei niedriger interner Aufloesung + kontinuierlicher
+// Scroll-Bewegung entsteht ein sichtbar "gestufter"/ruckeliger Look rein
+// durchs grobe Pixelraster -- unabhaengig von der tatsaechlichen
+// Framerate. Falls sich das jetzt als Ursache bestaetigt, koennen wir bei
+// Bedarf einen Mittelweg (z.B. 0.75) fuer schwaechere Geraete finden.
+const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PARAMS, true, 1) : null;
 
 // ==========================================================================
 // KONSOLIDIERTER Parallax-Loop -- ersetzt die vorher getrennten rAF-Loops
