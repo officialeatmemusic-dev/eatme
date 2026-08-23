@@ -21,19 +21,27 @@
   overflow: hidden;
 }
 
-/* Hintergrund-Ebene: Wolken. Größer als der Rahmen (Overhang), damit beim
-   langsameren Parallax-Versatz keine Lücke am Rand sichtbar wird.
-   Nebenwirkung: Bild ist dadurch etwas stärker gezoomt/beschnitten als der
-   ursprüngliche 1:1-Crop aus Figma — bei Bedarf über top/height feintunen. */
+/* Hintergrund-Ebene: Wolken, als WebGL-Canvas gerendert (siehe script.js,
+   initCloudShader()) statt als Bitmap. WICHTIG: kein Overhang/Crop-Trick
+   mehr nötig und KEIN transform/will-change auf diesem Element — der
+   bisherige Ansatz war, ein zu großes Bild per CSS-Transform zu verschieben
+   (teuer: Safari muss die bewegte Fläche neu rastern -> Ruckeln). Jetzt
+   bleibt der Canvas als DOM-Element komplett unbewegt und exakt
+   Stage-groß; Scroll-Parallax und Drift passieren stattdessen als
+   Uniform-Werte INNERHALB des Shaders (Rauschfeld verschiebt sich, nicht
+   das Element). Dadurch: keine Layout-/Compositing-Kosten fürs Bewegen
+   einer großen Fläche, nur GPU-Fragment-Berechnung auf Canvas-Größe. */
 #section-01-stage .stage-bg {
   position: absolute;
-  top: -30%;
+  top: 0;
   left: 0;
   width: 100%;
-  height: 160%;
-  object-fit: cover;
+  height: 100%;
   display: block;
-  will-change: transform;
+  /* Fallback, falls WebGL im Browser nicht verfügbar ist (initCloudShader()
+     gibt dann null zurück und zeichnet nichts) -- ohne das wäre der Canvas
+     einfach leer/schwarz. Gleiche Farben wie der Shader selbst nutzt. */
+  background: linear-gradient(180deg, var(--gradient-sky-top), var(--gradient-sky-bottom));
 }
 
 /* Vordergrund-Ebene: Vogelschwarm-Animation (birds-stage.html), transparenter
