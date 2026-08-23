@@ -1329,16 +1329,9 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   // einen Wert weiter anpassen, falls noch mehr/weniger gewuenscht.
   const CLOUD_DRIFT_STRENGTH = 1.4;
   const CLOUD_FADE_DISTANCE_PX = 400; // Strecke, über die die Cloud weich ein-/ausblendet
-  // Glaettungs-Faktor fuer die Drift-Bewegung (0-1): faengt Spruenge ab,
-  // die entstehen, wenn Safari beim schnellen Momentum-/Fling-Scrollen
-  // mehrere Frames Distanz zusammenfasst, bevor rAF wieder drankommt.
-  // 0.2 = folgt zuegig, aber nicht mehr hart/instant.
-  const CLOUD_SMOOTHING = 0.2;
 
   let cloudFadeInDocTop = 0;
   let cloudFadeOutDocTop = 0;
-  let currentCloudOffset = 0;
-  let cloudOffsetInitialized = false;
   function measureCloudAnchor() {
     if (!bgCloudEl) return;
     // Fade-IN beginnt, wenn section-03 von unten im Viewport auftaucht
@@ -1455,33 +1448,8 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
         // Drift-Staerke bezieht sich auf den Fade-IN-Anker (dort beginnt
         // die Bewegung "bei 0"), nicht auf den alten section-02-Anker.
         const scrollDelta = scrollY - cloudFadeInDocTop;
-        const targetOffset = scrollDelta * CLOUD_DRIFT_STRENGTH;
-
-        if (!cloudOffsetInitialized) {
-          // Beim ersten aktiven Frame direkt auf das Ziel springen (kein
-          // Reinlaufen von 0 aus) -- das Fade-in uebernimmt ohnehin schon
-          // die weiche Einfuehrung, die Glaettung unten ist nur fuer
-          // Spruenge WAEHREND des Scrollens gedacht, nicht fuers
-          // Sichtbarwerden.
-          currentCloudOffset = targetOffset;
-          cloudOffsetInitialized = true;
-        } else {
-          // Exponentielle Glaettung (Lerp) statt hartem Uebernehmen des
-          // Zielwerts: Safari kann bei schnellem Momentum-/Fling-Scrollen
-          // mehrere Frames Distanz zusammenfassen, bevor rAF ueberhaupt
-          // wieder drankommt (Compositor-Thread laeuft unabhaengig vom
-          // Main-Thread) -- der naechste targetOffset kann dadurch weit
-          // vom vorherigen abweichen und wuerde sonst als sichtbarer
-          // Sprung gerendert. Die Glaettung laesst currentCloudOffset
-          // stattdessen ueber ein paar Frames sanft hinterherziehen.
-          // CLOUD_SMOOTHING hoeher = folgt schneller/direkter (mehr
-          // Sprung-Risiko), niedriger = weicher (aber minimal "hinterher").
-          currentCloudOffset += (targetOffset - currentCloudOffset) * CLOUD_SMOOTHING;
-        }
-
-        bgCloudShader.render(currentCloudOffset);
-      } else {
-        cloudOffsetInitialized = false;
+        const offset = scrollDelta * CLOUD_DRIFT_STRENGTH;
+        bgCloudShader.render(offset);
       }
     }
 
