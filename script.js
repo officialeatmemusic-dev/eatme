@@ -1303,6 +1303,15 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
 
   const section07El = document.querySelector("#section-07-footer");
 
+  // Einmalig feststellen, ob der Browser native CSS-Scroll-Timelines
+  // beherrscht (siehe @supports-Block in styles.css) -- wenn ja,
+  // uebernimmt CSS die .bg-cloud-Opacity komplett off-main-thread, JS
+  // schreibt dann bewusst nichts mehr in dieses Property (siehe Loop
+  // unten). CSS.supports ist eine reine Capability-Abfrage, kein
+  // Layout-Read, daher unproblematisch hier oben aufzurufen.
+  const supportsNativeCloudFade =
+    typeof CSS !== "undefined" && CSS.supports && CSS.supports("animation-timeline: view()");
+
   const bgCloudEl = document.querySelector(".bg-cloud");
 
   const BIRDS_SPEED = 0.6;
@@ -1320,9 +1329,16 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   // einen Wert weiter anpassen, falls noch mehr/weniger gewuenscht.
   const CLOUD_DRIFT_STRENGTH = 1.4;
   const CLOUD_FADE_DISTANCE_PX = 400; // Strecke, über die die Cloud weich ein-/ausblendet
+  // Glaettungs-Faktor fuer die Drift-Bewegung (0-1): faengt Spruenge ab,
+  // die entstehen, wenn Safari beim schnellen Momentum-/Fling-Scrollen
+  // mehrere Frames Distanz zusammenfasst, bevor rAF wieder drankommt.
+  // 0.2 = folgt zuegig, aber nicht mehr hart/instant.
+  const CLOUD_SMOOTHING = 0.2;
 
   let cloudFadeInDocTop = 0;
   let cloudFadeOutDocTop = 0;
+  let currentCloudOffset = 0;
+  let cloudOffsetInitialized = false;
   function measureCloudAnchor() {
     if (!bgCloudEl) return;
     // Fade-IN beginnt, wenn section-03 von unten im Viewport auftaucht
@@ -1403,29 +1419,69 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     }
     if (bgCloudShader && bgCloudEl) {
       // .bg-cloud ist jetzt position:fixed (siehe styles.css) und daher
-      // IMMER im Viewport -- Sichtbarkeit wird rein ueber opacity
-      // gesteuert. Fade-IN beginnt, wenn section-03 von unten auftaucht;
-      // Fade-OUT beginnt symmetrisch dazu, wenn die Footer-Sektion von
-      // unten auftaucht (siehe Chat-Feedback).
+      // IMMER im Viewport -- Sichtbarkeit wird ueber opacity gesteuert.
+      // Fade-IN beginnt, wenn section-03 von unten auftaucht; Fade-OUT
+      // beginnt symmetrisch dazu, wenn die Footer-Sektion von unten
+      // auftaucht.
+      //
+      // WICHTIG: Wenn der Browser native CSS-Scroll-Timelines unterstuetzt
+      // (siehe @supports-Block in styles.css, Safari 26+/Chrome 115+),
+      // uebernimmt CSS die komplette Opacity-Steuerung -- off-main-thread,
+      // synchron zum Scrollen, ohne die JS/rAF-Main-Thread-Verzoegerung,
+      // die auf Safari beim schnellen Momentum-Scrollen (Fling vom Footer
+      // nach oben) das gemeldete Springen/Ruckeln verursacht hat. JS
+      // schreibt in diesem Fall bewusst KEIN eigenes .style.opacity mehr
+      // (sonst wuerden sich CSS und JS gegenseitig ueberschreiben).
+      // fadeInProgress/fadeOutProgress dienen dann nur noch als grobe
+      // JS-interne Heuristik dafuer, ob der teure Shader-Render-Call
+      // ueberhaupt noetig ist (GPU sparen) -- muss dafuer nicht
+      // pixelgenau sein.
       const fadeInProgress = Math.min(Math.max((scrollY - cloudFadeInDocTop) / CLOUD_FADE_DISTANCE_PX, 0), 1);
       const fadeOutProgress = Math.min(Math.max((scrollY - cloudFadeOutDocTop) / CLOUD_FADE_DISTANCE_PX, 0), 1);
       const opacity = fadeInProgress * (1 - fadeOutProgress);
       const isActive = opacity > 0; // ausserhalb davon: gar nicht rendern, GPU sparen
 
-      // opacity IMMER schreiben (nicht nur wenn isActive), damit der Wert
-      // beim Unsichtbarwerden nicht auf dem letzten Stand einfriert --
-      // die kurze CSS-Transition (siehe styles.css) faengt zusaetzlich
-      // ab, falls Safari beim schnellen Momentum-Scrollen (z.B. Fling
-      // vom Footer nach oben) mehrere Frames Scroll-Distanz in einem
-      // rAF-Tick zusammenfasst und der Wert dadurch springt.
-      bgCloudEl.style.opacity = opacity;
+      if (!supportsNativeCloudFade) {
+        // Fallback fuer Browser ohne Scroll-Timeline-Support (z.B. aktuell
+        // Firefox stable): opacity IMMER schreiben (nicht nur wenn
+        // isActive), damit der Wert beim Unsichtbarwerden nicht auf dem
+        // letzten Stand einfriert -- die kurze CSS-Transition (siehe
+        // styles.css) faengt zusaetzlich ab, falls doch mal ein groesserer
+        // Sprung zwischen zwei Frames passiert.
+        bgCloudEl.style.opacity = opacity;
+      }
 
       if (isActive) {
         // Drift-Staerke bezieht sich auf den Fade-IN-Anker (dort beginnt
         // die Bewegung "bei 0"), nicht auf den alten section-02-Anker.
         const scrollDelta = scrollY - cloudFadeInDocTop;
-        const offset = scrollDelta * CLOUD_DRIFT_STRENGTH;
-        bgCloudShader.render(offset);
+        const targetOffset = scrollDelta * CLOUD_DRIFT_STRENGTH;
+
+        if (!cloudOffsetInitialized) {
+          // Beim ersten aktiven Frame direkt auf das Ziel springen (kein
+          // Reinlaufen von 0 aus) -- das Fade-in uebernimmt ohnehin schon
+          // die weiche Einfuehrung, die Glaettung unten ist nur fuer
+          // Spruenge WAEHREND des Scrollens gedacht, nicht fuers
+          // Sichtbarwerden.
+          currentCloudOffset = targetOffset;
+          cloudOffsetInitialized = true;
+        } else {
+          // Exponentielle Glaettung (Lerp) statt hartem Uebernehmen des
+          // Zielwerts: Safari kann bei schnellem Momentum-/Fling-Scrollen
+          // mehrere Frames Distanz zusammenfassen, bevor rAF ueberhaupt
+          // wieder drankommt (Compositor-Thread laeuft unabhaengig vom
+          // Main-Thread) -- der naechste targetOffset kann dadurch weit
+          // vom vorherigen abweichen und wuerde sonst als sichtbarer
+          // Sprung gerendert. Die Glaettung laesst currentCloudOffset
+          // stattdessen ueber ein paar Frames sanft hinterherziehen.
+          // CLOUD_SMOOTHING hoeher = folgt schneller/direkter (mehr
+          // Sprung-Risiko), niedriger = weicher (aber minimal "hinterher").
+          currentCloudOffset += (targetOffset - currentCloudOffset) * CLOUD_SMOOTHING;
+        }
+
+        bgCloudShader.render(currentCloudOffset);
+      } else {
+        cloudOffsetInitialized = false;
       }
     }
 
