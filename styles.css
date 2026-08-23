@@ -167,6 +167,15 @@ body {
   z-index: 0;
   pointer-events: none;
   opacity: 0;
+  /* TEST (siehe Chat): explizite Layer-Promotion. Safari behandelt
+     position:fixed-Elemente mit staendig wechselndem Inhalt (unser Canvas
+     wird jeden Frame per WebGL neu gezeichnet) manchmal nicht als eigene
+     Compositor-Ebene und rendert sie beim Scrollen synchron mit dem Rest
+     mit -- ein bekanntes WebKit-Verhalten, das Chrome von sich aus
+     aggressiver optimiert. translateZ(0) zwingt Safari, dem Element eine
+     eigene GPU-Ebene zu geben. */
+  transform: translateZ(0);
+  will-change: transform;
   /* Fallback fuer Browser ohne CSS-Scroll-Timeline-Support (siehe
      @supports-Block unten) -- dort wird die Opacity per JS/rAF gesetzt
      (parallaxLoop() in script.js), inkl. dieser kurzen Transition als

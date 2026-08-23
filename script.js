@@ -1329,9 +1329,8 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   // Wie stark die Cloud dem normalen Scroll folgt: 0 = steht komplett
   // still, 1 = bewegt sich exakt wie ein normales, nicht-parallaxtes
   // Element, >1 = bewegt sich sogar staerker/schneller als der Rest der
-  // Seite. War 0.5, dann 0.85, jetzt nochmal deutlich hoch auf 1.4 (siehe
-  // Chat-Feedback: "koennen noch viel mehr mitscrollen"). Einfach diesen
-  // einen Wert weiter anpassen, falls noch mehr/weniger gewuenscht.
+  // Seite. Test mit 0.4 hat das Ruckeln NICHT behoben (siehe Chat) --
+  // war also nicht die Ursache, daher zurueck auf 1.4.
   const CLOUD_DRIFT_STRENGTH = 1.4;
   const CLOUD_FADE_DISTANCE_PX = 400; // Strecke, über die die Cloud weich ein-/ausblendet
 
