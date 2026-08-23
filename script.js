@@ -1212,6 +1212,15 @@ function initCloudShader(canvas, params, edgeFade) {
       gl.uniform1f(u.uScroll, scrollValue);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     },
+    // Fuer Canvases, die anfangs display:none sind (z.B. .bg-cloud, siehe
+    // styles.css): clientWidth/clientHeight sind waehrend display:none
+    // immer 0, der allererste resize()-Aufruf oben laeuft daher ins Leere
+    // und der Canvas bleibt auf der Browser-Default-Groesse (300x150)
+    // haengen. resync() macht das genau EINMAL wett, in dem Moment, in dem
+    // das Element tatsaechlich sichtbar wird (siehe Aufrufer im
+    // Parallax-Loop) -- kein Problem fuer die Read/Write-Konvention, da es
+    // nur bei einem echten Sichtbarkeits-Wechsel laeuft, nicht pro Frame.
+    resync: resize,
   };
 }
 
@@ -1280,30 +1289,26 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   let cloudAnchorDocTop = 0;
   function measureCloudAnchor() {
     if (!bgCloudEl || !section02El) return;
+    // Kein .style.top mehr -- .bg-cloud ist jetzt position:fixed (siehe
+    // styles.css), cloudAnchorDocTop dient nur noch als Scroll-Y-
+    // Schwellwert fuers Ein-/Ausblenden weiter unten in parallaxLoop().
     cloudAnchorDocTop = section02El.offsetTop + section02El.offsetHeight * CLOUD_ANCHOR_FRACTION;
-    bgCloudEl.style.top = `${cloudAnchorDocTop}px`;
   }
 
   // Anker einmal sofort setzen (Fallback, falls Content-Ready schon
   // gefeuert war) UND nach echtem Content-Rendering neu messen -- vorher
   // (direkt beim Script-Start) kann section-02 noch leer/kollabiert sein,
   // weil der Text erst async über "eatme:content-ready" eingefügt wird,
-  // was die Höhe (und damit den Anker) verfälschen würde. Kein
-  // Opacity-Fade -- die Cloud ist schlicht permanent sichtbar, ihre
-  // Sichtbarkeit ergibt sich rein aus der Scroll-Position/Dokumentfluss
-  // (sie sitzt ja erst deutlich unterhalb von section-02).
+  // was die Höhe (und damit den Anker) verfälschen würde.
   //
   // WICHTIG (Safari-Fix): Safari feuert "resize"-Events, wenn beim
   // Scrollen die Adressleiste/Toolbar ein-/ausblendet -- KEINE echte
   // Breiten-/Layout-Aenderung, nur die sichtbare Viewport-Hoehe aendert
   // sich kurzzeitig. Ein naiver resize-Listener wuerde dadurch MITTEN
-  // IM SCROLLEN wiederholt offsetTop/offsetHeight neu auslesen
-  // (erzwingt synchrones Layout) UND bgCloudEl.style.top ueberschreiben
-  // -- das kollidiert mit dem laufenden Parallax-Transform und erzeugt
-  // genau das gemeldete Springen/kurze Verschwinden der Cloud in Safari.
-  // Fix: nur auf echte Breiten-Aenderungen reagieren (Rotation,
-  // Fenster-Resize), Hoehen-Aenderungen durch die Safari-Toolbar
-  // ignorieren.
+  // IM SCROLLEN wiederholt offsetTop/offsetHeight neu auslesen (erzwingt
+  // synchrones Layout). Fix: nur auf echte Breiten-Aenderungen reagieren
+  // (Rotation, Fenster-Resize), Hoehen-Aenderungen durch die
+  // Safari-Toolbar ignorieren.
   let lastViewportWidth = window.innerWidth;
   function handleResize() {
     if (window.innerWidth === lastViewportWidth) return; // nur Hoehe geaendert (Safari-Toolbar) -> ignorieren
@@ -1318,6 +1323,8 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
       requestAnimationFrame(() => requestAnimationFrame(measureCloudAnchor));
     });
   }
+
+  let bgCloudWasVisible = false;
 
   function parallaxLoop() {
     // ---- 1) ALLE READS ZUERST (ein Layout-Durchgang, keine Writes dazwischen) ----
@@ -1352,13 +1359,31 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
         el.style.transform = `translateY(${section05Rect.top * factor}px)`;
       });
     }
-    if (bgCloudShader) {
-      const scrollDelta = scrollY - cloudAnchorDocTop;
-      const offset = scrollDelta * (1 - CLOUD_PARALLAX_SPEED);
-      // Gleiche Formel wie zuvor (offset), nur als Shader-Uniform statt
-      // als CSS-Transform-Write -- .bg-cloud selbst bewegt sich nie mehr
-      // (siehe styles.css), das Rauschfeld verschiebt sich stattdessen.
-      bgCloudShader.render(offset);
+    if (bgCloudShader && bgCloudEl) {
+      // .bg-cloud ist jetzt position:fixed (siehe styles.css) und daher
+      // IMMER im Viewport, wenn sichtbar -- Sichtbarkeit muss also
+      // explizit per Klasse gesteuert werden (vorher ergab sie sich von
+      // selbst aus der Dokumentposition). Gleichzeitig sparen wir uns
+      // damit den GPU-Draw-Call komplett, solange die Cloud noch gar
+      // nicht dran ist (oberhalb des Ankers).
+      const isVisible = scrollY >= cloudAnchorDocTop;
+      bgCloudEl.classList.toggle("is-visible", isVisible);
+      if (isVisible && !bgCloudWasVisible) {
+        // Erster Frame nach display:none -> block: clientWidth/Height
+        // waren bis eben 0, jetzt einmalig nachziehen (siehe resync()-
+        // Kommentar in initCloudShader()).
+        bgCloudShader.resync();
+      }
+      bgCloudWasVisible = isVisible;
+      if (isVisible) {
+        const scrollDelta = scrollY - cloudAnchorDocTop;
+        const offset = scrollDelta * (1 - CLOUD_PARALLAX_SPEED);
+        // Gleiche Formel wie zuvor (offset) -- nur treibt sie jetzt
+        // ausschliesslich den Shader an, nicht mehr zusaetzlich ein
+        // Element, das sich parallel dazu auch noch nativ mitbewegt
+        // (das war die Ursache des Ruckelns/Springens, siehe styles.css).
+        bgCloudShader.render(offset);
+      }
     }
 
     requestAnimationFrame(parallaxLoop);
