@@ -165,7 +165,18 @@ body {
   height: 100vh;
   z-index: 0;
   pointer-events: none;
-  display: none; /* Default: unsichtbar, bis parallaxLoop() .is-visible setzt */
+  /* Opacity statt display:none/block: ein harter display-Wechsel ist ein
+     Hard-Cut ohne Uebergang (siehe Chat-Feedback: "instant eingeblendet").
+     Frueher (position:absolute/document-flow) kam die Cloud ganz natuerlich
+     und graduell ins Bild, weil man buchstaeblich zu ihrer Position
+     hinscrollte -- das muss jetzt bei position:fixed explizit nachgebaut
+     werden. opacity wird darum pro Frame in parallaxLoop() gesetzt
+     (weicher Fade ueber FADE_DISTANCE_PX, siehe script.js), nicht per
+     CSS-Klasse. display:none bleibt trotzdem als Ausgangszustand, damit
+     der Canvas nicht rendert/Klicks abfaengt, bevor ueberhaupt gescrollt
+     wurde. */
+  display: none;
+  opacity: 0;
 }
 
 .bg-cloud.is-visible {

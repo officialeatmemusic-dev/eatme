@@ -1060,7 +1060,12 @@ const CLOUD_FRAGMENT_SRC = `
     vec2 p = vec2(rotated.x, rotated.y / stretchFactor) * 3.0;
 
     p.x += uTime * (uDrift / 100.0) * 0.05 + uPhase * 0.03;
-    p.y += uScroll * 0.0006 + uTime * (uRise / 100.0) * 0.02;
+    // MINUS hier (nicht Plus): beim Runterscrollen soll das Muster nach
+    // OBEN wandern (wie der Rest der Seite, nur langsamer) -- mit Plus
+    // wanderte es faelschlich nach unten (falsche Richtung, siehe
+    // Chat-Feedback).
+    p.y -= uScroll * 0.0006;
+    p.y += uTime * (uRise / 100.0) * 0.02;
 
     float persistence = mix(0.35, 0.65, uDetail / 100.0);
 
@@ -1132,7 +1137,8 @@ function readCloudColors() {
 // uebergebenen Canvas. params = feste Parameter (Coverage, Warp etc.,
 // siehe CLOUD_FRAGMENT_SRC), edgeFade = true/false (weicher Rand
 // oben/unten, nur fuer .bg-cloud gedacht).
-function initCloudShader(canvas, params, edgeFade) {
+function initCloudShader(canvas, params, edgeFade, renderScale) {
+  const scale = renderScale || 1; // < 1 = intern in niedrigerer Aufloesung rendern, CSS skaliert visuell wieder hoch
   const gl = canvas.getContext("webgl", { antialias: true, alpha: false }) ||
              canvas.getContext("experimental-webgl");
   if (!gl) {
@@ -1188,7 +1194,7 @@ function initCloudShader(canvas, params, edgeFade) {
   // erzwingen (kollidiert mit der Read-dann-Write-Konvention, siehe
   // Kommentar am konsolidierten Parallax-Loop unten).
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2) * scale;
     const width = Math.round(canvas.clientWidth * dpr);
     const height = Math.round(canvas.clientHeight * dpr);
     if (width > 0 && height > 0 && (canvas.width !== width || canvas.height !== height)) {
@@ -1243,7 +1249,14 @@ const BG_CLOUD_PARAMS = {
 };
 
 const bgCloudCanvas = document.getElementById("bg-cloud-canvas");
-const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PARAMS, true) : null;
+// renderScale 0.6: der Canvas deckt den kompletten Viewport ab und wird
+// JEDEN Frame mit mehreren verschachtelten 6-Oktaven-fBm-Durchlaeufen neu
+// gerechnet -- bei voller Aufloesung (dpr x 2) ist das auf schwaecheren
+// GPUs/mobile Safari spuerbar teuer (siehe Chat-Feedback: "ruckelt immer
+// noch ein wenig"). 60% interne Aufloesung, per CSS wieder hochskaliert,
+// ist bei einer weichen, unscharfen Wolkentextur optisch praktisch nicht
+// unterscheidbar, senkt die Pixel-Anzahl pro Frame aber deutlich.
+const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PARAMS, true, 0.6) : null;
 
 // ==========================================================================
 // KONSOLIDIERTER Parallax-Loop -- ersetzt die vorher getrennten rAF-Loops
@@ -1285,6 +1298,7 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const DROP_PARALLAX_BY_SIZE = { "24": 0.035, "40": 0.09 };
   const CLOUD_PARALLAX_SPEED = 0.5; // 0 = steht fest, 1 = scrollt normal
   const CLOUD_ANCHOR_FRACTION = 1.2; // 120% der section-02-Höhe, reicht leicht in section-03 hinein. Bei Bedarf leicht anpassbar.
+  const CLOUD_FADE_DISTANCE_PX = 400; // Strecke, über die die Cloud weich einblendet, statt hart zu poppen
 
   let cloudAnchorDocTop = 0;
   function measureCloudAnchor() {
@@ -1362,21 +1376,31 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     if (bgCloudShader && bgCloudEl) {
       // .bg-cloud ist jetzt position:fixed (siehe styles.css) und daher
       // IMMER im Viewport, wenn sichtbar -- Sichtbarkeit muss also
-      // explizit per Klasse gesteuert werden (vorher ergab sie sich von
-      // selbst aus der Dokumentposition). Gleichzeitig sparen wir uns
-      // damit den GPU-Draw-Call komplett, solange die Cloud noch gar
-      // nicht dran ist (oberhalb des Ankers).
-      const isVisible = scrollY >= cloudAnchorDocTop;
-      bgCloudEl.classList.toggle("is-visible", isVisible);
-      if (isVisible && !bgCloudWasVisible) {
+      // explizit gesteuert werden (vorher ergab sie sich von selbst aus
+      // der Dokumentposition, UND kam dabei ganz natuerlich/graduell ins
+      // Bild, weil man buchstaeblich zu ihrer Position hinscrollte).
+      //
+      // Ein reiner Boolean-Toggle (isVisible true/false) waere ein
+      // Hard-Cut -- genau das wurde als "instant eingeblendet" gemeldet.
+      // Fix: weicher Opacity-Fade ueber CLOUD_FADE_DISTANCE_PX, beginnend
+      // am selben Anker wie vorher.
+      const scrollDelta = scrollY - cloudAnchorDocTop;
+      const fadeProgress = Math.min(Math.max(scrollDelta / CLOUD_FADE_DISTANCE_PX, 0), 1);
+      const isActive = fadeProgress > 0; // ab hier ueberhaupt rendern (GPU sparen davor)
+
+      if (isActive && !bgCloudWasVisible) {
         // Erster Frame nach display:none -> block: clientWidth/Height
         // waren bis eben 0, jetzt einmalig nachziehen (siehe resync()-
         // Kommentar in initCloudShader()).
+        bgCloudEl.classList.add("is-visible");
         bgCloudShader.resync();
+      } else if (!isActive && bgCloudWasVisible) {
+        bgCloudEl.classList.remove("is-visible");
       }
-      bgCloudWasVisible = isVisible;
-      if (isVisible) {
-        const scrollDelta = scrollY - cloudAnchorDocTop;
+      bgCloudWasVisible = isActive;
+
+      if (isActive) {
+        bgCloudEl.style.opacity = fadeProgress;
         const offset = scrollDelta * (1 - CLOUD_PARALLAX_SPEED);
         // Gleiche Formel wie zuvor (offset) -- nur treibt sie jetzt
         // ausschliesslich den Shader an, nicht mehr zusaetzlich ein
