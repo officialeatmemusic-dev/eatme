@@ -29,20 +29,12 @@
 <body>
 
   <!--
-    Durchgehender Himmel-Hintergrund über alle Sektionen: Cloud (startet
-    unterhalb section-02, langsamerer Parallax) + Footer-Bandfoto (hängt
-    am Dokumentende, kein Parallax). Details/Begründung siehe styles.css
-    (Kommentarblock "Sitewide Himmel-Hintergrund") und script.js
-    (Positionierung/Parallax-Loop). Liegt hinter allen Sektionen (z-index).
+    Durchgehender Himmel-Hintergrund über alle Sektionen.
+    Verhalten (Verlauf, Textur, evtl. Parallax) wird separat in
+    background-and-motion.md spezifiziert und hier per CSS/JS befüllt,
+    sobald das geklärt ist. Liegt hinter allen Sektionen (z-index).
   -->
-  <div class="page-background" aria-hidden="true">
-    <div class="bg-cloud">
-      <img src="assets/visuals/backgrounds/clouds.webp" alt="" aria-hidden="true" />
-    </div>
-    <div class="bg-footer">
-      <img src="assets/images/eatme-image-footer.jpg" alt="" aria-hidden="true" />
-    </div>
-  </div>
+  <div class="page-background" aria-hidden="true"></div>
 
   <!--
     Wiederkehrende Navigation (Logo, Social-Links, Sound-Toggle später).
@@ -68,7 +60,7 @@
     -->
     <section id="section-01-stage" class="section">
       <div class="stage">
-        <img class="stage-bg" src="assets/visuals/backgrounds/cloud-stage-background.jpg" alt="" aria-hidden="true" />
+        <canvas class="stage-bg" id="stage-cloud-canvas" aria-hidden="true"></canvas>
         <iframe class="stage-birds" src="assets/visuals/birds-stage.html" title="" aria-hidden="true" tabindex="-1"></iframe>
       </div>
       <nav class="secondary-nav">
@@ -319,33 +311,9 @@
     </section>
 
     <section id="section-07-footer" class="section">
-      <!-- Zwei-Spalten-Grid: links eatme-lyrics + scribble-sm ("Height
-           Fill"), rechts scribble-lg (vertikal zentriert, rechtsbündig).
-           Mittig absolut zentrierter Booking-CTA. eatme-footer-Pille
-           unten, absolut positioniert. Details siehe ARCHITECTURE.md
-           ("Details section-07-footer") und sections/section-07-footer.css. -->
-      <div class="footer-col-left">
-        <!-- component: eatme-lyrics (identisches Markup wie section-03/05) -->
-        <a href="#" class="eatme-lyrics-link" id="section-07-lyrics-link" aria-label="Song abspielen">
-          <div class="lyrics-lines text-lyrics" id="section-07-lyrics-lines">
-            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
-          </div>
-          <div class="song-link">
-            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
-            </svg>
-            <span class="text-copy-xs" id="section-07-song-title"></span>
-          </div>
-        </a>
-        <img class="footer-scribble-sm" src="assets/visuals/scribble/scribble-sm.svg" alt="" aria-hidden="true" />
-      </div>
-      <div class="footer-col-right">
-        <img class="footer-scribble-lg" src="assets/visuals/scribble/scribble-lg.svg" alt="" aria-hidden="true" />
-      </div>
-
-      <!-- Booking-CTA: Text + Umbruch nach dem ersten Wort wird zur
-           Laufzeit über renderFooterCta() in script.js eingefügt. -->
-      <a href="#" class="footer-cta text-highlight" id="section-07-cta"></a>
+      <!-- Songzeile, Booking-CTA, Kontakt: folgt in einem eigenen
+           Sektions-Chat. Die eatme-footer-Pill unten ist bereits final,
+           siehe components/eatme-footer.css. -->
 
       <!-- component: eatme-footer -->
       <nav class="eatme-footer" aria-label="Footer">

@@ -17,6 +17,15 @@
   --gradient-top: #c9e1e7;
   --gradient-bottom: #60cae4;
 
+  /* Cloud-Shader (section-01-stage, siehe script.js initCloudShader()) —
+     1:1 aus dem Figma-Shader-Fill-Panel übernommen (Node 3:3664). Getrennt
+     von --gradient-top/-bottom oben, weil das andere Werte sind (die sind
+     laut Kommentar oben nicht der Himmel-Hintergrund). --color-blue wird
+     zusätzlich vom Shader als Schatten-Farbe der Wolken wiederverwendet. */
+  --color-cloud-light: #edf8ff;
+  --gradient-sky-top: #87c8d7;
+  --gradient-sky-bottom: #fbfdfe;
+
   /* Button/Footer-Gradient — NICHT der Himmel-Hintergrund (der wird separat
      in background-and-motion.md behandelt). Direkt aus Figma-Style übernommen,
      inkl. eigener Opacity-Werte und Farb-Stop bei 26.93%. */
