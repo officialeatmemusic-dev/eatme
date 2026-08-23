@@ -1144,7 +1144,12 @@ function readCloudColors() {
 // oben/unten, nur fuer .bg-cloud gedacht).
 function initCloudShader(canvas, params, edgeFade, renderScale) {
   const scale = renderScale || 1; // < 1 = intern in niedrigerer Aufloesung rendern, CSS skaliert visuell wieder hoch
-  const gl = canvas.getContext("webgl", { antialias: true, alpha: false }) ||
+  // antialias:false -- wir zeichnen nur EIN bildschirmfuellendes Rechteck,
+  // es gibt keine internen Polygonkanten zu glaetten. MSAA/Supersampling
+  // kostet hier nur zusaetzliche Rechenzeit ohne sichtbaren Nutzen (im
+  // Gegensatz zu einer Aufloesungs-Reduktion aendert das NICHTS am
+  // sichtbaren Detailgrad).
+  const gl = canvas.getContext("webgl", { antialias: false, alpha: false }) ||
              canvas.getContext("experimental-webgl");
   if (!gl) {
     console.warn("WebGL nicht verfuegbar -- Cloud-Shader wird uebersprungen (CSS-Fallback greift, siehe styles.css).");
@@ -1194,11 +1199,18 @@ function initCloudShader(canvas, params, edgeFade, renderScale) {
   gl.uniform1f(u.uRise, params.rise);
   gl.uniform1f(u.uEdgeFade, edgeFade ? 1.0 : 0.0);
 
-  // Resize NUR bei echtem resize-Event (nicht pro Frame!) -- ein Read von
-  // clientWidth/clientHeight in jedem rAF-Tick wuerde einen Layout-Read
-  // erzwingen (kollidiert mit der Read-dann-Write-Konvention, siehe
-  // Kommentar am konsolidierten Parallax-Loop unten).
-  function resize() {
+  // Resize NUR bei echten Breiten-Aenderungen (nicht pro Frame, und NICHT
+  // bei reinen Hoehen-Aenderungen) -- Safari feuert "resize"-Events, wenn
+  // beim Scrollen die Adressleiste ein-/ausblendet (keine echte Layout-
+  // Aenderung, nur die sichtbare Viewport-Hoehe aendert sich kurzzeitig).
+  // Ohne diese Absicherung wuerde JEDES Scrollen auf iOS Safari hier
+  // wiederholt clientWidth/clientHeight auslesen (erzwingt synchrones
+  // Layout) -- exakt dasselbe Problem, das handleResize() weiter unten
+  // fuer den Anker bereits kennt und abfaengt, hier aber bisher NICHT
+  // abgesichert war. Sehr wahrscheinliche Teilursache fuers gemeldete
+  // Restruckeln.
+  let lastCanvasViewportWidth = window.innerWidth;
+  function doResize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2) * scale;
     const width = Math.round(canvas.clientWidth * dpr);
     const height = Math.round(canvas.clientHeight * dpr);
@@ -1209,8 +1221,13 @@ function initCloudShader(canvas, params, edgeFade, renderScale) {
       gl.uniform2f(u.uResolution, canvas.width, canvas.height);
     }
   }
+  function resize() {
+    if (window.innerWidth === lastCanvasViewportWidth) return; // nur Hoehe geaendert (Safari-Toolbar) -> ignorieren
+    lastCanvasViewportWidth = window.innerWidth;
+    doResize();
+  }
   window.addEventListener("resize", resize);
-  resize();
+  doResize(); // initiale Groesse IMMER setzen, unabhaengig vom Breiten-Guard oben
 
   const start = performance.now();
 
@@ -1231,7 +1248,7 @@ function initCloudShader(canvas, params, edgeFade, renderScale) {
     // das Element tatsaechlich sichtbar wird (siehe Aufrufer im
     // Parallax-Loop) -- kein Problem fuer die Read/Write-Konvention, da es
     // nur bei einem echten Sichtbarkeits-Wechsel laeuft, nicht pro Frame.
-    resync: resize,
+    resync: doResize,
   };
 }
 
@@ -1306,10 +1323,11 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const DROP_PARALLAX_BY_SIZE = { "24": 0.035, "40": 0.09 };
   // Wie stark die Cloud dem normalen Scroll folgt: 0 = steht komplett
   // still, 1 = bewegt sich exakt wie ein normales, nicht-parallaxtes
-  // Element. Hochgesetzt von vorher effektiv 0.5 auf 0.85, siehe
-  // Chat-Feedback ("Parallax ist zu stark, Wolken duerfen gerne mehr
-  // mitscrollen").
-  const CLOUD_DRIFT_STRENGTH = 0.85;
+  // Element, >1 = bewegt sich sogar staerker/schneller als der Rest der
+  // Seite. War 0.5, dann 0.85, jetzt nochmal deutlich hoch auf 1.4 (siehe
+  // Chat-Feedback: "koennen noch viel mehr mitscrollen"). Einfach diesen
+  // einen Wert weiter anpassen, falls noch mehr/weniger gewuenscht.
+  const CLOUD_DRIFT_STRENGTH = 1.4;
   const CLOUD_FADE_DISTANCE_PX = 400; // Strecke, über die die Cloud weich ein-/ausblendet
 
   let cloudFadeInDocTop = 0;
@@ -1416,8 +1434,17 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
       }
       bgCloudWasVisible = isActive;
 
+      // WICHTIG: opacity IMMER schreiben, nicht nur wenn isActive -- sonst
+      // friert der Wert beim Unsichtbarwerden auf dem letzten Stand kurz
+      // vor 0 ein. Scrollt man danach schnell/in einem Rutsch zurueck
+      // (z.B. Ende der Seite -> schnell wieder hoch), kann der erste
+      // wieder-aktive Frame dann direkt einen hohen Opacity-Sprung zeigen
+      // statt weich einzublenden (siehe Chat-Feedback: "erscheint instant,
+      // wirkt wie ein Bug"). Reiner Style-Write ist guenstig, kein Problem
+      // fuer die Read/Write-Konvention.
+      bgCloudEl.style.opacity = opacity;
+
       if (isActive) {
-        bgCloudEl.style.opacity = opacity;
         // Drift-Staerke bezieht sich auf den Fade-IN-Anker (dort beginnt
         // die Bewegung "bei 0"), nicht auf den alten section-02-Anker.
         const scrollDelta = scrollY - cloudFadeInDocTop;
