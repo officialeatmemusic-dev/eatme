@@ -1034,7 +1034,12 @@ const CLOUD_FRAGMENT_SRC = `
   float fbm(vec2 p, float persistence) {
     float value = 0.0;
     float amplitude = 0.5;
-    for (int i = 0; i < 6; i++) {
+    // 4 statt 6 Oktaven -- der Shader ruft fbm() 5x pro Pixel auf
+    // (Density, 2x Warp, Variation, Schatten), jede Oktave weniger spart
+    // hier ca. 1/6 aller noise()-Aufrufe. Bei einer weichen Wolkentextur
+    // optisch kaum ein Unterschied, GPU-seitig aber spuerbar (siehe
+    // Chat-Feedback: "ruckelt immer noch").
+    for (int i = 0; i < 4; i++) {
       value += amplitude * noise(p);
       p *= 2.02;
       amplitude *= persistence;
@@ -1238,25 +1243,26 @@ function initCloudShader(canvas, params, edgeFade, renderScale) {
 const BG_CLOUD_PARAMS = {
   // Gleiche Optik/Regler-Werte wie beim Stage-Shader fuer einen
   // konsistenten Look (siehe Kommentarblock oben -- kein eigener
-  // Figma-Node fuer dieses konkrete Asset). Kein eigener Drift/Rise:
-  // das Original-Bild hatte auch keine automatische Bewegung, nur den
-  // scroll-gebundenen Parallax -- daher hier bewusst 0, um das
-  // bestehende Verhalten 1:1 zu erhalten, nicht neues Verhalten
-  // einzufuehren.
+  // Figma-Node fuer dieses konkrete Asset).
+  // Drift jetzt aktiv (dezenter Wert, 15 statt section-01s 30 -- diese
+  // Cloud ist grossflaechiger/langsamer): kostet KEINE zusaetzliche
+  // Performance, die Drift-Rechnung laeuft im Shader ohnehin immer mit,
+  // vorher war der Wert nur 0 (= wirkungslos, aber nicht "billiger").
   coverage: 52, density: 50, brightness: 70, detail: 55, variation: 100,
   warpAmount: 100, warpScale: 6, stretch: 0, phase: 12, radius: 60,
-  drift: 0, rise: 0,
+  drift: 15, rise: 0,
 };
 
 const bgCloudCanvas = document.getElementById("bg-cloud-canvas");
-// renderScale 0.6: der Canvas deckt den kompletten Viewport ab und wird
+// renderScale 0.45 (weiter runter von 0.6, siehe Chat-Feedback "ruckelt
+// immer noch"): der Canvas deckt den kompletten Viewport ab und wird
 // JEDEN Frame mit mehreren verschachtelten 6-Oktaven-fBm-Durchlaeufen neu
 // gerechnet -- bei voller Aufloesung (dpr x 2) ist das auf schwaecheren
 // GPUs/mobile Safari spuerbar teuer (siehe Chat-Feedback: "ruckelt immer
-// noch ein wenig"). 60% interne Aufloesung, per CSS wieder hochskaliert,
+// noch ein wenig"). 45% interne Aufloesung, per CSS wieder hochskaliert,
 // ist bei einer weichen, unscharfen Wolkentextur optisch praktisch nicht
 // unterscheidbar, senkt die Pixel-Anzahl pro Frame aber deutlich.
-const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PARAMS, true, 0.6) : null;
+const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PARAMS, true, 0.45) : null;
 
 // ==========================================================================
 // KONSOLIDIERTER Parallax-Loop -- ersetzt die vorher getrennten rAF-Loops
@@ -1287,6 +1293,8 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const section05El = document.querySelector("#section-05-images-drops");
   const dropEls = document.querySelectorAll("#section-05-images-drops .tropfen");
 
+  const section07El = document.querySelector("#section-07-footer");
+
   const bgCloudEl = document.querySelector(".bg-cloud");
 
   const BIRDS_SPEED = 0.6;
@@ -1296,17 +1304,30 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const IMG1_PARALLAX = 0.05;
   const IMG2_PARALLAX = 0.09;
   const DROP_PARALLAX_BY_SIZE = { "24": 0.035, "40": 0.09 };
-  const CLOUD_PARALLAX_SPEED = 0.5; // 0 = steht fest, 1 = scrollt normal
-  const CLOUD_ANCHOR_FRACTION = 1.2; // 120% der section-02-Höhe, reicht leicht in section-03 hinein. Bei Bedarf leicht anpassbar.
-  const CLOUD_FADE_DISTANCE_PX = 400; // Strecke, über die die Cloud weich einblendet, statt hart zu poppen
+  // Wie stark die Cloud dem normalen Scroll folgt: 0 = steht komplett
+  // still, 1 = bewegt sich exakt wie ein normales, nicht-parallaxtes
+  // Element. Hochgesetzt von vorher effektiv 0.5 auf 0.85, siehe
+  // Chat-Feedback ("Parallax ist zu stark, Wolken duerfen gerne mehr
+  // mitscrollen").
+  const CLOUD_DRIFT_STRENGTH = 0.85;
+  const CLOUD_FADE_DISTANCE_PX = 400; // Strecke, über die die Cloud weich ein-/ausblendet
 
-  let cloudAnchorDocTop = 0;
+  let cloudFadeInDocTop = 0;
+  let cloudFadeOutDocTop = 0;
   function measureCloudAnchor() {
-    if (!bgCloudEl || !section02El) return;
-    // Kein .style.top mehr -- .bg-cloud ist jetzt position:fixed (siehe
-    // styles.css), cloudAnchorDocTop dient nur noch als Scroll-Y-
-    // Schwellwert fuers Ein-/Ausblenden weiter unten in parallaxLoop().
-    cloudAnchorDocTop = section02El.offsetTop + section02El.offsetHeight * CLOUD_ANCHOR_FRACTION;
+    if (!bgCloudEl) return;
+    // Fade-IN beginnt, wenn section-03 von unten im Viewport auftaucht
+    // (ihre Oberkante erreicht den unteren Viewport-Rand) -- siehe
+    // Chat-Feedback ("faengt zu spaet an ... koennte schon anfangen wenn
+    // sektion 3 unten auftaucht").
+    if (section03El) {
+      cloudFadeInDocTop = section03El.offsetTop - window.innerHeight;
+    }
+    // Fade-OUT beginnt symmetrisch dazu, wenn die Footer-Sektion von unten
+    // auftaucht.
+    if (section07El) {
+      cloudFadeOutDocTop = section07El.offsetTop - window.innerHeight;
+    }
   }
 
   // Anker einmal sofort setzen (Fallback, falls Content-Ready schon
@@ -1330,7 +1351,7 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     measureCloudAnchor();
   }
 
-  if (bgCloudEl && section02El) {
+  if (bgCloudEl) {
     measureCloudAnchor();
     window.addEventListener("resize", handleResize);
     document.addEventListener("eatme:content-ready", () => {
@@ -1376,17 +1397,13 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     if (bgCloudShader && bgCloudEl) {
       // .bg-cloud ist jetzt position:fixed (siehe styles.css) und daher
       // IMMER im Viewport, wenn sichtbar -- Sichtbarkeit muss also
-      // explizit gesteuert werden (vorher ergab sie sich von selbst aus
-      // der Dokumentposition, UND kam dabei ganz natuerlich/graduell ins
-      // Bild, weil man buchstaeblich zu ihrer Position hinscrollte).
-      //
-      // Ein reiner Boolean-Toggle (isVisible true/false) waere ein
-      // Hard-Cut -- genau das wurde als "instant eingeblendet" gemeldet.
-      // Fix: weicher Opacity-Fade ueber CLOUD_FADE_DISTANCE_PX, beginnend
-      // am selben Anker wie vorher.
-      const scrollDelta = scrollY - cloudAnchorDocTop;
-      const fadeProgress = Math.min(Math.max(scrollDelta / CLOUD_FADE_DISTANCE_PX, 0), 1);
-      const isActive = fadeProgress > 0; // ab hier ueberhaupt rendern (GPU sparen davor)
+      // explizit gesteuert werden. Fade-IN beginnt, wenn section-03 von
+      // unten auftaucht; Fade-OUT beginnt symmetrisch dazu, wenn die
+      // Footer-Sektion von unten auftaucht (siehe Chat-Feedback).
+      const fadeInProgress = Math.min(Math.max((scrollY - cloudFadeInDocTop) / CLOUD_FADE_DISTANCE_PX, 0), 1);
+      const fadeOutProgress = Math.min(Math.max((scrollY - cloudFadeOutDocTop) / CLOUD_FADE_DISTANCE_PX, 0), 1);
+      const opacity = fadeInProgress * (1 - fadeOutProgress);
+      const isActive = opacity > 0; // ausserhalb davon: gar nicht rendern, GPU sparen
 
       if (isActive && !bgCloudWasVisible) {
         // Erster Frame nach display:none -> block: clientWidth/Height
@@ -1400,12 +1417,11 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
       bgCloudWasVisible = isActive;
 
       if (isActive) {
-        bgCloudEl.style.opacity = fadeProgress;
-        const offset = scrollDelta * (1 - CLOUD_PARALLAX_SPEED);
-        // Gleiche Formel wie zuvor (offset) -- nur treibt sie jetzt
-        // ausschliesslich den Shader an, nicht mehr zusaetzlich ein
-        // Element, das sich parallel dazu auch noch nativ mitbewegt
-        // (das war die Ursache des Ruckelns/Springens, siehe styles.css).
+        bgCloudEl.style.opacity = opacity;
+        // Drift-Staerke bezieht sich auf den Fade-IN-Anker (dort beginnt
+        // die Bewegung "bei 0"), nicht auf den alten section-02-Anker.
+        const scrollDelta = scrollY - cloudFadeInDocTop;
+        const offset = scrollDelta * CLOUD_DRIFT_STRENGTH;
         bgCloudShader.render(offset);
       }
     }
