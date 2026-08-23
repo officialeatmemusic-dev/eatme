@@ -167,95 +167,26 @@ body {
   z-index: 0;
   pointer-events: none;
   opacity: 0;
-  /* TEST (siehe Chat): explizite Layer-Promotion. Safari behandelt
-     position:fixed-Elemente mit staendig wechselndem Inhalt (unser Canvas
-     wird jeden Frame per WebGL neu gezeichnet) manchmal nicht als eigene
-     Compositor-Ebene und rendert sie beim Scrollen synchron mit dem Rest
-     mit -- ein bekanntes WebKit-Verhalten, das Chrome von sich aus
-     aggressiver optimiert. translateZ(0) zwingt Safari, dem Element eine
-     eigene GPU-Ebene zu geben. */
-  transform: translateZ(0);
-  will-change: transform;
-  /* Fallback fuer Browser ohne CSS-Scroll-Timeline-Support (siehe
-     @supports-Block unten) -- dort wird die Opacity per JS/rAF gesetzt
-     (parallaxLoop() in script.js), inkl. dieser kurzen Transition als
-     Sicherheitsnetz gegen Sprung-Artefakte bei sehr schnellem
-     Momentum-Scrolling. KEIN display:none mehr -- das erforderte einen
-     resync()-Sonderfall genau an der Stelle, an der Scroll-Spruenge am
-     wahrscheinlichsten auftreten; jetzt ist die Groesse von Anfang an
-     korrekt, kein Sonderfall mehr noetig. */
+  /* Opacity wird per JS/rAF gesetzt (parallaxLoop() in script.js), inkl.
+     dieser kurzen Transition als Sicherheitsnetz gegen Sprung-Artefakte
+     bei sehr schnellem Momentum-Scrolling. KEIN display:none -- das
+     erforderte einen resync()-Sonderfall genau an der Stelle, an der
+     Scroll-Spruenge am wahrscheinlichsten auftreten; die Groesse ist von
+     Anfang an korrekt, kein Sonderfall noetig.
+
+     FRUEHER stand hier zusaetzlich eine native CSS-Scroll-Timeline
+     (animation-timeline: view() + @property + calc()) als vermeintlich
+     off-main-thread-Loesung fuers Fade-in/-out. Per Web-Inspector-
+     Timeline-Aufnahme (Til, 23.08.2026) widerlegt: die echten Zahlen
+     zeigten ~260 Style-Neuberechnungen/Sekunde bei nur ~19 tatsaechlichen
+     rAF-Aufrufen/Sekunde und Frame-Zeiten bis 700ms (Ziel: 16ms) -- die
+     Funktion ist in Safari erst seit Version 26 verfuegbar und hat in
+     dieser Kombination (@property + calc() + view-timeline) offenbar
+     einen Style-Recalculation-Sturm ausgeloest, der den Main-Thread
+     abgewuergt hat. Ersatzlos entfernt, zurueck zur reinen JS-Loesung.
+     KEIN translateZ(0)/will-change mehr -- ebenfalls getestet (siehe
+     Chat), keine messbare Wirkung. */
   transition: opacity 0.15s linear;
-}
-
-/* ==========================================================================
-   Natives Scroll-Fade fuer .bg-cloud (progressive enhancement)
-   Der eigentliche Grund fuers anhaltende Ruckeln/Springen auf Safari: JS
-   liest window.scrollY in requestAnimationFrame, aber Safari laesst
-   Momentum-/Fling-Scrolling auf einem eigenen Compositor-Thread laufen,
-   der NICHT auf den Main-Thread/JS wartet -- bei schnellem Scrollen
-   (bes. Fling vom Footer nach oben) fasst Safari mehrere Frames Distanz
-   zusammen, bevor rAF ueberhaupt wieder drankommt: der naechste
-   JS-berechnete Wert "springt". Das ist keine Optimierungsfrage mehr,
-   sondern eine Architektur-Grenze von JS-getriebenen Scroll-Effekten.
-   CSS Scroll-driven Animations (animation-timeline: view()) sind genau
-   dafuer gebaut: der Browser berechnet den Fortschritt selbst, synchron
-   zum Scrollen, unabhaengig von JS/rAF -- seit Safari 26.4 sogar komplett
-   off-main-thread. Support: Safari 26+, Chrome 115+ (Firefox aktuell nur
-   hinter einem Flag, faellt daher unten auf die JS-Loesung zurueck).
-   Technik: section-03 bekommt eine eigene "View-Timeline", die den
-   Fade-IN antreibt (Fortschritt 0->1 waehrend section-03 von unten
-   hereinkommt); section-07-footer (Footer) bekommt eine zweite fuer den
-   Fade-OUT. timeline-scope hebt beide auf :root, damit .bg-cloud (ein
-   Geschwister-Element, kein Nachfahre) sie referenzieren kann. Die
-   beiden Fortschritts-Werte werden als registrierte Custom Properties
-   (@property, dadurch animierbar/interpolierbar) gespeichert und per
-   calc() zu einer finalen Opacity kombiniert -- exakt dieselbe Formel
-   wie zuvor in JS (fadeIn * (1 - fadeOut)), nur jetzt nativ.
-   ========================================================================== */
-@supports (animation-timeline: view()) {
-  @property --cloud-fade-in {
-    syntax: "<number>";
-    inherits: false;
-    initial-value: 0;
-  }
-  @property --cloud-fade-out {
-    syntax: "<number>";
-    inherits: false;
-    initial-value: 0;
-  }
-
-  #section-03-images {
-    view-timeline-name: --cloud-in-timeline;
-    view-timeline-axis: block;
-  }
-  #section-07-footer {
-    view-timeline-name: --cloud-out-timeline;
-    view-timeline-axis: block;
-  }
-  :root {
-    timeline-scope: --cloud-in-timeline, --cloud-out-timeline;
-  }
-
-  @keyframes cloud-fade-in-kf {
-    from { --cloud-fade-in: 0; }
-    to   { --cloud-fade-in: 1; }
-  }
-  @keyframes cloud-fade-out-kf {
-    from { --cloud-fade-out: 0; }
-    to   { --cloud-fade-out: 1; }
-  }
-
-  .bg-cloud {
-    animation:
-      cloud-fade-in-kf linear both,
-      cloud-fade-out-kf linear both;
-    animation-timeline: --cloud-in-timeline, --cloud-out-timeline;
-    animation-range: entry, entry;
-    /* Ersetzt die JS/rAF-Opacity komplett -- kein Main-Thread-Lag mehr
-       moeglich, weil hier keine JS-Zeile mehr beteiligt ist. */
-    opacity: calc(var(--cloud-fade-in, 0) * (1 - var(--cloud-fade-out, 0)));
-    transition: none;
-  }
 }
 
 /* Footer: Hoehe eingefroren ab Referenzbreite 1080px. 1080 * 1.172

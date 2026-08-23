@@ -1308,15 +1308,6 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
 
   const section07El = document.querySelector("#section-07-footer");
 
-  // Einmalig feststellen, ob der Browser native CSS-Scroll-Timelines
-  // beherrscht (siehe @supports-Block in styles.css) -- wenn ja,
-  // uebernimmt CSS die .bg-cloud-Opacity komplett off-main-thread, JS
-  // schreibt dann bewusst nichts mehr in dieses Property (siehe Loop
-  // unten). CSS.supports ist eine reine Capability-Abfrage, kein
-  // Layout-Read, daher unproblematisch hier oben aufzurufen.
-  const supportsNativeCloudFade =
-    typeof CSS !== "undefined" && CSS.supports && CSS.supports("animation-timeline: view()");
-
   const bgCloudEl = document.querySelector(".bg-cloud");
 
   const BIRDS_SPEED = 0.6;
@@ -1421,32 +1412,19 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
       // beginnt symmetrisch dazu, wenn die Footer-Sektion von unten
       // auftaucht.
       //
-      // WICHTIG: Wenn der Browser native CSS-Scroll-Timelines unterstuetzt
-      // (siehe @supports-Block in styles.css, Safari 26+/Chrome 115+),
-      // uebernimmt CSS die komplette Opacity-Steuerung -- off-main-thread,
-      // synchron zum Scrollen, ohne die JS/rAF-Main-Thread-Verzoegerung,
-      // die auf Safari beim schnellen Momentum-Scrollen (Fling vom Footer
-      // nach oben) das gemeldete Springen/Ruckeln verursacht hat. JS
-      // schreibt in diesem Fall bewusst KEIN eigenes .style.opacity mehr
-      // (sonst wuerden sich CSS und JS gegenseitig ueberschreiben).
-      // fadeInProgress/fadeOutProgress dienen dann nur noch als grobe
-      // JS-interne Heuristik dafuer, ob der teure Shader-Render-Call
-      // ueberhaupt noetig ist (GPU sparen) -- muss dafuer nicht
-      // pixelgenau sein.
+      // Fade-IN beginnt, wenn section-03 von unten auftaucht; Fade-OUT
+      // beginnt symmetrisch dazu, wenn die Footer-Sektion von unten
+      // auftaucht.
       const fadeInProgress = Math.min(Math.max((scrollY - cloudFadeInDocTop) / CLOUD_FADE_DISTANCE_PX, 0), 1);
       const fadeOutProgress = Math.min(Math.max((scrollY - cloudFadeOutDocTop) / CLOUD_FADE_DISTANCE_PX, 0), 1);
       const opacity = fadeInProgress * (1 - fadeOutProgress);
       const isActive = opacity > 0; // ausserhalb davon: gar nicht rendern, GPU sparen
 
-      if (!supportsNativeCloudFade) {
-        // Fallback fuer Browser ohne Scroll-Timeline-Support (z.B. aktuell
-        // Firefox stable): opacity IMMER schreiben (nicht nur wenn
-        // isActive), damit der Wert beim Unsichtbarwerden nicht auf dem
-        // letzten Stand einfriert -- die kurze CSS-Transition (siehe
-        // styles.css) faengt zusaetzlich ab, falls doch mal ein groesserer
-        // Sprung zwischen zwei Frames passiert.
-        bgCloudEl.style.opacity = opacity;
-      }
+      // opacity IMMER schreiben (nicht nur wenn isActive), damit der Wert
+      // beim Unsichtbarwerden nicht auf dem letzten Stand einfriert -- die
+      // kurze CSS-Transition (siehe styles.css) faengt zusaetzlich ab,
+      // falls mal ein groesserer Sprung zwischen zwei Frames passiert.
+      bgCloudEl.style.opacity = opacity;
 
       if (isActive) {
         // Drift-Staerke bezieht sich auf den Fade-IN-Anker (dort beginnt
