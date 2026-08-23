@@ -1240,15 +1240,6 @@ function initCloudShader(canvas, params, edgeFade, renderScale) {
       gl.uniform1f(u.uScroll, scrollValue);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     },
-    // Fuer Canvases, die anfangs display:none sind (z.B. .bg-cloud, siehe
-    // styles.css): clientWidth/clientHeight sind waehrend display:none
-    // immer 0, der allererste resize()-Aufruf oben laeuft daher ins Leere
-    // und der Canvas bleibt auf der Browser-Default-Groesse (300x150)
-    // haengen. resync() macht das genau EINMAL wett, in dem Moment, in dem
-    // das Element tatsaechlich sichtbar wird (siehe Aufrufer im
-    // Parallax-Loop) -- kein Problem fuer die Read/Write-Konvention, da es
-    // nur bei einem echten Sichtbarkeits-Wechsel laeuft, nicht pro Frame.
-    resync: doResize,
   };
 }
 
@@ -1377,8 +1368,6 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     });
   }
 
-  let bgCloudWasVisible = false;
-
   function parallaxLoop() {
     // ---- 1) ALLE READS ZUERST (ein Layout-Durchgang, keine Writes dazwischen) ----
     const stageRect = stageEl ? stageEl.getBoundingClientRect() : null;
@@ -1414,34 +1403,21 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     }
     if (bgCloudShader && bgCloudEl) {
       // .bg-cloud ist jetzt position:fixed (siehe styles.css) und daher
-      // IMMER im Viewport, wenn sichtbar -- Sichtbarkeit muss also
-      // explizit gesteuert werden. Fade-IN beginnt, wenn section-03 von
-      // unten auftaucht; Fade-OUT beginnt symmetrisch dazu, wenn die
-      // Footer-Sektion von unten auftaucht (siehe Chat-Feedback).
+      // IMMER im Viewport -- Sichtbarkeit wird rein ueber opacity
+      // gesteuert. Fade-IN beginnt, wenn section-03 von unten auftaucht;
+      // Fade-OUT beginnt symmetrisch dazu, wenn die Footer-Sektion von
+      // unten auftaucht (siehe Chat-Feedback).
       const fadeInProgress = Math.min(Math.max((scrollY - cloudFadeInDocTop) / CLOUD_FADE_DISTANCE_PX, 0), 1);
       const fadeOutProgress = Math.min(Math.max((scrollY - cloudFadeOutDocTop) / CLOUD_FADE_DISTANCE_PX, 0), 1);
       const opacity = fadeInProgress * (1 - fadeOutProgress);
       const isActive = opacity > 0; // ausserhalb davon: gar nicht rendern, GPU sparen
 
-      if (isActive && !bgCloudWasVisible) {
-        // Erster Frame nach display:none -> block: clientWidth/Height
-        // waren bis eben 0, jetzt einmalig nachziehen (siehe resync()-
-        // Kommentar in initCloudShader()).
-        bgCloudEl.classList.add("is-visible");
-        bgCloudShader.resync();
-      } else if (!isActive && bgCloudWasVisible) {
-        bgCloudEl.classList.remove("is-visible");
-      }
-      bgCloudWasVisible = isActive;
-
-      // WICHTIG: opacity IMMER schreiben, nicht nur wenn isActive -- sonst
-      // friert der Wert beim Unsichtbarwerden auf dem letzten Stand kurz
-      // vor 0 ein. Scrollt man danach schnell/in einem Rutsch zurueck
-      // (z.B. Ende der Seite -> schnell wieder hoch), kann der erste
-      // wieder-aktive Frame dann direkt einen hohen Opacity-Sprung zeigen
-      // statt weich einzublenden (siehe Chat-Feedback: "erscheint instant,
-      // wirkt wie ein Bug"). Reiner Style-Write ist guenstig, kein Problem
-      // fuer die Read/Write-Konvention.
+      // opacity IMMER schreiben (nicht nur wenn isActive), damit der Wert
+      // beim Unsichtbarwerden nicht auf dem letzten Stand einfriert --
+      // die kurze CSS-Transition (siehe styles.css) faengt zusaetzlich
+      // ab, falls Safari beim schnellen Momentum-Scrollen (z.B. Fling
+      // vom Footer nach oben) mehrere Frames Scroll-Distanz in einem
+      // rAF-Tick zusammenfasst und der Wert dadurch springt.
       bgCloudEl.style.opacity = opacity;
 
       if (isActive) {

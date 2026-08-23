@@ -98,12 +98,13 @@ body {
    - Footer (assets/images/eatme-image-footer.jpg): unveraendert ein <img>
      mit echter mask-image (JPG hat keinen Alpha-Kanal). Kein Parallax,
      daher unproblematisch fuer Performance, bleibt document-flow/absolute.
-   Sichtbarkeit der Cloud: kein CSS-Fade-in mehr (siehe Chat-Notizen,
-   verworfen) -- stattdessen ein simples .is-visible-Toggle in script.js
-   (parallaxLoop()), gesetzt sobald scrollY den CLOUD_ANCHOR_FRACTION-
-   Schwellwert unterhalb section-02 erreicht. Vorher (position:absolute)
-   ergab sich die Sichtbarkeit von selbst aus der Dokumentposition -- bei
-   position:fixed muss das jetzt explizit gesteuert werden.
+   Sichtbarkeit der Cloud: reine opacity, pro Frame in script.js
+   (parallaxLoop()) berechnet -- Fade-in ab section-03, Fade-out ab der
+   Footer-Sektion (jeweils ueber CLOUD_FADE_DISTANCE_PX). Kein
+   display:none/.is-visible-Toggle mehr (siehe Kommentar an .bg-cloud
+   unten) -- das GPU-Sparen beim Nicht-Sichtbar-Sein passiert stattdessen
+   rein in JS (der teure Shader-Render-Call wird uebersprungen), ohne die
+   DOM-Sichtbarkeit anzufassen.
    ========================================================================== */
 
 .bg-footer {
@@ -165,22 +166,19 @@ body {
   height: 100vh;
   z-index: 0;
   pointer-events: none;
-  /* Opacity statt display:none/block: ein harter display-Wechsel ist ein
-     Hard-Cut ohne Uebergang (siehe Chat-Feedback: "instant eingeblendet").
-     Frueher (position:absolute/document-flow) kam die Cloud ganz natuerlich
-     und graduell ins Bild, weil man buchstaeblich zu ihrer Position
-     hinscrollte -- das muss jetzt bei position:fixed explizit nachgebaut
-     werden. opacity wird darum pro Frame in parallaxLoop() gesetzt
-     (weicher Fade ueber FADE_DISTANCE_PX, siehe script.js), nicht per
-     CSS-Klasse. display:none bleibt trotzdem als Ausgangszustand, damit
-     der Canvas nicht rendert/Klicks abfaengt, bevor ueberhaupt gescrollt
-     wurde. */
-  display: none;
   opacity: 0;
-}
-
-.bg-cloud.is-visible {
-  display: block;
+  /* Kurzer Opacity-Transition als Sicherheitsnetz: Safari kann bei
+     schnellem Momentum-Scrolling (v.a. Fling nach oben vom Footer aus)
+     mehrere Frames Scroll-Distanz zusammenfassen, bevor JS/rAF wieder
+     drankommt -- der naechste berechnete opacity-Wert kann dadurch in
+     einem Schritt "springen" (siehe Chat-Feedback: "instant auf Safari").
+     Diese kurze Transition federt genau das ab, ohne die eigentliche
+     Fade-Distanz (siehe CLOUD_FADE_DISTANCE_PX in script.js) zu aendern.
+     KEIN display:none mehr (siehe unten) -- das erforderte einen
+     resync()-Sonderfall genau an der Stelle, an der so ein Scroll-Sprung
+     am wahrscheinlichsten auftritt; jetzt ist die Groesse von Anfang an
+     korrekt, kein Sonderfall mehr noetig. */
+  transition: opacity 0.15s linear;
 }
 
 /* Footer: Hoehe eingefroren ab Referenzbreite 1080px. 1080 * 1.172
