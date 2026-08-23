@@ -73,29 +73,30 @@ body {
 }
 
 /* ==========================================================================
-   Sitewide Himmel-Hintergrund — Cloud + Footer Layer
-   .bg-cloud/.bg-footer sind Wrapper-DIVs mit einem <img> drin (Markup
-   siehe index.html), Positionierung/Parallax siehe script.js.
-   - Cloud (assets/visuals/backgrounds/clouds.webp): KEIN CSS-Fade (kein
-     mask-image, kein Gradient-Overlay) -- das Asset hat bereits einen
-     eingebauten Alpha-Fade oben UND unten (WebP mit Transparenz-Kanal,
-     Alpha faedet bereits im Bild selbst weich von 0 auf 255 in den
-     ersten ~500px von 4658px Original-Bildhoehe, siehe Chat-Notizen zum
-     Background-Feature). Ein zusaetzlicher CSS-Fade waere nicht nur
-     unnoetig, sondern hat in einer frueheren Version bei jedem
-     Parallax-Frame zusaetzliche Transparenz-Berechnung auf einem sehr
-     grossen animierten Bild erzwungen -> sichtbares Ruckeln (v.a.
-     Safari). Ersatzlos gestrichen.
-   - Footer (assets/images/eatme-image-footer.jpg): bekommt eine echte
-     mask-image fuer den weichen oberen Rand, weil das Bild ein JPG ohne
-     Alpha-Kanal ist (braucht daher einen echten CSS-Fade). Unproblematisch
-     fuer Performance, da der Footer NICHT animiert wird (kein Parallax,
-     haengt fix an bottom:0 -- "scrollt normal" mit der Seite mit).
-   Kein eigenes Opacity-Fade-in mehr (war zwischenzeitlich per
-   IntersectionObserver geplant, aber wieder verworfen -- Timing-Probleme,
-   siehe Chat-Notizen). Die Cloud ist permanent sichtbar (opacity:1 per
-   Default), ihre Sichtbarkeit ergibt sich rein aus der Scroll-Position:
-   sie sitzt erst deutlich unterhalb von section-02 (siehe
+   Sitewide Himmel-Hintergrund — Cloud (WebGL-Shader) + Footer (Bild) Layer
+   .bg-cloud enthaelt jetzt ein <canvas> statt eines <img> (siehe
+   initBgCloudShader() in script.js) -- .bg-footer bleibt unveraendert ein
+   <img>. Positionierung/Anker siehe script.js (measureCloudAnchor(),
+   CLOUD_ANCHOR_FRACTION).
+   - Cloud: der weiche Alpha-Fade oben/unten, den das alte clouds.webp
+     bereits eingebaut hatte, wird jetzt IM SHADER selbst erzeugt (siehe
+     script.js, Fade-Konstanten im Fragment-Shader) -- kein CSS-Fade auf
+     dem Canvas noetig.
+   - WICHTIG (der eigentliche Perf-Fix): Vorher wurde bei jedem Scroll-Frame
+     ein transform: translate3d(...) auf das komplette, sehr grosse Bild
+     geschrieben (Safari musste die bewegte Flaeche neu rastern/kompositieren
+     -> sichtbares Ruckeln). Jetzt bleibt der Transform auf .bg-cloud fuer
+     IMMER statisch (nur die horizontale Zentrierung, siehe unten) -- der
+     Scroll-Parallax-Effekt (langsameres Driften) passiert stattdessen als
+     Uniform-Wert INNERHALB des Shaders (das Rauschfeld verschiebt sich,
+     nicht das DOM-Element). Kein Element-Move mehr, nur ein GPU-Draw-Call
+     pro Frame.
+   - Footer (assets/images/eatme-image-footer.jpg): unveraendert ein <img>
+     mit echter mask-image (JPG hat keinen Alpha-Kanal). Kein Parallax,
+     daher unproblematisch fuer Performance.
+   Kein eigenes Opacity-Fade-in (siehe Chat-Notizen, verworfen). Die Cloud
+   ist permanent sichtbar, ihre Sichtbarkeit ergibt sich rein aus der
+   Scroll-Position: sie sitzt erst deutlich unterhalb von section-02 (siehe
    CLOUD_ANCHOR_FRACTION in script.js), ist beim Laden der Seite also
    ohnehin ausserhalb des Viewports.
    ========================================================================== */
@@ -109,7 +110,12 @@ body {
   pointer-events: none;
 }
 
-.bg-cloud img,
+.bg-cloud canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
 .bg-footer img {
   display: block;
   width: 100%;
@@ -132,14 +138,16 @@ body {
 .bg-cloud {
   top: 0; /* wird per JS ueberschrieben, siehe measureCloudAnchor() in script.js */
   aspect-ratio: 2000 / 4658;
-  transform: translate3d(-50%, 0, 0);
+  transform: translate3d(-50%, 0, 0); /* bleibt fuer IMMER statisch -- siehe Kommentarblock oben */
   z-index: 0;
-  will-change: transform;
-  /* KEIN contain/backface-visibility mehr -- beide wurden als
-     Safari-Compositing-Hints ergaenzt, haben aber offenbar genau das
-     Gegenteil bewirkt (Flicker/kurzes Verschwinden beim Scrollen in
-     Safari, bekanntes WebKit-Verhalten bei dieser Kombination mit
-     transform auf grossen Bildern). Ersatzlos entfernt. */
+  /* KEIN will-change: transform mehr -- der Transform aendert sich nie
+     wieder (siehe Kommentarblock oben), das Hinweis-Feature waere hier nur
+     verschwendeter Compositing-Layer-Speicher ohne Nutzen.
+     KEIN contain/backface-visibility -- beide wurden zuvor als
+     Safari-Compositing-Hints probiert, haben aber genau das Gegenteil
+     bewirkt (Flicker/kurzes Verschwinden beim Scrollen in Safari,
+     bekanntes WebKit-Verhalten bei dieser Kombination mit transform auf
+     grossen Elementen). Ersatzlos entfernt. */
 }
 
 /* Footer: Hoehe eingefroren ab Referenzbreite 1080px. 1080 * 1.172

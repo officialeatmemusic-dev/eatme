@@ -31,15 +31,34 @@ document.addEventListener("DOMContentLoaded", async () => {
 // müssen dafür nichts Eigenes bauen: einfach die Klasse .fade-in-text auf
 // die gewünschten Text-Elemente setzen und initFadeInText() nach dem
 // Einfügen neuer Elemente (z.B. nach dynamischem content.json-Rendering)
-// aufrufen. Text blendet beim Reinscrollen ein UND beim Rausscrollen
-// (in beide Richtungen) wieder aus -> is-visible wird bei jeder
-// Intersection-Änderung neu gesetzt, kein einmaliges unobserve mehr.
+// aufrufen.
+//
+// Richtungsabhängig (Update, ersetzt die frühere beidseitige Version):
+// - Runterscrollen + Element kommt in den Viewport -> einblenden.
+// - Runterscrollen + Element verlässt den Viewport oben -> NICHTS tun
+//   (bleibt sichtbar, kein Ausfaden während man weiter runterscrollt).
+// - Hochscrollen + Element verlässt den Viewport -> ausblenden.
+// - Hochscrollen + Element kommt (von oben) in den Viewport -> NICHTS
+//   tun (kein erneutes Einblenden während man zurückscrollt).
+// window.scrollY ist ein reiner Scroll-Offset-Wert, kein Layout-Read --
+// unproblematisch hier im Callback (im Gegensatz zu
+// getBoundingClientRect(), siehe Parallax-Loop weiter unten).
 // ==========================================================================
+
+let fadeLastScrollY = window.scrollY;
 
 const fadeInObserver = new IntersectionObserver(
   (entries) => {
+    const currentScrollY = window.scrollY;
+    const scrollingDown = currentScrollY >= fadeLastScrollY;
+    fadeLastScrollY = currentScrollY;
+
     entries.forEach((entry) => {
-      entry.target.classList.toggle("is-visible", entry.isIntersecting);
+      if (scrollingDown && entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+      } else if (!scrollingDown && !entry.isIntersecting) {
+        entry.target.classList.remove("is-visible");
+      }
     });
   },
   { threshold: 0.15, rootMargin: "0px 0px -10% 0px" }
@@ -78,311 +97,9 @@ if (soundToggleBtn) {
   });
 }
 
-// ==========================================================================
-// Cloud-Shader (WebGL) — ersetzt das bisherige Bitmap
-// (cloud-stage-background.jpg) + CSS-Transform-Parallax.
-//
-// Hintergrund: Der Figma-Node (3:3664) verwendet KEIN Bild, sondern einen
-// Custom-Shader-Fill ("Clouds", prozedural: Sky-Gradient, Coverage, Density,
-// Brightness, Detail, Variation, Warp amount, Warp scale, Stretch, Phase,
-// Transform). Per Figma-MCP (get_design_context / Plugin-API) direkt am
-// Node ausgelesen: fill.type === "SHADER" + die konkreten Parameterwerte.
-// Figma liefert für Custom-Fills aber nur Metadaten, keinen Rohquellcode --
-// die Rausch-Formel unten ist daher eine Standard-fBm-Implementierung
-// (Fractal Brownian Motion + Domain Warp, Industriestandard für
-// prozedurale Wolken), kalibriert mit den echten Figma-Werten/-Farben.
-//
-// Warum das schneller ist als das alte Bild: Der Canvas ist exakt
-// Stage-groß (ein Viewport, nicht 2973px) und wird NIE per CSS-Transform
-// bewegt (siehe section-01-stage.css) -- Scroll-Parallax und Drift
-// passieren stattdessen als GPU-Uniform-Werte auf einem unbewegten
-// Element. Kein großes Bitmap wird pro Frame neu positioniert/gerastert.
-// ==========================================================================
-
-function hexToRgbFloat(hex) {
-  const clean = hex.replace("#", "").trim();
-  const bigint = parseInt(clean.slice(0, 6), 16);
-  return [
-    ((bigint >> 16) & 255) / 255,
-    ((bigint >> 8) & 255) / 255,
-    (bigint & 255) / 255,
-  ];
-}
-
-function readToken(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-const CLOUD_VERTEX_SRC = `
-  attribute vec2 aPos;
-  void main() {
-    gl_Position = vec4(aPos, 0.0, 1.0);
-  }
-`;
-
-const CLOUD_FRAGMENT_SRC = `
-  precision highp float;
-  uniform vec2 uResolution;
-  uniform float uTime;
-  uniform float uScroll;
-  uniform float uCoverage;
-  uniform float uDensity;
-  uniform float uBrightness;
-  uniform float uDetail;
-  uniform float uVariation;
-  uniform float uWarpAmount;
-  uniform float uWarpScale;
-  uniform float uStretch;
-  uniform float uPhase;
-  uniform float uRadius;
-  uniform float uDrift;
-  uniform float uRise;
-
-  uniform vec3 uSkyTop;
-  uniform vec3 uSkyBottom;
-  uniform vec3 uCloudLight;
-  uniform vec3 uCloudShadow;
-
-  // Standard value-noise + fBm -- öffentlich bekannte Technik, keine
-  // Figma-interne Formel (siehe Kommentar oben).
-  float hash(vec2 p) {
-    p = fract(p * vec2(123.34, 456.21));
-    p += dot(p, p + 78.233);
-    return fract(p.x * p.y);
-  }
-
-  float noise(vec2 p) {
-    vec2 i = floor(p);
-    vec2 f = fract(p);
-    float a = hash(i);
-    float b = hash(i + vec2(1.0, 0.0));
-    float c = hash(i + vec2(0.0, 1.0));
-    float d = hash(i + vec2(1.0, 1.0));
-    vec2 u = f * f * (3.0 - 2.0 * f);
-    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-  }
-
-  float fbm(vec2 p, float persistence) {
-    float value = 0.0;
-    float amplitude = 0.5;
-    for (int i = 0; i < 6; i++) {
-      value += amplitude * noise(p);
-      p *= 2.02;
-      amplitude *= persistence;
-    }
-    return value;
-  }
-
-  void main() {
-    vec2 uv = gl_FragCoord.xy / uResolution.xy;
-
-    // Aspect-Korrektur: verhindert, dass das Wolkenmuster beim
-    // Resize des Viewports gestaucht/gequetscht wird.
-    float aspect = uResolution.x / uResolution.y;
-    vec2 uvAspect = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
-
-    // Transform (X/Y/R/A aus dem Figma-Panel): Rotation um den
-    // Mittelpunkt, aktuell A=0 im Design, aber verdrahtet für später.
-    vec2 center = vec2(0.5, 0.5);
-    float angle = 0.0;
-    vec2 centered = uvAspect - center;
-    float ca = cos(angle), sa = sin(angle);
-    vec2 rotated = vec2(ca * centered.x - sa * centered.y, sa * centered.x + ca * centered.y) + center;
-
-    // Stretch: vertikale Dehnung des Rauschfelds
-    float stretchFactor = 1.0 + uStretch / 6.0;
-    vec2 p = vec2(rotated.x, rotated.y / stretchFactor) * 3.0;
-
-    // Horizontal-Drift (Vorbeifliegen) + Scroll-Parallax (nach oben) +
-    // "Nach-oben-Fliegen"-Dauerbewegung + statischer Phase-Offset (Seed)
-    p.x += uTime * (uDrift / 100.0) * 0.05 + uPhase * 0.03;
-    p.y += uScroll * 0.0006 + uTime * (uRise / 100.0) * 0.02;
-
-    // Detail: Persistenz der fBm-Oktaven
-    float persistence = mix(0.35, 0.65, uDetail / 100.0);
-
-    // Variation: großräumige Formvariation über eine zweite,
-    // langsam schwankende Frequenzebene
-    float variationField = fbm(p * 0.35 + 2.0, persistence) * (uVariation / 100.0);
-    p += variationField * 0.6;
-
-    // Domain Warp: Warp scale = Abtast-Frequenz, Warp amount = Stärke
-    vec2 warpP = p * (uWarpScale / 6.0);
-    vec2 warp = vec2(
-      fbm(warpP + vec2(1.7, 9.2), persistence),
-      fbm(warpP + vec2(8.3, 2.8), persistence)
-    );
-    float warpAmount = uWarpAmount / 100.0;
-    float densityField = fbm(p + warp * warpAmount * 2.0, persistence);
-
-    // Coverage-Schwelle + weiche Kante (Density = Kanten-Weichheit/Fülle)
-    float coverage = uCoverage / 100.0;
-    float edge = max(1.0 - uDensity / 100.0, 0.03) * 0.4;
-    float mask = smoothstep(coverage - edge, coverage + edge, densityField);
-
-    // Radius (R): weicher Vignette-Rahmen um das Transform-Zentrum
-    float distFromCenter = length(centered) * 1.6;
-    float radiusFalloff = smoothstep(uRadius / 100.0 + 0.5, uRadius / 100.0 - 0.15, distFromCenter);
-    mask *= mix(0.85, 1.0, radiusFalloff);
-
-    // Feinere fBm-Schicht für Schatten-Detail innerhalb der Wolke
-    float shadowDetail = fbm(p * 2.3 + 4.0, persistence);
-    float shadowMask = smoothstep(0.35, 0.75, shadowDetail) * mask;
-
-    vec3 sky = mix(uSkyBottom, uSkyTop, uv.y);
-    vec3 cloud = mix(uCloudLight, uCloudShadow, shadowMask);
-
-    vec3 color = mix(sky, cloud, mask);
-    color *= (uBrightness / 70.0);
-
-    gl_FragColor = vec4(color, 1.0);
-  }
-`;
-
-function compileShader(gl, type, src) {
-  const shader = gl.createShader(type);
-  gl.shaderSource(shader, src);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.error("Cloud-Shader-Compile-Fehler:", gl.getShaderInfoLog(shader));
-  }
-  return shader;
-}
-
-// Parameter 1:1 aus dem Figma-Shader-Fill-Panel (Node 3:3664) übernommen.
-// Drift/Scroll-Parallax final abgestimmt mit Til (23.08.2026).
-const CLOUD_PARAMS = {
-  coverage: 52,
-  density: 50,
-  brightness: 70,
-  detail: 55,
-  variation: 100,
-  warpAmount: 100,
-  warpScale: 6,
-  stretch: 0,
-  phase: 12,
-  radius: 60,
-  drift: 30,
-  scrollStrength: 60,
-  rise: 0, // aktuell ungenutzt (kein "Nach-oben-Fliegen" gewünscht), verdrahtet für später
-};
-
-function initCloudShader(canvas) {
-  const gl = canvas.getContext("webgl", { antialias: true, alpha: false }) ||
-             canvas.getContext("experimental-webgl");
-  if (!gl) {
-    console.warn("WebGL nicht verfügbar -- Cloud-Shader wird übersprungen (CSS-Gradient-Fallback greift, siehe section-01-stage.css).");
-    return null;
-  }
-
-  const program = gl.createProgram();
-  gl.attachShader(program, compileShader(gl, gl.VERTEX_SHADER, CLOUD_VERTEX_SRC));
-  gl.attachShader(program, compileShader(gl, gl.FRAGMENT_SHADER, CLOUD_FRAGMENT_SRC));
-  gl.linkProgram(program);
-  gl.useProgram(program);
-
-  const quad = new Float32Array([-1, -1, 1, -1, -1, 1, 1, -1, 1, 1, -1, 1]);
-  const buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
-  const aPos = gl.getAttribLocation(program, "aPos");
-  gl.enableVertexAttribArray(aPos);
-  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
-
-  const u = {};
-  [
-    "uResolution", "uTime", "uScroll", "uCoverage", "uDensity", "uBrightness",
-    "uDetail", "uVariation", "uWarpAmount", "uWarpScale", "uStretch", "uPhase",
-    "uRadius", "uDrift", "uRise", "uSkyTop", "uSkyBottom", "uCloudLight", "uCloudShadow",
-  ].forEach((name) => { u[name] = gl.getUniformLocation(program, name); });
-
-  // Farben aus tokens.css lesen statt Hex-Werte hier zu duplizieren
-  // (siehe tokens.css: --gradient-sky-top/-bottom, --color-cloud-light,
-  // --color-blue -- Letzteres bereits sitewide vorhanden, hier
-  // wiederverwendet als Wolken-Schatten-Farbe).
-  gl.uniform3fv(u.uSkyTop, hexToRgbFloat(readToken("--gradient-sky-top")));
-  gl.uniform3fv(u.uSkyBottom, hexToRgbFloat(readToken("--gradient-sky-bottom")));
-  gl.uniform3fv(u.uCloudLight, hexToRgbFloat(readToken("--color-cloud-light")));
-  gl.uniform3fv(u.uCloudShadow, hexToRgbFloat(readToken("--color-blue")));
-
-  gl.uniform1f(u.uCoverage, CLOUD_PARAMS.coverage);
-  gl.uniform1f(u.uDensity, CLOUD_PARAMS.density);
-  gl.uniform1f(u.uBrightness, CLOUD_PARAMS.brightness);
-  gl.uniform1f(u.uDetail, CLOUD_PARAMS.detail);
-  gl.uniform1f(u.uVariation, CLOUD_PARAMS.variation);
-  gl.uniform1f(u.uWarpAmount, CLOUD_PARAMS.warpAmount);
-  gl.uniform1f(u.uWarpScale, CLOUD_PARAMS.warpScale);
-  gl.uniform1f(u.uStretch, CLOUD_PARAMS.stretch);
-  gl.uniform1f(u.uPhase, CLOUD_PARAMS.phase);
-  gl.uniform1f(u.uRadius, CLOUD_PARAMS.radius);
-  gl.uniform1f(u.uDrift, CLOUD_PARAMS.drift);
-  gl.uniform1f(u.uRise, CLOUD_PARAMS.rise);
-
-  // Resize NUR bei echtem resize-Event (nicht pro Frame!) -- ein Read von
-  // clientWidth/clientHeight in jedem rAF-Tick würde einen Layout-Read
-  // erzwingen und kollidiert mit der Read-dann-Write-Konvention der Seite
-  // (siehe ARCHITECTURE.md, ".getBoundingClientRect() während Scroll
-  // verursacht Reflows").
-  function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.round(canvas.clientWidth * dpr);
-    const height = Math.round(canvas.clientHeight * dpr);
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.uniform2f(u.uResolution, canvas.width, canvas.height);
-    }
-  }
-  window.addEventListener("resize", resize);
-  resize();
-
-  const start = performance.now();
-
-  return {
-    // scrollOffsetPx: der rohe -rect.top-Wert, den der bestehende
-    // Parallax-Loop unten ohnehin schon pro Frame misst -- wird hier nur
-    // noch mit scrollStrength gewichtet, kein zusätzlicher Layout-Read.
-    render(scrollOffsetPx) {
-      const t = (performance.now() - start) / 1000;
-      gl.uniform1f(u.uTime, t);
-      gl.uniform1f(u.uScroll, scrollOffsetPx * (CLOUD_PARAMS.scrollStrength / 100));
-      gl.drawArrays(gl.TRIANGLES, 0, 6);
-    },
-  };
-}
-
-const stageCloudCanvas = document.getElementById("stage-cloud-canvas");
-const cloudShader = stageCloudCanvas ? initCloudShader(stageCloudCanvas) : null;
-
-// Parallax: Vögel (Vordergrund) weiterhin per CSS-Transform, gleiches
-// rAF-Muster wie zuvor. Die Wolken bekommen denselben rect.top-Wert dieses
-// EINEN Loops als Shader-Uniform statt eines eigenen Transforms -- kein
-// zusätzlicher getBoundingClientRect()-Call, kein zweiter Loop.
-const stageEl = document.querySelector("#section-01-stage .stage");
-const stageBirdsEl = document.querySelector("#section-01-stage .stage-birds");
-
-if (stageEl && stageBirdsEl) {
-  const BIRDS_SPEED = 0.6; // Vordergrund: mehr Eigenbewegung
-
-  const parallaxLoop = () => {
-    const rect = stageEl.getBoundingClientRect();
-    stageBirdsEl.style.transform = `translateY(${-rect.top * (1 - BIRDS_SPEED)}px)`;
-    if (cloudShader) {
-      cloudShader.render(-rect.top);
-    }
-    requestAnimationFrame(parallaxLoop);
-  };
-  requestAnimationFrame(parallaxLoop);
-} else if (cloudShader) {
-  // Fallback, falls .stage/.stage-birds aus irgendeinem Grund fehlen:
-  // Cloud-Shader läuft trotzdem weiter (Drift/Time unabhängig vom Scroll).
-  const cloudOnlyLoop = () => {
-    cloudShader.render(0);
-    requestAnimationFrame(cloudOnlyLoop);
-  };
-  requestAnimationFrame(cloudOnlyLoop);
-}
+// Parallax: siehe der EINE konsolidierte Loop weiter unten in dieser
+// Datei ("KONSOLIDIERTER Parallax-Loop"), der Stage-, section-02-,
+// section-03-, Tropfen- und Cloud-Parallax gemeinsam behandelt.
 
 // ==========================================================================
 // section-02-text-01 — Text aus content.json rendern + subtiler Parallax
@@ -446,25 +163,8 @@ document.addEventListener("eatme:content-ready", (e) => {
   renderNav(e.detail);
 });
 
-// Subtiler Scroll-Parallax für die blauen Vögel: die größere/vordere Vogel
-// bewegt sich etwas schneller als die kleinere/hintere. Gleiches rAF-Muster
-// wie section-01 (kein Scroll-Listener, stattdessen durchgehender Loop).
-const section02El = document.querySelector("#section-02-text-01");
-const birdLgEl = document.querySelector("#section-02-text-01 .bird-blue-lg");
-const birdSmEl = document.querySelector("#section-02-text-01 .bird-blue-sm");
-
-if (section02El && birdLgEl && birdSmEl) {
-  const BIRD_LG_PARALLAX = 0.06; // vordere, größere Vogel — etwas schneller
-  const BIRD_SM_PARALLAX = 0.025; // hintere, kleinere Vogel — langsamer
-
-  const section02ParallaxLoop = () => {
-    const rect = section02El.getBoundingClientRect();
-    birdLgEl.style.transform = `translateY(${rect.top * BIRD_LG_PARALLAX}px)`;
-    birdSmEl.style.transform = `translateY(${rect.top * BIRD_SM_PARALLAX}px)`;
-    requestAnimationFrame(section02ParallaxLoop);
-  };
-  requestAnimationFrame(section02ParallaxLoop);
-}
+// Subtiler Scroll-Parallax für die blauen Vögel: siehe der EINE
+// konsolidierte Loop weiter unten in dieser Datei.
 
 // ==========================================================================
 // eatme-lyrics — gemeinsame Render-Funktion für das Songtext-Modul
@@ -539,25 +239,8 @@ document.addEventListener("eatme:content-ready", (e) => {
   renderSection03(e.detail["section-03-images"]);
 });
 
-// Subtiler Scroll-Parallax auf beide Bandfotos, bewusst UNTERSCHIEDLICHE
-// Faktoren (kein identisches Bewegungsmuster) -- gleiches rAF-Muster wie
-// section-01/section-02 (kein Scroll-Event-Listener).
-const section03El = document.querySelector("#section-03-images");
-const section03Img1El = document.querySelector("#section-03-image-01");
-const section03Img2El = document.querySelector("#section-03-image-02");
-
-if (section03El && section03Img1El && section03Img2El) {
-  const IMG1_PARALLAX = 0.05;
-  const IMG2_PARALLAX = 0.09;
-
-  const section03ParallaxLoop = () => {
-    const rect = section03El.getBoundingClientRect();
-    section03Img1El.style.transform = `translateY(${rect.top * IMG1_PARALLAX}px)`;
-    section03Img2El.style.transform = `translateY(${rect.top * IMG2_PARALLAX}px)`;
-    requestAnimationFrame(section03ParallaxLoop);
-  };
-  requestAnimationFrame(section03ParallaxLoop);
-}
+// Subtiler Scroll-Parallax auf beide Bandfotos: siehe der EINE
+// konsolidierte Loop weiter unten in dieser Datei.
 
 // ==========================================================================
 // section-04-text-02 — Fließtext (2 Absätze) aus content.json rendern.
@@ -622,34 +305,8 @@ document.addEventListener("eatme:content-ready", (e) => {
   renderSection05(e.detail["section-05-images-drops"]);
 });
 
-// Tropfen-Parallax: Faktor abhängig von der Tropfen-Größe (data-size,
-// siehe sections/section-05-images-drops.css) -- größere Tropfen (40px)
-// bewegen sich stärker/wirken näher, kleinere (24px) dezenter/wirken
-// weiter weg. Gilt für Desktop- UND Mobile-Tropfen gleichermaßen (welcher
-// Satz sichtbar ist, steuert allein das CSS über den 768px-Breakpoint).
-// Gleiches rAF-Muster wie alle übrigen Parallax-Effekte auf der Seite.
-function initDropsParallax() {
-  const section = document.querySelector("#section-05-images-drops");
-  const drops = document.querySelectorAll("#section-05-images-drops .tropfen");
-  if (!section || !drops.length) return;
-
-  const DROP_PARALLAX_BY_SIZE = {
-    "24": 0.035,
-    "40": 0.09,
-  };
-
-  const loop = () => {
-    const rect = section.getBoundingClientRect();
-    drops.forEach((el) => {
-      const factor = DROP_PARALLAX_BY_SIZE[el.dataset.size] || 0.05;
-      el.style.transform = `translateY(${rect.top * factor}px)`;
-    });
-    requestAnimationFrame(loop);
-  };
-  requestAnimationFrame(loop);
-}
-
-initDropsParallax();
+// Tropfen-Parallax: siehe der EINE konsolidierte Loop weiter unten in
+// dieser Datei.
 
 
 // ==========================================================================
@@ -1287,3 +944,424 @@ function renderFooterBar(data) {
 document.addEventListener("eatme:content-ready", (e) => {
   renderFooterBar(e.detail["section-07-footer"]);
 });
+
+// ==========================================================================
+// Cloud-Shader (WebGL) — ersetzt das lange clouds.webp-Bitmap in .bg-cloud.
+//
+// Hintergrund/Perf-Fix im Detail: siehe Kommentarblock in styles.css
+// ("Sitewide Himmel-Hintergrund"). Kurzfassung: das alte Bild wurde bei
+// jedem Scroll-Frame per CSS-Transform bewegt (Safari musste die riesige
+// Flaeche neu rastern/kompositieren -> Ruckeln). Der Canvas hier bleibt
+// stattdessen komplett unbewegt (Transform bleibt fuer immer bei
+// translate3d(-50%,0,0)) -- der Scroll-Parallax passiert stattdessen als
+// Uniform-Wert INNERHALB des Shaders.
+//
+// Optik/Kalibrierung: Die Regler-Werte (Coverage, Warp etc.) sind
+// dieselben wie beim section-01-Stage-Cloud-Shader, kalibriert anhand des
+// Figma-Shader-Fills (Node 3:3664, per MCP ausgelesen) fuer einen
+// konsistenten Look. Fuer DIESES konkrete Asset (clouds.webp) liegt mir
+// kein eigener Figma-Node vor -- die Werte sind also eine bewusste
+// Wiederverwendung fuer Konsistenz, keine 1:1-Kalibrierung dieses
+// speziellen Bilds. Bei Bedarf einzeln in BG_CLOUD_PARAMS nachjustierbar.
+// ==========================================================================
+
+function hexToRgbFloat(hex) {
+  const clean = hex.replace("#", "").trim();
+  const bigint = parseInt(clean.slice(0, 6), 16);
+  return [
+    ((bigint >> 16) & 255) / 255,
+    ((bigint >> 8) & 255) / 255,
+    (bigint & 255) / 255,
+  ];
+}
+
+function readToken(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+const CLOUD_VERTEX_SRC = `
+  attribute vec2 aPos;
+  void main() {
+    gl_Position = vec4(aPos, 0.0, 1.0);
+  }
+`;
+
+const CLOUD_FRAGMENT_SRC = `
+  precision highp float;
+  uniform vec2 uResolution;
+  uniform float uTime;
+  uniform float uScroll;
+  uniform float uCoverage;
+  uniform float uDensity;
+  uniform float uBrightness;
+  uniform float uDetail;
+  uniform float uVariation;
+  uniform float uWarpAmount;
+  uniform float uWarpScale;
+  uniform float uStretch;
+  uniform float uPhase;
+  uniform float uRadius;
+  uniform float uDrift;
+  uniform float uRise;
+  uniform float uEdgeFade; // 0 = aus, 1 = weicher Rand oben/unten (fuer .bg-cloud)
+
+  uniform vec3 uSkyTop;
+  uniform vec3 uSkyBottom;
+  uniform vec3 uCloudLight;
+  uniform vec3 uCloudShadow;
+  uniform vec3 uFadeColor;
+
+  // Standard value-noise + fBm -- oeffentlich bekannte Technik, keine
+  // Figma-interne Formel (Figma liefert fuer Custom-Shader-Fills nur
+  // Metadaten, keinen Rohquellcode).
+  float hash(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 78.233);
+    return fract(p.x * p.y);
+  }
+
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+  }
+
+  float fbm(vec2 p, float persistence) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    for (int i = 0; i < 6; i++) {
+      value += amplitude * noise(p);
+      p *= 2.02;
+      amplitude *= persistence;
+    }
+    return value;
+  }
+
+  void main() {
+    vec2 uv = gl_FragCoord.xy / uResolution.xy;
+
+    // Aspect-Korrektur: verhindert, dass das Wolkenmuster beim Resize
+    // gestaucht/gequetscht wird.
+    float aspect = uResolution.x / uResolution.y;
+    vec2 uvAspect = vec2((uv.x - 0.5) * aspect + 0.5, uv.y);
+
+    vec2 center = vec2(0.5, 0.5);
+    float angle = 0.0;
+    vec2 centered = uvAspect - center;
+    float ca = cos(angle), sa = sin(angle);
+    vec2 rotated = vec2(ca * centered.x - sa * centered.y, sa * centered.x + ca * centered.y) + center;
+
+    float stretchFactor = 1.0 + uStretch / 6.0;
+    vec2 p = vec2(rotated.x, rotated.y / stretchFactor) * 3.0;
+
+    p.x += uTime * (uDrift / 100.0) * 0.05 + uPhase * 0.03;
+    p.y += uScroll * 0.0006 + uTime * (uRise / 100.0) * 0.02;
+
+    float persistence = mix(0.35, 0.65, uDetail / 100.0);
+
+    float variationField = fbm(p * 0.35 + 2.0, persistence) * (uVariation / 100.0);
+    p += variationField * 0.6;
+
+    vec2 warpP = p * (uWarpScale / 6.0);
+    vec2 warp = vec2(
+      fbm(warpP + vec2(1.7, 9.2), persistence),
+      fbm(warpP + vec2(8.3, 2.8), persistence)
+    );
+    float warpAmount = uWarpAmount / 100.0;
+    float densityField = fbm(p + warp * warpAmount * 2.0, persistence);
+
+    float coverage = uCoverage / 100.0;
+    float edge = max(1.0 - uDensity / 100.0, 0.03) * 0.4;
+    float mask = smoothstep(coverage - edge, coverage + edge, densityField);
+
+    float distFromCenter = length(centered) * 1.6;
+    float radiusFalloff = smoothstep(uRadius / 100.0 + 0.5, uRadius / 100.0 - 0.15, distFromCenter);
+    mask *= mix(0.85, 1.0, radiusFalloff);
+
+    float shadowDetail = fbm(p * 2.3 + 4.0, persistence);
+    float shadowMask = smoothstep(0.35, 0.75, shadowDetail) * mask;
+
+    vec3 sky = mix(uSkyBottom, uSkyTop, uv.y);
+    vec3 cloud = mix(uCloudLight, uCloudShadow, shadowMask);
+
+    vec3 color = mix(sky, cloud, mask);
+    color *= (uBrightness / 70.0);
+
+    // Weicher Rand oben/unten (ersetzt den frueher ins clouds.webp
+    // eingebackenen Alpha-Fade) -- blendet Richtung Seiten-Weiss statt
+    // echter Transparenz, da .page-background ohnehin weiss ist.
+    float fadeFraction = 0.11; // ~500px von 4658px Original-Bildhoehe
+    float topFade = smoothstep(0.0, fadeFraction, uv.y);
+    float bottomFade = smoothstep(0.0, fadeFraction, 1.0 - uv.y);
+    float edgeFadeAmount = mix(1.0, topFade * bottomFade, uEdgeFade);
+    color = mix(uFadeColor, color, edgeFadeAmount);
+
+    gl_FragColor = vec4(color, 1.0);
+  }
+`;
+
+function compileShader(gl, type, src) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, src);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error("Cloud-Shader-Compile-Fehler:", gl.getShaderInfoLog(shader));
+  }
+  return shader;
+}
+
+// Gemeinsame Farb-Uniforms fuer beide Cloud-Shader-Instanzen (section-01
+// Stage + sitewide .bg-cloud) -- aus tokens.css gelesen statt Hex-Werte
+// zu duplizieren.
+function readCloudColors() {
+  return {
+    skyTop: hexToRgbFloat(readToken("--gradient-sky-top")),
+    skyBottom: hexToRgbFloat(readToken("--gradient-sky-bottom")),
+    cloudLight: hexToRgbFloat(readToken("--color-cloud-light")),
+    cloudShadow: hexToRgbFloat(readToken("--color-blue")),
+    fadeColor: hexToRgbFloat(readToken("--color-white")),
+  };
+}
+
+// Fabrik: erzeugt einen unabhaengigen WebGL-Cloud-Shader auf dem
+// uebergebenen Canvas. params = feste Parameter (Coverage, Warp etc.,
+// siehe CLOUD_FRAGMENT_SRC), edgeFade = true/false (weicher Rand
+// oben/unten, nur fuer .bg-cloud gedacht).
+function initCloudShader(canvas, params, edgeFade) {
+  const gl = canvas.getContext("webgl", { antialias: true, alpha: false }) ||
+             canvas.getContext("experimental-webgl");
+  if (!gl) {
+    console.warn("WebGL nicht verfuegbar -- Cloud-Shader wird uebersprungen (CSS-Fallback greift, siehe styles.css).");
+    return null;
+  }
+
+  const program = gl.createProgram();
+  gl.attachShader(program, compileShader(gl, gl.VERTEX_SHADER, CLOUD_VERTEX_SRC));
+  gl.attachShader(program, compileShader(gl, gl.FRAGMENT_SHADER, CLOUD_FRAGMENT_SRC));
+  gl.linkProgram(program);
+  gl.useProgram(program);
+
+  const quad = new Float32Array([-1, -1, 1, -1, -1, 1, 1, -1, 1, 1, -1, 1]);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+  const aPos = gl.getAttribLocation(program, "aPos");
+  gl.enableVertexAttribArray(aPos);
+  gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+  const u = {};
+  [
+    "uResolution", "uTime", "uScroll", "uCoverage", "uDensity", "uBrightness",
+    "uDetail", "uVariation", "uWarpAmount", "uWarpScale", "uStretch", "uPhase",
+    "uRadius", "uDrift", "uRise", "uEdgeFade",
+    "uSkyTop", "uSkyBottom", "uCloudLight", "uCloudShadow", "uFadeColor",
+  ].forEach((name) => { u[name] = gl.getUniformLocation(program, name); });
+
+  const colors = readCloudColors();
+  gl.uniform3fv(u.uSkyTop, colors.skyTop);
+  gl.uniform3fv(u.uSkyBottom, colors.skyBottom);
+  gl.uniform3fv(u.uCloudLight, colors.cloudLight);
+  gl.uniform3fv(u.uCloudShadow, colors.cloudShadow);
+  gl.uniform3fv(u.uFadeColor, colors.fadeColor);
+
+  gl.uniform1f(u.uCoverage, params.coverage);
+  gl.uniform1f(u.uDensity, params.density);
+  gl.uniform1f(u.uBrightness, params.brightness);
+  gl.uniform1f(u.uDetail, params.detail);
+  gl.uniform1f(u.uVariation, params.variation);
+  gl.uniform1f(u.uWarpAmount, params.warpAmount);
+  gl.uniform1f(u.uWarpScale, params.warpScale);
+  gl.uniform1f(u.uStretch, params.stretch);
+  gl.uniform1f(u.uPhase, params.phase);
+  gl.uniform1f(u.uRadius, params.radius);
+  gl.uniform1f(u.uDrift, params.drift);
+  gl.uniform1f(u.uRise, params.rise);
+  gl.uniform1f(u.uEdgeFade, edgeFade ? 1.0 : 0.0);
+
+  // Resize NUR bei echtem resize-Event (nicht pro Frame!) -- ein Read von
+  // clientWidth/clientHeight in jedem rAF-Tick wuerde einen Layout-Read
+  // erzwingen (kollidiert mit der Read-dann-Write-Konvention, siehe
+  // Kommentar am konsolidierten Parallax-Loop unten).
+  function resize() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const width = Math.round(canvas.clientWidth * dpr);
+    const height = Math.round(canvas.clientHeight * dpr);
+    if (width > 0 && height > 0 && (canvas.width !== width || canvas.height !== height)) {
+      canvas.width = width;
+      canvas.height = height;
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(u.uResolution, canvas.width, canvas.height);
+    }
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  const start = performance.now();
+
+  return {
+    // scrollValue: bereits gewichteter Scroll-/Drift-Rohwert (siehe
+    // Aufrufer unten) -- kein zusaetzlicher Layout-Read hier drin.
+    render(scrollValue) {
+      const t = (performance.now() - start) / 1000;
+      gl.uniform1f(u.uTime, t);
+      gl.uniform1f(u.uScroll, scrollValue);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    },
+  };
+}
+
+// Parameter 1:1 aus dem Figma-Shader-Fill-Panel (Node 3:3664) uebernommen,
+// siehe Kommentarblock oben. .bg-cloud ist die einzige Stelle, die diesen
+// Shader aktuell nutzt -- section-01 (.stage-bg) bleibt bewusst beim
+// Original-Bild + CLOUD_SPEED-Transform (siehe Loop unten), das war nie
+// das eigentliche Ruckel-Problem.
+const BG_CLOUD_PARAMS = {
+  // Gleiche Optik/Regler-Werte wie beim Stage-Shader fuer einen
+  // konsistenten Look (siehe Kommentarblock oben -- kein eigener
+  // Figma-Node fuer dieses konkrete Asset). Kein eigener Drift/Rise:
+  // das Original-Bild hatte auch keine automatische Bewegung, nur den
+  // scroll-gebundenen Parallax -- daher hier bewusst 0, um das
+  // bestehende Verhalten 1:1 zu erhalten, nicht neues Verhalten
+  // einzufuehren.
+  coverage: 52, density: 50, brightness: 70, detail: 55, variation: 100,
+  warpAmount: 100, warpScale: 6, stretch: 0, phase: 12, radius: 60,
+  drift: 0, rise: 0,
+};
+
+const bgCloudCanvas = document.getElementById("bg-cloud-canvas");
+const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PARAMS, true) : null;
+
+// ==========================================================================
+// KONSOLIDIERTER Parallax-Loop -- ersetzt die vorher getrennten rAF-Loops
+// (Stage, section-02-Vögel, section-03-Bilder, Tropfen, Cloud).
+// Grund: jeder einzelne Loop rief für sich getBoundingClientRect() auf und
+// schrieb direkt danach einen style.transform -- mehrere solcher
+// Lese-Schreib-Paare INNERHALB DESSELBEN Frames zwingen den Browser
+// wiederholt zu synchronen Layout-Reflows (Chrome verkraftet das
+// offenbar gut, Safari deutlich schlechter -> sichtbares Ruckeln dort,
+// obwohl Chrome smooth blieb). Fix: ALLE Reads zuerst (in einem Block),
+// DANN alle Writes -- pro Frame maximal ein Layout-Read-Durchgang, keine
+// verschachtelten Lese-/Schreibzyklen mehr.
+// ==========================================================================
+
+(function () {
+  const stageEl = document.querySelector("#section-01-stage .stage");
+  const stageBirdsEl = document.querySelector("#section-01-stage .stage-birds");
+  const stageCloudEl = document.querySelector("#section-01-stage .stage-bg");
+
+  const section02El = document.querySelector("#section-02-text-01");
+  const birdLgEl = document.querySelector("#section-02-text-01 .bird-blue-lg");
+  const birdSmEl = document.querySelector("#section-02-text-01 .bird-blue-sm");
+
+  const section03El = document.querySelector("#section-03-images");
+  const section03Img1El = document.querySelector("#section-03-image-01");
+  const section03Img2El = document.querySelector("#section-03-image-02");
+
+  const section05El = document.querySelector("#section-05-images-drops");
+  const dropEls = document.querySelectorAll("#section-05-images-drops .tropfen");
+
+  const bgCloudEl = document.querySelector(".bg-cloud");
+
+  const BIRDS_SPEED = 0.6;
+  const CLOUD_SPEED = 0.3;
+  const BIRD_LG_PARALLAX = 0.06;
+  const BIRD_SM_PARALLAX = 0.025;
+  const IMG1_PARALLAX = 0.05;
+  const IMG2_PARALLAX = 0.09;
+  const DROP_PARALLAX_BY_SIZE = { "24": 0.035, "40": 0.09 };
+  const CLOUD_PARALLAX_SPEED = 0.5; // 0 = steht fest, 1 = scrollt normal
+  const CLOUD_ANCHOR_FRACTION = 1.2; // 120% der section-02-Höhe, reicht leicht in section-03 hinein. Bei Bedarf leicht anpassbar.
+
+  let cloudAnchorDocTop = 0;
+  function measureCloudAnchor() {
+    if (!bgCloudEl || !section02El) return;
+    cloudAnchorDocTop = section02El.offsetTop + section02El.offsetHeight * CLOUD_ANCHOR_FRACTION;
+    bgCloudEl.style.top = `${cloudAnchorDocTop}px`;
+  }
+
+  // Anker einmal sofort setzen (Fallback, falls Content-Ready schon
+  // gefeuert war) UND nach echtem Content-Rendering neu messen -- vorher
+  // (direkt beim Script-Start) kann section-02 noch leer/kollabiert sein,
+  // weil der Text erst async über "eatme:content-ready" eingefügt wird,
+  // was die Höhe (und damit den Anker) verfälschen würde. Kein
+  // Opacity-Fade -- die Cloud ist schlicht permanent sichtbar, ihre
+  // Sichtbarkeit ergibt sich rein aus der Scroll-Position/Dokumentfluss
+  // (sie sitzt ja erst deutlich unterhalb von section-02).
+  //
+  // WICHTIG (Safari-Fix): Safari feuert "resize"-Events, wenn beim
+  // Scrollen die Adressleiste/Toolbar ein-/ausblendet -- KEINE echte
+  // Breiten-/Layout-Aenderung, nur die sichtbare Viewport-Hoehe aendert
+  // sich kurzzeitig. Ein naiver resize-Listener wuerde dadurch MITTEN
+  // IM SCROLLEN wiederholt offsetTop/offsetHeight neu auslesen
+  // (erzwingt synchrones Layout) UND bgCloudEl.style.top ueberschreiben
+  // -- das kollidiert mit dem laufenden Parallax-Transform und erzeugt
+  // genau das gemeldete Springen/kurze Verschwinden der Cloud in Safari.
+  // Fix: nur auf echte Breiten-Aenderungen reagieren (Rotation,
+  // Fenster-Resize), Hoehen-Aenderungen durch die Safari-Toolbar
+  // ignorieren.
+  let lastViewportWidth = window.innerWidth;
+  function handleResize() {
+    if (window.innerWidth === lastViewportWidth) return; // nur Hoehe geaendert (Safari-Toolbar) -> ignorieren
+    lastViewportWidth = window.innerWidth;
+    measureCloudAnchor();
+  }
+
+  if (bgCloudEl && section02El) {
+    measureCloudAnchor();
+    window.addEventListener("resize", handleResize);
+    document.addEventListener("eatme:content-ready", () => {
+      requestAnimationFrame(() => requestAnimationFrame(measureCloudAnchor));
+    });
+  }
+
+  function parallaxLoop() {
+    // ---- 1) ALLE READS ZUERST (ein Layout-Durchgang, keine Writes dazwischen) ----
+    const stageRect = stageEl ? stageEl.getBoundingClientRect() : null;
+    const section02Rect = section02El ? section02El.getBoundingClientRect() : null;
+    const section03Rect = section03El ? section03El.getBoundingClientRect() : null;
+    const section05Rect = section05El ? section05El.getBoundingClientRect() : null;
+    const scrollY = window.scrollY; // kein Layout-Read, daher hier unproblematisch
+
+    // ---- 2) ALLE WRITES DANACH (kein Read mehr bis zum nächsten Frame) ----
+    if (stageRect && stageBirdsEl && stageCloudEl) {
+      stageBirdsEl.style.transform = `translateY(${-stageRect.top * (1 - BIRDS_SPEED)}px)`;
+      stageCloudEl.style.transform = `translateY(${-stageRect.top * (1 - CLOUD_SPEED)}px)`;
+    }
+    if (section02Rect && birdLgEl && birdSmEl) {
+      birdLgEl.style.transform = `translateY(${section02Rect.top * BIRD_LG_PARALLAX}px)`;
+      birdSmEl.style.transform = `translateY(${section02Rect.top * BIRD_SM_PARALLAX}px)`;
+    }
+    if (section03Rect && section03Img1El && section03Img2El) {
+      section03Img1El.style.transform = `translateY(${section03Rect.top * IMG1_PARALLAX}px)`;
+      section03Img2El.style.transform = `translateY(${section03Rect.top * IMG2_PARALLAX}px)`;
+    }
+    if (section05Rect && dropEls.length) {
+      dropEls.forEach((el) => {
+        // offsetParent ist null, wenn das Element (oder ein Vorfahre)
+        // display:none hat -- z.B. die jeweils andere Breakpoint-Variante
+        // (Desktop-/Mobile-Tropfen-Satz, siehe section-05-images-drops.css).
+        // Unnötige Style-Writes auf unsichtbaren Elementen sparen, kleiner
+        // zusätzlicher Perf-Gewinn v.a. in Safari.
+        if (el.offsetParent === null) return;
+        const factor = DROP_PARALLAX_BY_SIZE[el.dataset.size] || 0.05;
+        el.style.transform = `translateY(${section05Rect.top * factor}px)`;
+      });
+    }
+    if (bgCloudShader) {
+      const scrollDelta = scrollY - cloudAnchorDocTop;
+      const offset = scrollDelta * (1 - CLOUD_PARALLAX_SPEED);
+      // Gleiche Formel wie zuvor (offset), nur als Shader-Uniform statt
+      // als CSS-Transform-Write -- .bg-cloud selbst bewegt sich nie mehr
+      // (siehe styles.css), das Rauschfeld verschiebt sich stattdessen.
+      bgCloudShader.render(offset);
+    }
+
+    requestAnimationFrame(parallaxLoop);
+  }
+  requestAnimationFrame(parallaxLoop);
+})();
