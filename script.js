@@ -1380,6 +1380,19 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     const section05Rect = section05El ? section05El.getBoundingClientRect() : null;
     const scrollY = window.scrollY; // kein Layout-Read, daher hier unproblematisch
 
+    // WICHTIG (Fix, siehe Chat/Profiling 24.08.2026): offsetParent ist
+    // ebenfalls ein Layout-Read wie getBoundingClientRect() -- gehoert
+    // daher HIER in die Read-Phase, nicht in die Write-Schleife weiter
+    // unten. Vorher stand diese Pruefung INNERHALB des forEach direkt vor
+    // dem style.transform-Write -- pro Frame wurden davor aber bereits
+    // mehrere ANDERE style.transform-Writes ausgefuehrt (Voegel, Bilder),
+    // die das Layout invalidiert haben. Jeder offsetParent-Read danach
+    // hat dadurch einen SYNCHRONEN Reflow erzwungen -- einmal PRO
+    // Tropfen-Element, jedes Frame (klassisches Layout-Thrashing:
+    // lesen/schreiben im Wechsel statt strikt getrennt). Ein Web-Inspector-
+    // CPU-Profil zeigte 79% aller Stichproben exakt an dieser Zeile.
+    const visibleDropEls = section05Rect ? Array.from(dropEls).filter((el) => el.offsetParent !== null) : [];
+
     // ---- 2) ALLE WRITES DANACH (kein Read mehr bis zum nächsten Frame) ----
     if (stageRect && stageBirdsEl && stageCloudEl) {
       stageBirdsEl.style.transform = `translateY(${-stageRect.top * (1 - BIRDS_SPEED)}px)`;
@@ -1393,14 +1406,8 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
       section03Img1El.style.transform = `translateY(${section03Rect.top * IMG1_PARALLAX}px)`;
       section03Img2El.style.transform = `translateY(${section03Rect.top * IMG2_PARALLAX}px)`;
     }
-    if (section05Rect && dropEls.length) {
-      dropEls.forEach((el) => {
-        // offsetParent ist null, wenn das Element (oder ein Vorfahre)
-        // display:none hat -- z.B. die jeweils andere Breakpoint-Variante
-        // (Desktop-/Mobile-Tropfen-Satz, siehe section-05-images-drops.css).
-        // Unnötige Style-Writes auf unsichtbaren Elementen sparen, kleiner
-        // zusätzlicher Perf-Gewinn v.a. in Safari.
-        if (el.offsetParent === null) return;
+    if (section05Rect && visibleDropEls.length) {
+      visibleDropEls.forEach((el) => {
         const factor = DROP_PARALLAX_BY_SIZE[el.dataset.size] || 0.05;
         el.style.transform = `translateY(${section05Rect.top * factor}px)`;
       });
