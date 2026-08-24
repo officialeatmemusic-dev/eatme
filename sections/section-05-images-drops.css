@@ -98,6 +98,23 @@
    (40px) bewegen sich stärker (wirken näher), kleinere (24px) dezenter
    (wirken weiter weg) -- simple Tiefenwirkung, siehe initDropsParallax().
    ========================================================================== */
+/* Gruppen-Wrapper: buendelt alle Tropfen EINER Groesse (24px oder 40px)
+   in einen gemeinsamen Container, der als Ganzes EINEN Transform pro
+   Frame bekommt (siehe initDropsParallax() in script.js), statt vorher
+   19 (Desktop) bzw. 9 (Mobile) Tropfen EINZELN zu transformieren. Til hat
+   per Web-Inspector-Aufnahme (25.08.2026) verifiziert, dass das Entfernen
+   von will-change (siehe .tropfen unten) allein nicht ausreichte -- die
+   schiere Anzahl individuell transformierter/gemalter Elemente war
+   weiterhin ein grosser Paint/Composite-Kostenfaktor. Position/Groesse
+   der einzelnen .tropfen-Kinder bleibt unveraendert (weiterhin absolute
+   %/px-Werte, 1:1 aus Figma) -- der Wrapper deckt einfach die komplette
+   Sektion ab (inset:0), damit sich daran nichts aendert. */
+#section-05-images-drops .tropfen-group {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
 #section-05-images-drops .tropfen {
   position: absolute;
   pointer-events: none;
@@ -122,7 +139,12 @@
   object-fit: contain;
 }
 
-#section-05-images-drops .tropfen--mobile {
+/* Sichtbarkeit jetzt auf Gruppen-Ebene gesteuert (ein display:none auf
+   dem Wrapper versteckt automatisch alle Kinder mit) -- die einzelnen
+   .tropfen--desktop/--mobile-Klassen bleiben nur noch fuer den
+   Parallax-Faktor (data-size) und Styling relevant, nicht mehr fuers
+   Ein-/Ausblenden. */
+#section-05-images-drops .tropfen-group--mobile {
   display: none;
 }
 
@@ -157,11 +179,11 @@
     align-self: auto;
   }
 
-  #section-05-images-drops .tropfen--desktop {
+  #section-05-images-drops .tropfen-group--desktop {
     display: none;
   }
 
-  #section-05-images-drops .tropfen--mobile {
+  #section-05-images-drops .tropfen-group--mobile {
     display: block;
   }
 }
