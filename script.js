@@ -1359,28 +1359,25 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   }
 
   // Vogel-Silhouetten-Übergang (birds-black.webp, Figma-Node 3:5415) --
-  // liegt über section-03 UND section-04. Im Referenz-Frame aus Figma
-  // (1280px Design-Breite) gilt: section-03 top 1396 / height 946,
-  // section-04 top 2342 / height 441, birds-black top 1614 / height 1147.
-  // Daraus abgeleitet: die Überlappung reicht 728px in section-03 hinein
-  // (von unten) und deckt 419px von section-04 ab (von oben) -- der Rest
-  // von section-04 (22px) bleibt frei.
+  // liegt über section-03 UND section-04. Höhe kommt jetzt komplett aus
+  // CSS (`aspect-ratio: 1280/1147` in birds-black-transition.css) --
+  // dadurch kann das Bild nie gequetscht/gestaucht werden, es skaliert
+  // immer proportional mit seiner eigenen (fluiden) Breite.
   //
-  // Das NICHT als feste px übernommen, weil section-04 "Height Hug" ist
-  // (wächst mit dem Fließtext) und section-03 durch das Lyrics-Modul
-  // ebenfalls leicht variieren kann -- Fixwerte aus Figma würden bei jeder
-  // Content-Änderung falsch sitzen. Stattdessen als Anteil der jeweils
-  // tatsächlich gerenderten Sektions-Höhe ausgedrückt, damit die
-  // Überlappung mitskaliert, egal wie hoch section-03/04 gerade sind.
-  const BIRDS_BLACK_INTO_SECTION03_RATIO = 728 / 946;
-  const BIRDS_BLACK_INTO_SECTION04_RATIO = 419 / 441;
+  // Hier wird NUR NOCH `top` berechnet: im Figma-Referenzrahmen
+  // (1280px Design-Breite) beginnt birds-black 728px oberhalb von
+  // section-04s Oberkante. Dieser Wert wird mit dem aktuellen
+  // Breiten-Verhältnis (gerenderte Breite / 1280) skaliert, damit der
+  // Versatz mit der (fluiden) Bildgröße mitwächst/-schrumpft, statt bei
+  // schmaleren Viewports relativ zu groß zu werden.
+  const BIRDS_BLACK_REF_WIDTH = 1280;
+  const BIRDS_BLACK_INTO_SECTION03_PX = 728;
 
   function measureBirdsBlackTransition() {
-    if (!birdsBlackEl || !section03El || !section04El) return;
-    const overlapSection03 = section03El.offsetHeight * BIRDS_BLACK_INTO_SECTION03_RATIO;
-    const overlapSection04 = section04El.offsetHeight * BIRDS_BLACK_INTO_SECTION04_RATIO;
-    birdsBlackEl.style.top = `${section04El.offsetTop - overlapSection03}px`;
-    birdsBlackEl.style.height = `${overlapSection03 + overlapSection04}px`;
+    if (!birdsBlackEl || !section04El) return;
+    const scale = birdsBlackEl.offsetWidth / BIRDS_BLACK_REF_WIDTH;
+    const topOffset = BIRDS_BLACK_INTO_SECTION03_PX * scale;
+    birdsBlackEl.style.top = `${section04El.offsetTop - topOffset}px`;
   }
 
   // Anker einmal sofort setzen (Fallback, falls Content-Ready schon

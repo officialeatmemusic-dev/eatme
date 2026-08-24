@@ -389,31 +389,33 @@ bekommt das automatisch:
 - Mobile (≤768px): keine Layout-Umstellung nötig (schon einspaltig), nur
   horizontales Padding auf `16px` reduziert — identisch zum Muster bei
   section-02/section-03.
-- **Vogel-Silhouetten-Übergang: jetzt implementiert** (`assets/visuals/
+- **Vogel-Silhouetten-Übergang: implementiert** (`assets/visuals/
   birds-black.webp`, Figma-Node 3:5415 "birds-black"). Liegt NICHT
-  innerhalb von section-04 selbst, sondern als eigenständiges Overlay-`
-  <div class="birds-black-transition">` zwischen section-04 und
+  innerhalb von section-04 selbst, sondern als eigenständiges Overlay-
+  `<div class="birds-black-transition">` zwischen section-04 und
   section-05 im Markup (Position ist ohnehin `absolute`, DOM-Reihenfolge
   ist egal), eigene Komponente `components/birds-black-transition.css`.
   Deckt sowohl das Ende von section-03 als auch fast die gesamte Höhe von
-  section-04 ab. `mix-blend-mode: multiply` lässt den weißen Hintergrund
-  des Assets verschwinden, `pointer-events: none` lässt Klicks/Drag
+  section-04 ab.
+  **Asset hat echte Alpha-Transparenz statt `mix-blend-mode`** (weißer
+  Hintergrund → Alpha 0, schwarze Vögel → Alpha 255, aus der Luminanz pro
+  Pixel berechnet) — `mix-blend-mode: multiply` wurde zuerst versucht,
+  hat aber gegen `.bg-cloud` (position: fixed) nicht geblendet, siehe
+  "Gelernte Lektionen". `pointer-events: none` lässt Klicks/Drag
   ungehindert an die Elemente darunter durch (Bandfotos, Songtext-Modul,
   Fließtext) — gleiche Konvention wie die blauen Vögel in section-02.
-  **Positionierung per JS, nicht fest verdrahtet:** section-04 ist
-  "Height Hug" (wächst mit dem Fließtext) und section-03 kann durch das
-  Lyrics-Modul ebenfalls leicht variieren, daher würde ein Fixwert aus
-  Figma bei jeder Content-Änderung falsch sitzen. `script.js`
-  (`measureBirdsBlackTransition()`, im selben konsolidierten
-  Parallax-IIFE wie die übrigen Sektions-Messungen) berechnet die
-  Überlappung stattdessen als Anteil der tatsächlich gerenderten Höhe
-  beider Sektionen (728/946 in section-03 hinein, 419/441 von section-04
-  abgedeckt — aus dem Figma-Referenzrahmen abgeleitet) und setzt
-  top/height als Inline-Style, neu berechnet bei echten Resizes und nach
-  `eatme:content-ready`. **Kein Parallax** auf diesem Element (nicht
-  angefragt) — nur statische, aber content-abhängige Positionierung.
+  **Größe über `aspect-ratio` (1280/1147), nicht per JS berechnet:**
+  verhindert zuverlässig jedes Quetschen/Stauchen bei fluider Breite,
+  siehe "Gelernte Lektionen". **Nur `top` wird per JS positioniert**
+  (`measureBirdsBlackTransition()`, im selben konsolidierten Parallax-IIFE
+  wie die übrigen Sektions-Messungen in `script.js`): 728px oberhalb von
+  section-04s Oberkante im Figma-Referenzrahmen (1280px Breite), skaliert
+  mit dem aktuellen Breitenverhältnis (gerenderte Breite / 1280), neu
+  berechnet bei echten Resizes und nach `eatme:content-ready`. **Kein
+  Parallax** auf diesem Element (nicht angefragt) — nur statische, aber
+  content-abhängige Positionierung.
   **Offen:** Mobile-Verhalten ungetestet, da kein eigener Figma-Mobile-Node
-  für dieses Asset vorliegt — die Anteils-Werte sind 1:1 vom Desktop-Node
+  für dieses Asset vorliegt — die Werte sind 1:1 vom Desktop-Node
   übernommen; ggf. im Screenshot-Vergleich auf Mobile nachjustieren.
 
 ### Details section-05-images-drops (für Anschluss-Kontext)
@@ -716,6 +718,37 @@ bekommt das automatisch:
   `data:font/woff2;base64,...`, SVGs als `data:image/svg+xml;base64,...`).
   Betrifft nur die Vorschau-Datei, nicht die Produktionsversion (die nutzt
   die echten relativen Repo-Pfade).
+- **`mix-blend-mode` blendet NICHT zuverlässig gegen `position: fixed`-
+  Elemente.** Bei `birds-black-transition` (Vogel-Silhouetten-Übergang
+  über section-03/04) sollte `mix-blend-mode: multiply` den weißen
+  Hintergrund des PNG/WebP-Assets gegen `.bg-cloud` (den sitewide
+  Himmel-Hintergrund) verschwinden lassen. Ergebnis: hat gegen normale
+  Dokumentfluss-Elemente (Bandfotos) funktioniert, aber NICHT gegen
+  `.bg-cloud` selbst — dort blieb der weiße Hintergrund sichtbar. Grund:
+  `.bg-cloud` ist bewusst `position: fixed` (siehe "Hintergrund & Motion"
+  oben, eigener Compositing-Layer aus Performance-Gründen) — Blend-Modi
+  überschreiten in der Praxis nicht zuverlässig Compositing-Layer-Grenzen,
+  auch wenn die Spezifikation das nicht explizit ausschließt. **Fix:**
+  kein `mix-blend-mode` mehr für dieses Asset, stattdessen echte
+  Alpha-Transparenz direkt in der Bilddatei (Weiß → Alpha 0, Schwarz →
+  Alpha 255, per Skript aus der Luminanz jedes Pixels berechnet) —
+  funktioniert unabhängig von Compositing-Layern, weil es sich um
+  normale Transparenz statt eines Blend-Modus handelt. Faustregel: für
+  Deko-Overlays, die gegen `.bg-cloud`/`.bg-footer` (beide `position:
+  fixed`/-anteilig) "verschwinden" sollen, IMMER echte Transparenz im
+  Asset verwenden, nicht `mix-blend-mode`.
+- **Prozentuale Bildgrößen (`width`/`height` in %) verzerren, sobald der
+  umgebende Container ein anderes Seitenverhältnis hat als das
+  Figma-Original.** Bei `birds-black-transition` wurde die Container-Höhe
+  anfangs aus einer Rechnung abgeleitet, die nicht dem tatsächlichen
+  Bild-Seitenverhältnis entsprach — Ergebnis: das Bild wirkte gequetscht
+  UND wurde am unteren Rand abgeschnitten (weil der Container zu klein
+  war). Fix: Container bekommt `aspect-ratio` (aus den Figma-Maßen,
+  hier 1280/1147) statt einer unabhängig berechneten Höhe — dadurch
+  skaliert das Bild IMMER proportional mit seiner (fluiden) Breite, egal
+  bei welcher Viewport-Größe. Faustregel: bei vollflächigen/full-bleed
+  Deko-Grafiken lieber `aspect-ratio` auf dem Container setzen als Höhe
+  und Breite unabhängig voneinander zu berechnen.
 - **`.fade-in-text` + eigener Hover auf demselben Element verträgt sich
   nicht ohne Weiteres.** Der gemeinsame `IntersectionObserver`
   (`initFadeInText()`) setzt pro Element zusätzlich ein individuelles

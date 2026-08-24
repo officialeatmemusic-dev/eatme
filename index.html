@@ -131,11 +131,14 @@
       Vogel-Silhouetten-Übergang (assets/visuals/birds-black.webp,
       Figma-Node 3:5415) -- liegt als eigenständiges Overlay ÜBER
       section-03-images UND section-04-text-02 (siehe ARCHITECTURE.md).
-      Position (top/height) wird zur Laufzeit in script.js berechnet
-      (measureBirdsBlackTransition()), da section-04 "Height Hug" ist und
-      die Überlappung deshalb nicht als Fixwert im Markup stehen kann.
-      mix-blend-mode: multiply lässt den weißen Hintergrund des Assets
-      verschwinden. pointer-events: none, damit man weiterhin mit den
+      Das Asset selbst hat echte Alpha-Transparenz (weißer Hintergrund
+      entfernt, siehe ARCHITECTURE.md "Gelernte Lektionen") -- kein
+      mix-blend-mode nötig/verwendet, das hätte gegen den fixed
+      Himmel-Hintergrund ohnehin nicht funktioniert. `aspect-ratio` in
+      birds-black-transition.css hält das Bild proportional (kein
+      Quetschen/Stauchen responsiv); nur `top` wird zur Laufzeit in
+      script.js berechnet (measureBirdsBlackTransition()), da section-04
+      "Height Hug" ist. pointer-events: none, damit man weiterhin mit den
       Elementen darunter (Bilder, Songtext-Modul, Fließtext) interagieren
       kann -- rein dekorativ, gleiche Konvention wie die blauen Vögel in
       section-02.
