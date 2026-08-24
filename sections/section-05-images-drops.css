@@ -111,13 +111,7 @@
    weiterhin ein grosser Paint/Composite-Kostenfaktor. Position/Groesse
    der einzelnen .tropfen-Kinder bleibt unveraendert (weiterhin absolute
    %/px-Werte, 1:1 aus Figma) -- der Wrapper deckt einfach die komplette
-   Sektion ab (inset:0), damit sich daran nichts aendert.
-
-   HINWEIS: Ein Canvas-basierter Ansatz (ein einzelnes <canvas> statt
-   dieser DOM-Gruppen) wurde am 25.08.2026 ausprobiert und wieder
-   verworfen -- brachte keine spuerbare Verbesserung (eher schlechter)
-   und hat die visuelle Darstellung der Tropfen kaputt gemacht. Nicht
-   erneut versuchen ohne einen triftigen neuen Grund. */
+   Sektion ab (inset:0), damit sich daran nichts aendert. */
 #section-05-images-drops .tropfen-group {
   position: absolute;
   inset: 0;
@@ -148,8 +142,8 @@
   object-fit: contain;
 }
 
-/* Sichtbarkeit auf Gruppen-Ebene gesteuert (ein display:none auf dem
-   Wrapper versteckt automatisch alle Kinder mit) -- die einzelnen
+/* Sichtbarkeit jetzt auf Gruppen-Ebene gesteuert (ein display:none auf
+   dem Wrapper versteckt automatisch alle Kinder mit) -- die einzelnen
    .tropfen--desktop/--mobile-Klassen bleiben nur noch fuer den
    Parallax-Faktor (data-size) und Styling relevant, nicht mehr fuers
    Ein-/Ausblenden. */
