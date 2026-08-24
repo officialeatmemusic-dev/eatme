@@ -1288,7 +1288,7 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const section03Img2El = document.querySelector("#section-03-image-02");
 
   const section05El = document.querySelector("#section-05-images-drops");
-  const dropGroupEls = document.querySelectorAll("#section-05-images-drops .tropfen-group");
+  const dropsCanvas = document.querySelector("#drops-canvas");
 
   const section07El = document.querySelector("#section-07-footer");
 
@@ -1301,6 +1301,118 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const IMG1_PARALLAX = 0.05;
   const IMG2_PARALLAX = 0.09;
   const DROP_PARALLAX_BY_SIZE = { "24": 0.035, "40": 0.09 };
+
+  // ==========================================================================
+  // Tropfen (section-05) -- seit 25.08.2026 EIN <canvas> statt 28 einzelner
+  // DOM-Elemente. Til hat per Web-Inspector-Aufnahme UND gezieltem Testen
+  // (Bilder gegen ein simples SVG austauschen, will-change entfernen,
+  // Gruppierung in 4 Wrapper) verifiziert, dass keiner dieser Zwischenschritte
+  // ausreichte -- die schiere ANZAHL an DOM-Elementen war der Kostenfaktor,
+  // unabhaengig von Bild-Inhalt oder Compositor-Hints. Alle Positions-/
+  // Groessen-/Bild-Werte unten sind 1:1 aus dem alten Markup uebernommen
+  // (siehe Kommentar in index.html), nur das Render-Verfahren ist neu.
+  //
+  // Desktop: left/top in % (relativ zur Sektionsgroesse). Mobile: left in %,
+  // top in FESTEN px (war im alten Markup schon so gemischt, siehe
+  // ARCHITECTURE.md Details section-05 -- unveraendert uebernommen).
+  const DESKTOP_DROPS = [
+    { leftPct: 49.786, topPct: 27.019, size: 24, img: "01" },
+    { leftPct: 40.887, topPct: 58.617, size: 24, img: "01" },
+    { leftPct: 63.465, topPct: 82.620, size: 24, img: "02" },
+    { leftPct: 53.379, topPct: 65.090, size: 24, img: "02" },
+    { leftPct: 53.222, topPct: 46.400, size: 24, img: "02" },
+    { leftPct: 48.433, topPct: 39.647, size: 24, img: "02" },
+    { leftPct: 32.260, topPct: 37.033, size: 24, img: "02" },
+    { leftPct: 24.987, topPct: 68.216, size: 24, img: "03" },
+    { leftPct: 25.629, topPct: 12.325, size: 24, img: "04" },
+    { leftPct: 66.861, topPct: 41.836, size: 24, img: "04" },
+    { leftPct: 33.972, topPct: 44.876, size: 24, img: "04" },
+    { leftPct: 53.178, topPct: 30.454, size: 40, img: "01" },
+    { leftPct: 42.516, topPct: 32.414, size: 40, img: "01" },
+    { leftPct: 32.805, topPct: 59.001, size: 40, img: "02" },
+    { leftPct: 5.313, topPct: 34.857, size: 40, img: "02" },
+    { leftPct: 48.535, topPct: 71.401, size: 40, img: "03" },
+    { leftPct: 65.613, topPct: 75.780, size: 40, img: "03" },
+    { leftPct: 41.522, topPct: 45.717, size: 40, img: "03" },
+    { leftPct: 74.852, topPct: 67.888, size: 40, img: "04" },
+  ];
+  const MOBILE_DROPS = [
+    { leftPct: 78, topPx: 110, size: 24, img: "01" },
+    { leftPct: 87, topPx: 250, size: 24, img: "03" },
+    { leftPct: 68, topPx: 335, size: 24, img: "04" },
+    { leftPct: 45, topPx: 450, size: 24, img: "02" },
+    { leftPct: 28, topPx: 520, size: 24, img: "04" },
+    { leftPct: 58, topPx: 545, size: 24, img: "01" },
+    { leftPct: 58, topPx: 170, size: 40, img: "02" },
+    { leftPct: 12, topPx: 405, size: 40, img: "01" },
+    { leftPct: 74, topPx: 475, size: 40, img: "03" },
+  ];
+
+  function initDropsCanvas(canvas) {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    // Die 4 Tropfen-Bilder EINMAL laden und wiederverwenden (nicht wie
+    // vorher 28 einzelne <img>-Elemente, aber dieselben 4 Dateien).
+    const images = {};
+    ["01", "02", "03", "04"].forEach((n) => {
+      const im = new Image();
+      im.src = `assets/visuals/drops/${n}.png`;
+      images[n] = im;
+    });
+
+    let dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let lastViewportWidth = window.innerWidth;
+
+    function doResize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.round(canvas.clientWidth * dpr);
+      const height = Math.round(canvas.clientHeight * dpr);
+      if (width > 0 && height > 0 && (canvas.width !== width || canvas.height !== height)) {
+        canvas.width = width;
+        canvas.height = height;
+      }
+    }
+    function resize() {
+      // Safari feuert "resize", wenn beim Scrollen die Adressleiste
+      // ein-/ausblendet (reine Hoehen-Aenderung) -- ignorieren, gleiches
+      // Muster wie beim Cloud-Canvas (siehe initCloudShader() oben).
+      if (window.innerWidth === lastViewportWidth) return;
+      lastViewportWidth = window.innerWidth;
+      doResize();
+    }
+    window.addEventListener("resize", resize);
+    doResize();
+
+    return {
+      resync: doResize,
+      // offsetsBySize: { "24": pxOffset, "40": pxOffset } -- aktueller
+      // Parallax-Versatz in CSS-Pixeln, bereits mit dem jeweiligen
+      // Groessen-Faktor gewichtet, siehe Aufrufer unten.
+      render(offsetsBySize) {
+        const cssWidth = canvas.width / dpr;
+        const cssHeight = canvas.height / dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+        const isMobile = window.innerWidth <= 768;
+        const drops = isMobile ? MOBILE_DROPS : DESKTOP_DROPS;
+
+        for (let i = 0; i < drops.length; i++) {
+          const d = drops[i];
+          const img = images[d.img];
+          if (!img || !img.complete || img.naturalWidth === 0) continue; // noch nicht geladen -> diesen Frame ueberspringen, kein Fehler
+          const x = (d.leftPct / 100) * cssWidth;
+          const y = d.topPx !== undefined ? d.topPx : (d.topPct / 100) * cssHeight;
+          const offsetY = offsetsBySize[d.size] || 0;
+          ctx.drawImage(img, x, y + offsetY, d.size, d.size);
+        }
+      },
+    };
+  }
+
+  const dropsCanvasHandle = dropsCanvas ? initDropsCanvas(dropsCanvas) : null;
+
   // Wie stark die Cloud dem normalen Scroll folgt: 0 = steht komplett
   // still, 1 = bewegt sich exakt wie ein normales, nicht-parallaxtes
   // Element, >1 = bewegt sich sogar staerker/schneller als der Rest der
@@ -1406,28 +1518,12 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     const section03Rect = (section03El && isNearViewport(section03El, scrollY, viewportHeight)) ? section03El.getBoundingClientRect() : null;
     const section05Rect = (section05El && isNearViewport(section05El, scrollY, viewportHeight)) ? section05El.getBoundingClientRect() : null;
 
-    // WICHTIG (Fix, siehe Chat/Profiling 24.08.2026): offsetParent ist
-    // ebenfalls ein Layout-Read wie getBoundingClientRect() -- gehoert
-    // daher HIER in die Read-Phase, nicht in die Write-Schleife weiter
-    // unten. Vorher stand diese Pruefung INNERHALB des forEach direkt vor
-    // dem style.transform-Write -- pro Frame wurden davor aber bereits
-    // mehrere ANDERE style.transform-Writes ausgefuehrt (Voegel, Bilder),
-    // die das Layout invalidiert haben. Jeder offsetParent-Read danach
-    // hat dadurch einen SYNCHRONEN Reflow erzwungen. Ein Web-Inspector-
-    // CPU-Profil zeigte 79% aller Stichproben exakt an dieser Zeile.
-    //
-    // WICHTIG (25.08.2026): Nur den Layout-Thrashing-Read/Write-Fix zu
-    // machen reichte nicht aus -- Til hat per Web-Inspector-Aufnahme
-    // verifiziert, dass weiterhin die schiere ANZAHL individuell
-    // transformierter/gemalter Elemente (19 Desktop bzw. 9 Mobile) ein
-    // grosser Paint/Composite-Kostenfaktor war, unabhaengig vom
-    // Read/Write-Timing. Fix: alle Tropfen EINER Groesse sind jetzt in
-    // index.html zu einem gemeinsamen .tropfen-group-Wrapper gebuendelt
-    // (siehe section-05-images-drops.css) -- hier wird nur noch der
-    // Wrapper (max. 4 Elemente, davon durch die Mobile/Desktop-
-    // Medienabfrage ohnehin nur 2 gleichzeitig sichtbar) transformiert,
-    // nicht mehr jeder einzelne Tropfen.
-    const visibleDropGroups = section05Rect ? Array.from(dropGroupEls).filter((el) => el.offsetParent !== null) : [];
+    // Tropfen (25.08.2026): brauchen keinen offsetParent-Check mehr --
+    // es gibt nur noch EIN Canvas-Element (siehe Kommentar bei
+    // initDropsCanvas() oben), dessen Sichtbarkeit schon ueber
+    // isNearViewport()/section05Rect abgedeckt ist. Mobile-vs-Desktop-
+    // Auswahl passiert innerhalb von dropsCanvasHandle.render() selbst
+    // (window.innerWidth-Check), kein separates DOM-Element mehr noetig.
 
     // ---- 2) ALLE WRITES DANACH (kein Read mehr bis zum nächsten Frame) ----
     if (stageRect && stageBirdsEl && stageCloudEl) {
@@ -1442,10 +1538,10 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
       section03Img1El.style.transform = `translateY(${section03Rect.top * IMG1_PARALLAX}px)`;
       section03Img2El.style.transform = `translateY(${section03Rect.top * IMG2_PARALLAX}px)`;
     }
-    if (section05Rect && visibleDropGroups.length) {
-      visibleDropGroups.forEach((el) => {
-        const factor = DROP_PARALLAX_BY_SIZE[el.dataset.size] || 0.05;
-        el.style.transform = `translateY(${section05Rect.top * factor}px)`;
+    if (section05Rect && dropsCanvasHandle) {
+      dropsCanvasHandle.render({
+        24: section05Rect.top * DROP_PARALLAX_BY_SIZE["24"],
+        40: section05Rect.top * DROP_PARALLAX_BY_SIZE["40"],
       });
     }
     if (bgCloudShader && bgCloudEl) {
