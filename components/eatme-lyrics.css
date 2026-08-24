@@ -48,11 +48,11 @@
   filter: none;
 }
 
-/* Hover-Blur deaktiviert, siehe Kommentar oben -- war vorher blur(14px),
-   staerker als der globale 4px-Standard. Opacity-Hover (dezent, guenstig)
-   bleibt erhalten, nur der teure Blur-Anteil ist weg. */
+/* Hover-Effekt komplett entfernt (25.08.2026, siehe Chat) -- Link bleibt
+   voll klickbar, zeigt aber keinerlei visuelles Hover-Feedback mehr
+   (weder Opacity noch Blur). */
 .eatme-lyrics-link:hover {
-  opacity: 0.85;
+  opacity: 1;
   filter: none;
 }
 
