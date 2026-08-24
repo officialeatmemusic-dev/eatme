@@ -6,7 +6,7 @@
 <title>Vogelschwarm</title>
 <style>
   html,body{margin:0;height:100%}
-  body{background:#FFFFFF;overflow:hidden}
+  body{background:transparent;overflow:hidden}
   canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity 1.2s ease}
 </style>
 </head>
@@ -21,7 +21,7 @@
   const DIRX=-0.707, DIRY=-0.707;
 
   // feste Einstellungen (ohne Beat)
-  const cfg = {"dot":"#B4C1CB","bg":"#FFFFFF","size":7.9,"alpha":0.5,"scale":true,
+  const cfg = {"dot":"#B4C1CB","bg":"transparent","size":7.9,"alpha":0.5,"scale":true,
     "wander":0.85,"unruhe":0.21,"blenden":0.6,"easing":0.75,
     "force":1,"radius":502,"delay":0.35,"trail":0,"zoom":1.08,"gridmul":0.97};
 
@@ -112,6 +112,7 @@
   const items=new Array(N);
   for(let i=0;i<N;i++){ items[i]={gi:0,gj:0,a:0,rad:0}; }
   const occ=new Set();
+  const dotColRGB="rgb("+dotCol+")"; // konstant -- fillStyle wird jetzt nur noch EINMAL pro Frame gesetzt (statt einmal PRO PUNKT), Alpha laeuft ueber globalAlpha
 
   // ---- Zeichnen ----
   function render(){
@@ -125,12 +126,17 @@
     }
     items.sort((a,b)=>b.a-a.a);
     occ.clear();
+    // fillStyle EINMAL pro Frame (statt bis zu 782x "rgba(...)"-String
+    // bauen + vom Canvas neu parsen lassen) -- globalAlpha ist eine reine
+    // Zahl-Zuweisung, kein String-Parsing, identisches Farbergebnis.
+    ctx.fillStyle=dotColRGB;
     for(const it of items){
       if(it.a<=0.004)continue;
       const k=okey(it.gi,it.gj); if(occ.has(k))continue; occ.add(k);
-      ctx.fillStyle="rgba("+dotCol+","+it.a+")";
+      ctx.globalAlpha=it.a;
       ctx.beginPath(); ctx.arc(mx(it.gi),my(it.gj),it.rad,0,6.2832); ctx.fill();
     }
+    ctx.globalAlpha=1; // sauberer Reset fuer den naechsten Frame
   }
 
   let opened=false;
