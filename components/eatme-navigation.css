@@ -15,8 +15,8 @@
    Wichtig: #site-nav hat pointer-events:none (siehe unten), damit die
    unsichtbare Box der Nav keine Klicks auf darunterliegenden Content
    (z.B. das Lyrics-Modul, wenn es beim Scrollen unter die Nav rutscht)
-   blockt. Nur .eatme-nav-links a holt sich das explizit zurück. Falls
-   das Logo je zum Link wird, braucht es ebenfalls pointer-events:auto.
+   blockt. .eatme-nav-links a UND .eatme-nav-logo-link holen sich das
+   explizit zurück (Logo verlinkt auf index.html, siehe unten).
    ========================================================================== */
 
 #site-nav {
@@ -49,10 +49,32 @@
    clamp(MIN, PREFERRED, MAX) liefert genau dieses Verhalten:
    - großer Viewport: 80vw > 743px -> clamp liefert 743px (MAX)
    - mittlerer Viewport: 330px < 80vw < 743px -> clamp liefert 80vw (fluid)
-   - kleiner Viewport: 80vw < 330px -> clamp liefert 330px (MIN, Boden) */
-.eatme-nav-logo {
+   - kleiner Viewport: 80vw < 330px -> clamp liefert 330px (MIN, Boden)
+
+   Logo ist jetzt ein <a href="index.html"> (verlinkt auf die Startseite,
+   auch von imprint-and-privacy.html aus) -- die Breiten-Logik sitzt daher
+   auf .eatme-nav-logo-link, das <img> selbst füllt einfach 100%.
+   BEWUSST OHNE die globale Link-Hover-Convention (Opacity+Blur) aus
+   styles.css: Til wollte keinen Hover-Effekt auf dem Logo, nur
+   Klickbarkeit -- daher hier explizit zurückgesetzt (padding/margin/
+   transition/will-change neutralisiert, :hover ohne Wirkung). */
+.eatme-nav-logo-link {
   display: block;
   width: clamp(330px, 80vw, 743px);
+  pointer-events: auto; /* holt sich Klickbarkeit vom #site-nav-Reset zurück */
+  padding: 0;
+  margin: 0;
+  will-change: auto;
+  transition: none;
+}
+.eatme-nav-logo-link:hover {
+  opacity: 1;
+  filter: none;
+}
+
+.eatme-nav-logo {
+  display: block;
+  width: 100%;
   aspect-ratio: 743 / 139; /* intrinsische Maße des Logo-Assets */
   object-fit: contain;
   mix-blend-mode: multiply;
