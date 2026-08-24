@@ -103,7 +103,16 @@
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  will-change: transform;
+  /* KEIN will-change: transform mehr -- Til hat per Web-Inspector-
+     Aufnahme (24./25.08.2026) verifiziert, dass das Entfernen die
+     Ruckel-/Sprung-Haeufigkeit deutlich senkt. Vermutung: 19 (Desktop)
+     bzw. 9 (Mobile) einzeln dauerhaft promotete Compositor-Ebenen
+     gleichzeitig ueberschreiten offenbar ein internes Budget in Safari
+     und kosten dadurch mehr an Paint/Composite-Zeit, als sie an
+     Transform-Performance einsparen. Falls in Zukunft ein aehnliches
+     Performance-Problem auftaucht: NICHT direkt wieder will-change auf
+     viele Einzelelemente packen, sondern zuerst mit einer Web-Inspector-
+     Aufnahme verifizieren. */
 }
 
 #section-05-images-drops .tropfen img {
