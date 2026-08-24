@@ -53,13 +53,23 @@
    Liegt in der linken Spalte, überlappt Bandfoto 1 leicht am unteren
    Rand (Design-Update -- vorher als eigenständiges Overlay über
    section-03/04 geplant, siehe ARCHITECTURE.md "Gelernte Lektionen" zur
-   alten Variante). Fixe px-Maße/-Position 1:1 aus Figma (79/218/445/311
-   relativ zur oberen linken Ecke von .image-container, wo auch
-   Bandfoto 1 bei 0/0 sitzt) -- bewusst NICHT fluid/prozentual, genau wie
-   Bandfoto 1 selbst (das ebenfalls fix 216×288 bleibt, siehe oben) --
-   dieselbe Konvention, daher braucht auch dieses Overlay keine
-   JS-Positionierung und bleibt auf jeder Breite (inkl. Mobile)
-   unverändert korrekt zum Bild ausgerichtet.
+   alten Variante).
+
+   WICHTIG -- zwei unterschiedliche Bezugsgrößen, nicht verwechseln:
+   - `top` ist FIX (218px), weil er sich auf Bandfoto 1 bezieht, und das
+     bleibt IMMER 288px hoch, unabhängig von der Viewport-Breite (siehe
+     .eatme-image-01 oben, bewusst nicht fluid).
+   - `left`/`width` sind PROZENTUAL (relativ zu .image-container, dessen
+     Breite mit der Spalte mitschrumpft/-wächst), weil das Vogelbild in
+     Figma fast doppelt so breit ist wie das Bandfoto (445px vs. 216px)
+     und weit in den leeren Spaltenraum rechts daneben hineinragt --
+     dieser leere Raum ist NICHT fix, sondern skaliert mit der Spalte.
+     Ein fixer px-Wert hier hätte bei schmaleren Viewports (< 1280px,
+     bevor der 768px-Mobile-Breakpoint greift) dazu geführt, dass das
+     Vogelbild proportional viel zu groß wirkt bzw. über die Spalte
+     hinausragt -- genau der Bug, den ein früherer Versuch mit rein
+     fixen px-Werten hatte. `max-width` deckelt es auf die Figma-Maße,
+     `aspect-ratio` hält Breite/Höhe im Gleichschritt (kein Quetschen).
    Asset hat echte Alpha-Transparenz (weißer Hintergrund → Alpha 0,
    schwarze Vögel → Alpha 255) statt mix-blend-mode -- siehe
    ARCHITECTURE.md "Gelernte Lektionen": mix-blend-mode hatte beim alten
@@ -70,10 +80,11 @@
    neu gerenderten Shader) entfällt dadurch von selbst. */
 #section-03-images .birds-black {
   position: absolute;
-  left: 79px;
+  left: 13.12%; /* 79/602 aus Figma */
   top: 218px;
-  width: 445px;
-  height: 311px;
+  width: 73.92%; /* 445/602 aus Figma */
+  max-width: 445px;
+  aspect-ratio: 445 / 311;
   overflow: hidden;
   pointer-events: none;
 }
