@@ -16,8 +16,19 @@
    ========================================================================== */
 
 /* Das komplette Modul (Zeilen + icon-play + Songtitel) ist EIN einziger
-   Link -> Opacity-Hover kommt automatisch aus der globalen a-Convention in
-   styles.css, der Blur wird unten bewusst stärker überschrieben.
+   Link -> Opacity/Blur-Hover normalerweise automatisch aus der globalen
+   a-Convention in styles.css. HIER BEWUSST DEAKTIVIERT (25.08.2026):
+   Til hat per mehreren Web-Inspector-Aufnahmen verifiziert, dass gerade
+   dieses Modul (3x auf der Seite, section-03/05/07, teils recht breite
+   Zeilen durch white-space:nowrap) einen grossen Anteil der gemeldeten
+   Paint/Composite-Stalls beim Scrollen ausmacht -- deutlich mehr als ein
+   normaler kurzer Nav-Link. Der Link bleibt voll funktional/klickbar,
+   nur der Hover-Blur-Effekt und die damit verbundene dauerhafte
+   will-change:filter-Ebene sind weg. Falls spaeter Kapazitaet fuer eine
+   sauberere Loesung da ist (z.B. Blur nur auf einem kleineren
+   Innenelement statt auf dem ganzen breiten Link), kann das hier wieder
+   aktiviert werden -- fuer jetzt ist Performance wichtiger als der
+   Hover-Effekt an dieser Stelle.
 
    Breite bewusst NICHT fix/prozentual, sondern width: fit-content (Hug) ->
    das Modul ist immer genau so breit wie seine längste Zeile. Dadurch
@@ -33,14 +44,16 @@
   align-items: flex-start;
   gap: 26px;
   width: fit-content;
+  will-change: auto;
+  filter: none;
 }
 
-/* Stärkerer Blur nur für dieses Modul (Wunsch: auffälliger als der globale
-   4px-Standard aus styles.css). Opacity/Transition-Timing bleiben
-   identisch zur globalen Convention, nur der Blur-Radius wird erhöht. */
+/* Hover-Blur deaktiviert, siehe Kommentar oben -- war vorher blur(14px),
+   staerker als der globale 4px-Standard. Opacity-Hover (dezent, guenstig)
+   bleibt erhalten, nur der teure Blur-Anteil ist weg. */
 .eatme-lyrics-link:hover {
-  opacity: 0.6;
-  filter: blur(14px);
+  opacity: 0.85;
+  filter: none;
 }
 
 /* Kein Umbruch der Songzeilen -- das Modul wächst stattdessen in der
