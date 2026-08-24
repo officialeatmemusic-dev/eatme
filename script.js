@@ -45,31 +45,15 @@ document.addEventListener("DOMContentLoaded", async () => {
 // getBoundingClientRect(), siehe Parallax-Loop weiter unten).
 // ==========================================================================
 
-let fadeLastScrollY = window.scrollY;
-
-const fadeInObserver = new IntersectionObserver(
-  (entries) => {
-    const currentScrollY = window.scrollY;
-    const scrollingDown = currentScrollY >= fadeLastScrollY;
-    fadeLastScrollY = currentScrollY;
-
-    entries.forEach((entry) => {
-      if (scrollingDown && entry.isIntersecting) {
-        entry.target.classList.add("is-visible");
-      } else if (!scrollingDown && !entry.isIntersecting) {
-        entry.target.classList.remove("is-visible");
-      }
-    });
-  },
-  { threshold: 0.15, rootMargin: "0px 0px -10% 0px" }
-);
-
+// Scroll-Fade-In-Convention DEAKTIVIERT (25.08.2026, siehe styles.css
+// Kommentar bei .fade-in-text): Der Effekt ist per CSS bereits neutralisiert
+// (Texte permanent sichtbar), initFadeInText() macht daher bewusst nichts
+// mehr -- spart den IntersectionObserver-Overhead komplett, statt ihn
+// weiterlaufen zu lassen, ohne dass er noch etwas Sichtbares bewirkt.
+// Aufruf-Stellen (DOMContentLoaded unten, renderSection0X() etc.) bleiben
+// unveraendert im Code, rufen aber nur noch eine leere Funktion auf.
 function initFadeInText(root = document) {
-  root.querySelectorAll(".fade-in-text:not(.fade-in-observed)").forEach((el, index) => {
-    el.classList.add("fade-in-observed");
-    el.style.transitionDelay = `${index * 80}ms`;
-    fadeInObserver.observe(el);
-  });
+  // no-op
 }
 
 document.addEventListener("DOMContentLoaded", () => initFadeInText());
