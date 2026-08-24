@@ -1304,7 +1304,7 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const section03Img2El = document.querySelector("#section-03-image-02");
 
   const section05El = document.querySelector("#section-05-images-drops");
-  const dropEls = document.querySelectorAll("#section-05-images-drops .tropfen");
+  const dropGroupEls = document.querySelectorAll("#section-05-images-drops .tropfen-group");
 
   const section07El = document.querySelector("#section-07-footer");
 
@@ -1429,11 +1429,21 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     // dem style.transform-Write -- pro Frame wurden davor aber bereits
     // mehrere ANDERE style.transform-Writes ausgefuehrt (Voegel, Bilder),
     // die das Layout invalidiert haben. Jeder offsetParent-Read danach
-    // hat dadurch einen SYNCHRONEN Reflow erzwungen -- einmal PRO
-    // Tropfen-Element, jedes Frame (klassisches Layout-Thrashing:
-    // lesen/schreiben im Wechsel statt strikt getrennt). Ein Web-Inspector-
+    // hat dadurch einen SYNCHRONEN Reflow erzwungen. Ein Web-Inspector-
     // CPU-Profil zeigte 79% aller Stichproben exakt an dieser Zeile.
-    const visibleDropEls = section05Rect ? Array.from(dropEls).filter((el) => el.offsetParent !== null) : [];
+    //
+    // WICHTIG (25.08.2026): Nur den Layout-Thrashing-Read/Write-Fix zu
+    // machen reichte nicht aus -- Til hat per Web-Inspector-Aufnahme
+    // verifiziert, dass weiterhin die schiere ANZAHL individuell
+    // transformierter/gemalter Elemente (19 Desktop bzw. 9 Mobile) ein
+    // grosser Paint/Composite-Kostenfaktor war, unabhaengig vom
+    // Read/Write-Timing. Fix: alle Tropfen EINER Groesse sind jetzt in
+    // index.html zu einem gemeinsamen .tropfen-group-Wrapper gebuendelt
+    // (siehe section-05-images-drops.css) -- hier wird nur noch der
+    // Wrapper (max. 4 Elemente, davon durch die Mobile/Desktop-
+    // Medienabfrage ohnehin nur 2 gleichzeitig sichtbar) transformiert,
+    // nicht mehr jeder einzelne Tropfen.
+    const visibleDropGroups = section05Rect ? Array.from(dropGroupEls).filter((el) => el.offsetParent !== null) : [];
 
     // ---- 2) ALLE WRITES DANACH (kein Read mehr bis zum nächsten Frame) ----
     if (stageRect && stageBirdsEl && stageCloudEl) {
@@ -1448,8 +1458,8 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
       section03Img1El.style.transform = `translateY(${section03Rect.top * IMG1_PARALLAX}px)`;
       section03Img2El.style.transform = `translateY(${section03Rect.top * IMG2_PARALLAX}px)`;
     }
-    if (section05Rect && visibleDropEls.length) {
-      visibleDropEls.forEach((el) => {
+    if (section05Rect && visibleDropGroups.length) {
+      visibleDropGroups.forEach((el) => {
         const factor = DROP_PARALLAX_BY_SIZE[el.dataset.size] || 0.05;
         el.style.transform = `translateY(${section05Rect.top * factor}px)`;
       });
