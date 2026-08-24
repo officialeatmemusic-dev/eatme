@@ -3,7 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EatMe</title>
+
+  <!--
+    SEO / Social Meta
+    ==================
+    canonical + og:url + JSON-LD zeigen auf die Custom-Domain
+    eatmemusic.com (Umzug via Strato). Diese Tags stehen bewusst
+    statisch im HTML (nicht per script.js aus content.json injiziert),
+    weil Social-Crawler (WhatsApp, iMessage, Facebook) kein JavaScript
+    ausführen und nur den rohen <head> lesen.
+  -->
+  <title>EatMe – Alternative Pop between Nostalgia and New Beginnings</title>
+  <meta name="description" content="EatMe is an independent pop/rock project from Hamburg blending shoegaze, hyperpop and folk influences — alternative pop between nostalgia and new beginnings." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://eatmemusic.com/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="EatMe" />
+  <meta property="og:title" content="EatMe – Alternative Pop between Nostalgia and New Beginnings" />
+  <meta property="og:description" content="Independent pop/rock from Hamburg with shoegaze, hyperpop and folk influences." />
+  <meta property="og:url" content="https://eatmemusic.com/" />
+  <meta property="og:image" content="https://eatmemusic.com/assets/images/eatme-image-01.jpg" />
+  <meta property="og:locale" content="en_US" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="EatMe – Alternative Pop between Nostalgia and New Beginnings" />
+  <meta name="twitter:description" content="Independent pop/rock from Hamburg with shoegaze, hyperpop and folk influences." />
+  <meta name="twitter:image" content="https://eatmemusic.com/assets/images/eatme-image-01.jpg" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/favicon/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/favicon/favicon.png" />
+
+  <!--
+    Structured Data (JSON-LD): hilft Google, EatMe als Musik-Act zu
+    verstehen und die Social-Profile zu verknüpfen (sameAs). Werte
+    stammen aus content.json (site.social_links) -- bei Änderungen dort
+    auch hier nachziehen, da dieser Block statisch ist.
+  -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MusicGroup",
+    "name": "EatMe",
+    "url": "https://eatmemusic.com/",
+    "genre": ["Alternative Pop", "Indie Pop", "Shoegaze"],
+    "email": "contact@eatmemusic.com",
+    "sameAs": [
+      "https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg",
+      "https://www.instagram.com/eatme.music/",
+      "https://www.youtube.com/@eatme.music.official",
+      "https://www.tiktok.com/@eatme.music"
+    ]
+  }
+  </script>
 
   <!-- Design-Tokens: Farben, Fonts, Font-Faces — einzige Quelle, siehe tokens-notes.md -->
   <link rel="stylesheet" href="tokens.css" />
