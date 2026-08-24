@@ -61,7 +61,10 @@
   max-width: 387px;
   aspect-ratio: 774 / 514;
   object-fit: cover;
-  will-change: transform;
+  /* KEIN will-change: transform mehr (25.08.2026) -- dieses Bild wird nie
+     per JS transformiert (nur section-03s Bilder bekommen Parallax),
+     die Layer-Promotion war also eine dauerhafte GPU-Ebene ohne jeden
+     Nutzen. Gleiches Muster wie bei .tropfen, siehe Kommentar unten. */
 }
 
 /* ---- Rechte Spalte: Lyrics-Modul, zentriert (beide Achsen) ---- */
