@@ -152,6 +152,24 @@
 
   #section-03-images .image-container {
     height: auto;
+    /* Vogel-Silhouette ragt über Bandfoto 1 hinaus (siehe .birds-black
+       oben) -- auf Desktop kein Problem, weil .image-container auf die
+       Zeilenhöhe der (viel höheren) rechten Spalte gestreckt wird, da
+       ist reichlich Platz. Im gestapelten Mobile-Layout gibt es diesen
+       Platz nicht automatisch -- ohne diese Reservierung würde die
+       Vogel-Grafik in den Songtext darunter hineinragen (sah aus wie
+       "Text überlagert"/"Bild unten abgeschnitten"). Fix: exakt so viel
+       padding-bottom reservieren, wie die Vogel-Grafik unten übersteht.
+       51.66% = wie viel die Vogel-HÖHE (aus width * 311/445) im
+       Verhältnis zur Container-BREITE ausmacht (padding-bottom-Prozente
+       beziehen sich immer auf die Breite, nicht die Höhe -- daher lässt
+       sich das rein in CSS ausdrücken, ohne JS). -70px, weil `top`
+       (218px) 70px WENIGER ist als die Bildhöhe (288px) -- der
+       Überhang unten ist also (Vogel-Höhe - 70px). `min()` deckelt das
+       Ganze bei 241px (= 218 + 311 - 288, der Wert ab der 445px-
+       Breitenobergrenze der Vogel-Grafik), damit auch kurz unter der
+       768px-Grenze nicht mehr Platz reserviert wird als nötig. */
+    padding-bottom: min(241px, calc(51.66% - 70px));
   }
 
   #section-03-images .col-text-image {
