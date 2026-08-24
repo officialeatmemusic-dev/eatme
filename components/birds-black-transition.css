@@ -5,20 +5,27 @@
    section-03-images UND section-04-text-02 (siehe ARCHITECTURE.md, "Vogel-
    Silhouetten-Übergang" -- das war bewusst bis zum Schluss zurückgestellt).
 
-   Position (top/height) wird NICHT hier fest verdrahtet, sondern per JS
-   berechnet (measureBirdsBlackTransition() in script.js) und als Inline-
-   Style gesetzt. Grund: section-04 ist "Height Hug" (wächst mit dem
-   Fließtext), section-03 kann durch das Lyrics-Modul ebenfalls leicht in
-   der Höhe variieren -- ein Fixwert aus Figma würde bei jeder
-   Content-Änderung falsch sitzen. Stattdessen wird die Überlappung als
-   Anteil der tatsächlich gerenderten Höhe beider Sektionen berechnet, sodass
-   sie mitskaliert.
+   WICHTIG -- kein mix-blend-mode mehr (siehe ARCHITECTURE.md, "Gelernte
+   Lektionen"): der weiße Hintergrund des Original-Assets ist jetzt als
+   ECHTE Transparenz in der Datei selbst enkodiert (Weiß -> Alpha 0,
+   Schwarz -> Alpha 255, siehe Kommentar bei der Asset-Konvertierung).
+   Grund: mix-blend-mode:multiply hat gegen .bg-cloud (position: fixed,
+   eigener Compositing-Layer) NICHT geblendet -- nur gegen normale
+   Dokumentfluss-Elemente (Bandfotos etc.), nicht gegen den fixed
+   Himmel-Hintergrund. Echte Alpha-Transparenz umgeht dieses Problem
+   komplett und funktioniert unabhängig von Compositing-Layern.
+
+   Größe/Seitenverhältnis: `aspect-ratio` hält das Bild proportional zur
+   Breite (1280×1147 aus Figma) -- WICHTIG, damit es responsiv nie
+   gequetscht/gestaucht wird. Höhe wird dadurch NICHT mehr per JS gesetzt
+   (nur noch `top`, siehe measureBirdsBlackTransition() in script.js).
    ========================================================================== */
 .birds-black-transition {
-  /* top + height kommen als Inline-Style von measureBirdsBlackTransition() */
+  /* top kommt als Inline-Style von measureBirdsBlackTransition() */
   position: absolute;
   left: 0;
   width: 100%;
+  aspect-ratio: 1280 / 1147; /* 1:1 aus Figma -- verhindert jedes Quetschen/Stauchen */
   overflow: hidden;
 
   /* Liegt oberhalb der Sektionen (section-03/04 haben kein eigenes
@@ -32,11 +39,6 @@
      gleiche Konvention wie die blauen Vögel in section-02 (siehe
      ARCHITECTURE.md, "Details section-02-text-01"). */
   pointer-events: none;
-
-  /* Lässt den weißen PNG/WebP-Hintergrund der Vogel-Grafik verschwinden --
-     genau wie beim Logo in eatme-navigation.css (dort dieselbe Technik,
-     siehe Kommentar dort). */
-  mix-blend-mode: multiply;
 }
 
 .birds-black-img {
