@@ -1301,12 +1301,6 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const IMG1_PARALLAX = 0.05;
   const IMG2_PARALLAX = 0.09;
   const DROP_PARALLAX_BY_SIZE = { "24": 0.035, "40": 0.09 };
-  // HINWEIS: Ein Canvas-basierter Ansatz fuer die Tropfen (ein einzelnes
-  // <canvas> statt der .tropfen-group-Wrapper) wurde am 25.08.2026
-  // ausprobiert und wieder verworfen -- keine spuerbare Verbesserung
-  // (eher schlechter) und visuell kaputt. Nicht erneut versuchen ohne
-  // triftigen neuen Grund.
-
   // Wie stark die Cloud dem normalen Scroll folgt: 0 = steht komplett
   // still, 1 = bewegt sich exakt wie ein normales, nicht-parallaxtes
   // Element, >1 = bewegt sich sogar staerker/schneller als der Rest der
@@ -1412,11 +1406,27 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     const section03Rect = (section03El && isNearViewport(section03El, scrollY, viewportHeight)) ? section03El.getBoundingClientRect() : null;
     const section05Rect = (section05El && isNearViewport(section05El, scrollY, viewportHeight)) ? section05El.getBoundingClientRect() : null;
 
-    // offsetParent ist ein Layout-Read wie getBoundingClientRect() --
-    // gehoert daher HIER in die Read-Phase, nicht in die Write-Schleife
-    // weiter unten (siehe aeltere Layout-Thrashing-Notiz: 79% der
-    // CPU-Profil-Stichproben lagen mal genau an dieser Stelle, als der
-    // Check noch in der Write-Schleife stand).
+    // WICHTIG (Fix, siehe Chat/Profiling 24.08.2026): offsetParent ist
+    // ebenfalls ein Layout-Read wie getBoundingClientRect() -- gehoert
+    // daher HIER in die Read-Phase, nicht in die Write-Schleife weiter
+    // unten. Vorher stand diese Pruefung INNERHALB des forEach direkt vor
+    // dem style.transform-Write -- pro Frame wurden davor aber bereits
+    // mehrere ANDERE style.transform-Writes ausgefuehrt (Voegel, Bilder),
+    // die das Layout invalidiert haben. Jeder offsetParent-Read danach
+    // hat dadurch einen SYNCHRONEN Reflow erzwungen. Ein Web-Inspector-
+    // CPU-Profil zeigte 79% aller Stichproben exakt an dieser Zeile.
+    //
+    // WICHTIG (25.08.2026): Nur den Layout-Thrashing-Read/Write-Fix zu
+    // machen reichte nicht aus -- Til hat per Web-Inspector-Aufnahme
+    // verifiziert, dass weiterhin die schiere ANZAHL individuell
+    // transformierter/gemalter Elemente (19 Desktop bzw. 9 Mobile) ein
+    // grosser Paint/Composite-Kostenfaktor war, unabhaengig vom
+    // Read/Write-Timing. Fix: alle Tropfen EINER Groesse sind jetzt in
+    // index.html zu einem gemeinsamen .tropfen-group-Wrapper gebuendelt
+    // (siehe section-05-images-drops.css) -- hier wird nur noch der
+    // Wrapper (max. 4 Elemente, davon durch die Mobile/Desktop-
+    // Medienabfrage ohnehin nur 2 gleichzeitig sichtbar) transformiert,
+    // nicht mehr jeder einzelne Tropfen.
     const visibleDropGroups = section05Rect ? Array.from(dropGroupEls).filter((el) => el.offsetParent !== null) : [];
 
     // ---- 2) ALLE WRITES DANACH (kein Read mehr bis zum nächsten Frame) ----
