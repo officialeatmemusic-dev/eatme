@@ -49,6 +49,50 @@
   will-change: transform;
 }
 
+/* ---- Vogel-Silhouetten (birds-black.webp, Figma-Node 169:212) ----
+   Liegt in der linken Spalte, überlappt Bandfoto 1 leicht am unteren
+   Rand (Design-Update -- vorher als eigenständiges Overlay über
+   section-03/04 geplant, siehe ARCHITECTURE.md "Gelernte Lektionen" zur
+   alten Variante). Fixe px-Maße/-Position 1:1 aus Figma (79/218/445/311
+   relativ zur oberen linken Ecke von .image-container, wo auch
+   Bandfoto 1 bei 0/0 sitzt) -- bewusst NICHT fluid/prozentual, genau wie
+   Bandfoto 1 selbst (das ebenfalls fix 216×288 bleibt, siehe oben) --
+   dieselbe Konvention, daher braucht auch dieses Overlay keine
+   JS-Positionierung und bleibt auf jeder Breite (inkl. Mobile)
+   unverändert korrekt zum Bild ausgerichtet.
+   Asset hat echte Alpha-Transparenz (weißer Hintergrund → Alpha 0,
+   schwarze Vögel → Alpha 255) statt mix-blend-mode -- siehe
+   ARCHITECTURE.md "Gelernte Lektionen": mix-blend-mode hatte beim alten
+   Cross-Section-Overlay gegen den fixed Himmel-Hintergrund nicht
+   geblendet, außerdem sitzt dieses Overlay jetzt ohnehin über einem
+   normalen <img>, nicht mehr über dem WebGL-Wolken-Canvas -- das
+   Performance-Problem von vorher (Alpha-Blending gegen einen pausenlos
+   neu gerenderten Shader) entfällt dadurch von selbst. */
+#section-03-images .birds-black {
+  position: absolute;
+  left: 79px;
+  top: 218px;
+  width: 445px;
+  height: 311px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+#section-03-images .birds-black-img {
+  /* 1:1 aus Figma: das Bild ist bewusst größer als sein Container und
+     leicht versetzt (bleedet über den Rand hinaus) -- Teil des
+     Original-Crops, NICHT anpassen. */
+  position: absolute;
+  top: -0.01%;
+  left: -1.32%;
+  width: 101.44%;
+  height: 114.75%;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 /* ---- Rechte Spalte: Songtext-Modul + Bandfoto 2, oben-zentriert ---- */
 
 #section-03-images .col-text-image {
