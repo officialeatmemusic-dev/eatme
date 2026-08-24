@@ -6,7 +6,7 @@
 <title>Vogelschwarm</title>
 <style>
   html,body{margin:0;height:100%}
-  body{background:transparent;overflow:hidden}
+  body{background:#FFFFFF;overflow:hidden}
   canvas{display:block;width:100%;height:100%;opacity:0;transition:opacity 1.2s ease}
 </style>
 </head>
@@ -21,7 +21,7 @@
   const DIRX=-0.707, DIRY=-0.707;
 
   // feste Einstellungen (ohne Beat)
-  const cfg = {"dot":"#B4C1CB","bg":"#transparent","size":7.9,"alpha":0.5,"scale":true,
+  const cfg = {"dot":"#B4C1CB","bg":"#FFFFFF","size":7.9,"alpha":0.5,"scale":true,
     "wander":0.85,"unruhe":0.21,"blenden":0.6,"easing":0.75,
     "force":1,"radius":502,"delay":0.35,"trail":0,"zoom":1.08,"gridmul":0.97};
 
@@ -30,6 +30,7 @@
   let W=0,H=0,DPR=1,scale=1,offX=0,offY=0,GI_MIN,GJ_MIN,SI,SJ,cx0=0,cy0=0;
   function hexToRgb(h){const n=parseInt(h.slice(1),16);return[(n>>16)&255,(n>>8)&255,n&255];}
   const dotRGB=hexToRgb(cfg.dot);
+  const dotCol=dotRGB.join(","); // einmalig berechnet -- dotRGB aendert sich nie, war vorher jeden Frame neu gejoint
   document.body.style.background=cfg.bg;
 
   const N=CELLS.length/2;
@@ -101,22 +102,33 @@
     }
   }
 
+  // Persistenter Objekt-Pool + wiederverwendetes Array/Set: vorher wurden
+  // hier JEDEN Frame 782 neue {gi,gj,a,rad}-Objekte, ein neues Array und
+  // ein neues Set erzeugt und sofort wieder verworfen -- das erzeugt bei
+  // 60fps spuerbaren Garbage-Collection-Druck (im Web-Inspector-Profiling
+  // als kurze 6-7ms-GC-Pausen sichtbar). Gleiche Werte, gleiche
+  // Sortierung, gleiche Zeichenreihenfolge wie vorher -- es wird nur
+  // Speicher wiederverwendet statt neu alloziert.
+  const items=new Array(N);
+  for(let i=0;i<N;i++){ items[i]={gi:0,gj:0,a:0,rad:0}; }
+  const occ=new Set();
+
   // ---- Zeichnen ----
   function render(){
     ctx.clearRect(0,0,W,H);
-    const drawR=cfg.size*scale*cfg.zoom, col=dotRGB.join(","), aBase=cfg.alpha;
-    const items=[];
+    const drawR=cfg.size*scale*cfg.zoom;
     for(let i=0;i<N;i++){
       const p=B[i];
       let rad=drawR; if(cfg.scale)rad*=1+p.prox*0.20;
-      items.push({gi:p.ci,gj:p.cj,a:aBase*easeMix(p.vis),rad});
+      const it=items[i];
+      it.gi=p.ci; it.gj=p.cj; it.a=cfg.alpha*easeMix(p.vis); it.rad=rad;
     }
     items.sort((a,b)=>b.a-a.a);
-    const occ=new Set();
+    occ.clear();
     for(const it of items){
       if(it.a<=0.004)continue;
       const k=okey(it.gi,it.gj); if(occ.has(k))continue; occ.add(k);
-      ctx.fillStyle="rgba("+col+","+it.a+")";
+      ctx.fillStyle="rgba("+dotCol+","+it.a+")";
       ctx.beginPath(); ctx.arc(mx(it.gi),my(it.gj),it.rad,0,6.2832); ctx.fill();
     }
   }
