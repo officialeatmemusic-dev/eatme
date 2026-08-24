@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="components/eatme-lyrics.css" />
   <link rel="stylesheet" href="components/instagram-module.css" />
   <link rel="stylesheet" href="components/eatme-footer.css" />
+  <link rel="stylesheet" href="components/birds-black-transition.css" />
 
   <!-- Sektions-CSS: eine Datei pro Sektion, siehe ARCHITECTURE.md -->
   <link rel="stylesheet" href="sections/section-01-stage.css" />
@@ -124,9 +125,24 @@
           <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
         </div>
       </div>
-      <!-- Vogel-Silhouetten-Übergang folgt erst ganz am Schluss (siehe
-           ARCHITECTURE.md), hier bewusst noch nicht enthalten. -->
     </section>
+
+    <!--
+      Vogel-Silhouetten-Übergang (assets/visuals/birds-black.webp,
+      Figma-Node 3:5415) -- liegt als eigenständiges Overlay ÜBER
+      section-03-images UND section-04-text-02 (siehe ARCHITECTURE.md).
+      Position (top/height) wird zur Laufzeit in script.js berechnet
+      (measureBirdsBlackTransition()), da section-04 "Height Hug" ist und
+      die Überlappung deshalb nicht als Fixwert im Markup stehen kann.
+      mix-blend-mode: multiply lässt den weißen Hintergrund des Assets
+      verschwinden. pointer-events: none, damit man weiterhin mit den
+      Elementen darunter (Bilder, Songtext-Modul, Fließtext) interagieren
+      kann -- rein dekorativ, gleiche Konvention wie die blauen Vögel in
+      section-02.
+    -->
+    <div class="birds-black-transition" id="birds-black-transition" aria-hidden="true">
+      <img class="birds-black-img" src="assets/visuals/birds-black.webp" alt="" />
+    </div>
 
     <section id="section-05-images-drops" class="section">
       <div class="col-image-left">

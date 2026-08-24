@@ -1287,6 +1287,9 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const section03Img1El = document.querySelector("#section-03-image-01");
   const section03Img2El = document.querySelector("#section-03-image-02");
 
+  const section04El = document.querySelector("#section-04-text-02");
+  const birdsBlackEl = document.querySelector("#birds-black-transition");
+
   const section05El = document.querySelector("#section-05-images-drops");
   const dropGroupEls = document.querySelectorAll("#section-05-images-drops .tropfen-group");
 
@@ -1355,6 +1358,31 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     }
   }
 
+  // Vogel-Silhouetten-Übergang (birds-black.webp, Figma-Node 3:5415) --
+  // liegt über section-03 UND section-04. Im Referenz-Frame aus Figma
+  // (1280px Design-Breite) gilt: section-03 top 1396 / height 946,
+  // section-04 top 2342 / height 441, birds-black top 1614 / height 1147.
+  // Daraus abgeleitet: die Überlappung reicht 728px in section-03 hinein
+  // (von unten) und deckt 419px von section-04 ab (von oben) -- der Rest
+  // von section-04 (22px) bleibt frei.
+  //
+  // Das NICHT als feste px übernommen, weil section-04 "Height Hug" ist
+  // (wächst mit dem Fließtext) und section-03 durch das Lyrics-Modul
+  // ebenfalls leicht variieren kann -- Fixwerte aus Figma würden bei jeder
+  // Content-Änderung falsch sitzen. Stattdessen als Anteil der jeweils
+  // tatsächlich gerenderten Sektions-Höhe ausgedrückt, damit die
+  // Überlappung mitskaliert, egal wie hoch section-03/04 gerade sind.
+  const BIRDS_BLACK_INTO_SECTION03_RATIO = 728 / 946;
+  const BIRDS_BLACK_INTO_SECTION04_RATIO = 419 / 441;
+
+  function measureBirdsBlackTransition() {
+    if (!birdsBlackEl || !section03El || !section04El) return;
+    const overlapSection03 = section03El.offsetHeight * BIRDS_BLACK_INTO_SECTION03_RATIO;
+    const overlapSection04 = section04El.offsetHeight * BIRDS_BLACK_INTO_SECTION04_RATIO;
+    birdsBlackEl.style.top = `${section04El.offsetTop - overlapSection03}px`;
+    birdsBlackEl.style.height = `${overlapSection03 + overlapSection04}px`;
+  }
+
   // Anker einmal sofort setzen (Fallback, falls Content-Ready schon
   // gefeuert war) UND nach echtem Content-Rendering neu messen -- vorher
   // (direkt beim Script-Start) kann section-02 noch leer/kollabiert sein,
@@ -1375,6 +1403,7 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     lastViewportWidth = window.innerWidth;
     measureCloudAnchor();
     measureSectionBounds();
+    measureBirdsBlackTransition();
   }
 
   measureSectionBounds();
@@ -1387,6 +1416,17 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     measureCloudAnchor();
     document.addEventListener("eatme:content-ready", () => {
       requestAnimationFrame(() => requestAnimationFrame(measureCloudAnchor));
+    });
+  }
+
+  if (birdsBlackEl) {
+    // Doppeltes rAF wie bei measureCloudAnchor()/measureSectionBounds():
+    // section-04 ist beim ersten Frame nach "eatme:content-ready" evtl.
+    // noch nicht final ausgemessen (Text-Reflow braucht einen Frame),
+    // daher zwei Frames abwarten statt nur einem.
+    measureBirdsBlackTransition();
+    document.addEventListener("eatme:content-ready", () => {
+      requestAnimationFrame(() => requestAnimationFrame(measureBirdsBlackTransition));
     });
   }
 

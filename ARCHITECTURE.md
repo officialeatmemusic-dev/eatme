@@ -32,8 +32,8 @@ leichter für Til selbst nachvollziehbar/wartbar.
   Unterordner, keine reine `username.github.io`-Hauptseite), zeigt ein
   Pfad mit führendem `/` von der Domain-Wurzel aus und würde am
   Unterordner vorbeizeigen → 404. Betraf ursprünglich die Font-Pfade in
-  `tokens.css`, wurde gefixt. Gilt für alle Asset-Referenzen (Sektions-CSS,
-  `styles.css` etc.) — siehe auch `tokens-notes.md`.
+  `tokens.css`, wurde gefixt. Gilt für alle künftigen Asset-Referenzen
+  (Sektions-CSS etc.) — siehe auch `tokens-notes.md`.
 
 ### Übergabe an den Kunden (später)
 
@@ -61,7 +61,7 @@ leichter für Til selbst nachvollziehbar/wartbar.
 ├── tokens.css                  ← einzige Quelle für Farben & Fonts, siehe unten
 ├── tokens-notes.md             ← offene Punkte/Herkunft der Tokens
 ├── styles.css                  ← globales Grundgerüst + globale Konventionen (Hover, Fade-In, Bild-Drag)
-├── script.js                   ← globale Logik + eine Sektion pro Kommentarblock
+├── script.js                   ← globale Logik + eine Sektion pro Kommentarblock (inkl. Himmel-Hintergrund/Parallax, siehe "Hintergrund & Motion")
 ├── content.json                ← alle Texte, Bildpfade, Links
 ├── imprint.html                ← einfache statische Seite (Imprint +
 │                                  Datenschutz zusammen, siehe unten)
@@ -87,11 +87,7 @@ leichter für Til selbst nachvollziehbar/wartbar.
 │       ├── /birds-blue         bird-blue-sm.svg, bird-blue-lg.svg (section-02)
 │       ├── /drops              01–04.png
 │       ├── /scribble           scribble-sm.svg, scribble-lg.svg
-│       └── /backgrounds        cloud-stage-background.jpg, clouds.webp
-│                                (ersetzt cloud.png/clouds.png aus früheren
-│                                Chat-Ständen; verkleinert auf
-│                                1200×2794px/~260KB, siehe "Hintergrund &
-│                                Motion" unten)
+│       └── /backgrounds        cloud-stage-background.jpg, clouds.png
 ├── /components                 wiederverwendbare Bausteine, siehe unten
 └── /sections                   eine Datei pro Sektion, siehe unten
 ```
@@ -203,20 +199,14 @@ bekommt das automatisch:
 - **Scroll-Fade-In für Texte (`.fade-in-text`):** Klasse auf beliebige
   Text-Elemente setzen → startet unsichtbar + leicht geblurred (`filter:
   blur(10px)`), wird beim Reinscrollen scharf/sichtbar
-  (`transition: opacity 2s ease, filter 0.6s ease`). **Keine
+  (`transition: opacity 2s ease, filter 0.6s ease`) und beim Rausscrollen
+  (in beide Richtungen) wieder unsichtbar/unscharf. **Keine
   Positionsverschiebung** — bewusst nur opacity + filter, kein
   translateY. Erkennung läuft über einen einzigen globalen
-  `IntersectionObserver` in `script.js` (`initFadeInText()`). Respektiert
-  `prefers-reduced-motion`.
-  **Update (Richtungsabhängig, ersetzt die frühere beidseitige Version):**
-  Einblenden nur beim Runterscrollen, Ausblenden nur beim Hochscrollen.
-  Konkret: Runterscrollen + Element kommt in den Viewport → einblenden;
-  Runterscrollen + Element verlässt den Viewport oben → nichts tun (bleibt
-  sichtbar); Hochscrollen + Element verlässt den Viewport → ausblenden;
-  Hochscrollen + Element kommt von oben in den Viewport → nichts tun (kein
-  erneutes Einblenden beim Zurückscrollen). Scroll-Richtung wird über
-  `window.scrollY`-Vergleich zwischen zwei Observer-Callbacks bestimmt
-  (kein Layout-Read, unproblematisch im Callback).
+  `IntersectionObserver` in `script.js` (`initFadeInText()`), der bei
+  jeder Intersection-Änderung `is-visible` togglet (kein einmaliges
+  `unobserve`, damit es beim Rausscrollen auch wieder ausblendet).
+  Respektiert `prefers-reduced-motion`.
   **Für neue Sektionen:** Klasse `fade-in-text` auf die Text-Elemente
   setzen, danach einmal `initFadeInText(containerElement)` aufrufen
   (wichtig bei dynamisch aus `content.json` gerendertem Content — muss
@@ -399,11 +389,32 @@ bekommt das automatisch:
 - Mobile (≤768px): keine Layout-Umstellung nötig (schon einspaltig), nur
   horizontales Padding auf `16px` reduziert — identisch zum Muster bei
   section-02/section-03.
-- **Vogel-Silhouetten-Übergang laut Sektionsliste bewusst NICHT
-  enthalten** — Til hat entschieden, das Vögel-Thema für alle Sektionen
-  ganz zum Schluss des Projekts zu bündeln, nachdem die Struktur aller 7
-  Sektionen steht. Wird in einem eigenen späteren Schritt nachgezogen
-  (eigener Figma-Node/eigene Klärung nötig, war nicht Teil von Node 1:3441).
+- **Vogel-Silhouetten-Übergang: jetzt implementiert** (`assets/visuals/
+  birds-black.webp`, Figma-Node 3:5415 "birds-black"). Liegt NICHT
+  innerhalb von section-04 selbst, sondern als eigenständiges Overlay-`
+  <div class="birds-black-transition">` zwischen section-04 und
+  section-05 im Markup (Position ist ohnehin `absolute`, DOM-Reihenfolge
+  ist egal), eigene Komponente `components/birds-black-transition.css`.
+  Deckt sowohl das Ende von section-03 als auch fast die gesamte Höhe von
+  section-04 ab. `mix-blend-mode: multiply` lässt den weißen Hintergrund
+  des Assets verschwinden, `pointer-events: none` lässt Klicks/Drag
+  ungehindert an die Elemente darunter durch (Bandfotos, Songtext-Modul,
+  Fließtext) — gleiche Konvention wie die blauen Vögel in section-02.
+  **Positionierung per JS, nicht fest verdrahtet:** section-04 ist
+  "Height Hug" (wächst mit dem Fließtext) und section-03 kann durch das
+  Lyrics-Modul ebenfalls leicht variieren, daher würde ein Fixwert aus
+  Figma bei jeder Content-Änderung falsch sitzen. `script.js`
+  (`measureBirdsBlackTransition()`, im selben konsolidierten
+  Parallax-IIFE wie die übrigen Sektions-Messungen) berechnet die
+  Überlappung stattdessen als Anteil der tatsächlich gerenderten Höhe
+  beider Sektionen (728/946 in section-03 hinein, 419/441 von section-04
+  abgedeckt — aus dem Figma-Referenzrahmen abgeleitet) und setzt
+  top/height als Inline-Style, neu berechnet bei echten Resizes und nach
+  `eatme:content-ready`. **Kein Parallax** auf diesem Element (nicht
+  angefragt) — nur statische, aber content-abhängige Positionierung.
+  **Offen:** Mobile-Verhalten ungetestet, da kein eigener Figma-Mobile-Node
+  für dieses Asset vorliegt — die Anteils-Werte sind 1:1 vom Desktop-Node
+  übernommen; ggf. im Screenshot-Vergleich auf Mobile nachjustieren.
 
 ### Details section-05-images-drops (für Anschluss-Kontext)
 
@@ -606,9 +617,7 @@ bekommt das automatisch:
   Sektionsrand) trifft dadurch zuverlässig die Bildschirmmitte, egal wie
   hoch die Sektion durch ihren Inhalt tatsächlich wird. Siehe auch
   "Gelernte Lektionen" unten -- gilt für jede künftige Sektion, die exakt
-  Bildschirmmitte treffen soll. **Textklasse: `text-highlight`** (30px,
-  passt zur 36px-Höhe des Figma-Textknotens für diesen CTA — nicht
-  `text-copy-l`, das war ein falscher Zwischenstand).
+  Bildschirmmitte treffen soll.
 - **Kein Scroll-Parallax auf dem Booking-CTA** -- ursprünglich vorhanden
   (verschiedene Faktoren durchprobiert: `0.05`/`0.15`/`0.08`), fühlte sich
   aber ruckelig/laggy an und wurde auf Wunsch komplett wieder entfernt.
@@ -745,6 +754,137 @@ bekommt das automatisch:
   zusätzlich einen unschönen Einzug am Zeilenanfang, sobald der `<br>`
   aktiv wird.
 
+### Performance-Debugging: Scroll-Ruckeln auf Safari (24.–25.08.2026)
+
+Mehrtägige Debugging-Session zu spürbarem Ruckeln/Springen beim Scrollen
+auf Safari (MacBook Pro M1), das sich über mehrere Iterationen als
+mehrschichtiges Problem entpuppte (Cloud-Shader, Layout-Thrashing,
+Vogel-Simulation, Tropfen-Anzahl, Songtext-Modul-Blur). Zentrale
+Lektionen, unabhängig vom konkreten Feature:
+
+- **Erst messen, dann fixen — nicht umgekehrt.** Über weite Strecken
+  wurde anhand von Plausibilität geraten (Wolke? Vögel? `will-change`?
+  Bildgröße?), oft ohne Wirkung. Der Durchbruch kam erst mit echten
+  Web-Inspector-Timeline-Aufnahmen (Safari: ⌥⌘I → Tab "Timelines" →
+  Aufnahme starten/stoppen → als JSON exportieren). Wichtige Kennzahlen
+  daraus: `rendering-frame`-Dauer (Ziel ~16ms/Frame bei 60fps),
+  `layout`-Einträge nach `eventType` aufschlüsseln (`invalidate-styles`/
+  `recalculate-styles` = Style-Neuberechnung, `paint`/`composite` =
+  tatsächliches Malen/Zusammensetzen), und `samples[0].stackTraces` für
+  eine echte CPU-Stichprobe (zeigt, in welcher Funktion/Zeile die Zeit
+  tatsächlich verbracht wird, statt zu raten). Ein einzelner Blick auf
+  "Framerate niedrig" reicht nicht — **Script- vs. Style- vs. Paint- vs.
+  Composite-Zeit getrennt betrachten**, das zeigt oft eine ganz andere
+  Ursache als vermutet (z.B. Script nur 0,5ms, aber Paint+Composite
+  600ms+ im selben Frame → kein JS-Problem, sondern ein
+  Rendering-Pipeline-Problem).
+- **Web-Inspector-Aufnahmen mit aktivierter Screenshot-Erfassung können
+  selbst die dominante Kostenquelle sein.** Safari erstellt dabei pro
+  Frame einen Screenshot (in den Daten an `frames ≈ screenshots`
+  erkennbar) — das ist ein bekanntes, schweres Feature und kann Zahlen
+  verfälschen. Vor dem Ziehen von Schlüssen: prüfen, ob das Ruckeln auch
+  OHNE offenen Web Inspector spürbar ist (reines Beobachten reicht),
+  und wenn möglich Screenshot-Erfassung in den Aufnahme-Einstellungen
+  deaktivieren.
+- **`display:none` stoppt kein laufendes JavaScript** — nur die
+  Darstellung. Ein per `display:none` verstecktes `<iframe>` (z.B.
+  `birds-stage.html`) rendert intern munter weiter (eigener
+  `requestAnimationFrame`-Loop läuft unbeeinflusst), ein versteckter
+  WebGL-Canvas kann ebenso weiterrechnen, wenn die eigene
+  Sichtbarkeits-Logik das nicht explizit stoppt. Für einen echten
+  "Ausschalten"-Test (um eine Komponente als Ursache auszuschließen)
+  braucht es einen echten Kill-Switch:
+  `iframeEl.src = 'about:blank'` (stoppt das iframe-Dokument komplett)
+  bzw. `canvas.getContext('webgl').getExtension('WEBGL_lose_context').loseContext()`
+  (kappt den GL-Kontext). Ohne das liefert ein Vorher/Nachher-Vergleich
+  falsche Ergebnisse (siehe: mehrere Runden, in denen "Cloud aus" und
+  "Vögel aus" per `display:none` fälschlich keine Verbesserung zeigten).
+- **Jeder Layout-erzwingende Read (`getBoundingClientRect()`,
+  `offsetParent`, `offsetTop`/`offsetHeight`, `clientWidth`/`clientHeight`
+  etc.) muss strikt VOR allen Writes im selben Frame passieren — auch
+  wenn er tief in einer Schleife über viele Elemente verschachtelt
+  liegt.** Ein `el.offsetParent === null`-Check INNERHALB einer
+  `forEach`-Schleife über z.B. 19 Elemente, direkt vor deren jeweiligem
+  `style.transform`-Write, wirkte harmlos, hat aber (weil VOR der
+  Schleife bereits andere Elemente per `style.transform` geschrieben
+  wurden) für jedes einzelne Element einen synchronen Reflow erzwungen
+  ("Layout Thrashing", verteilt über mehrere Codestellen, dadurch beim
+  Lesen des Codes nicht offensichtlich). Ein CPU-Profil zeigte 79% aller
+  Stichproben exakt an dieser einen Zeile. Fix: ALLE Reads (auch
+  Sichtbarkeits-Checks für einzelne Elemente in einer Schleife) in die
+  Read-Phase vorziehen, als Array/Liste zwischenspeichern, erst danach
+  schreiben.
+- **`will-change` ist kein Freifahrtschein — bei vielen gleichzeitig
+  promoteten Elementen kann es mehr kosten als es spart.** 19–28
+  gleichzeitig mit `will-change: transform` promotete Einzelelemente
+  (Wassertropfen) zu entfernen hat die Ruckel-Häufigkeit spürbar gesenkt
+  — vermutlich, weil so viele parallel gehaltene Compositor-Ebenen ein
+  internes Safari-Budget überschreiten. Zusätzlich fand sich ein
+  komplett verwaistes `will-change: transform` auf einem Bild, das nie
+  von JS transformiert wurde (dauerhafte GPU-Ebene ganz ohne Nutzen) —
+  **`will-change` regelmäßig darauf prüfen, ob das Element tatsächlich
+  animiert wird**, nicht nur beim ursprünglichen Anlegen. Faustregel:
+  nach jeder `will-change`-Änderung mit einer echten Aufnahme
+  verifizieren, nicht nur der Intuition vertrauen (in diesem Projekt
+  hat sich die Intuition mehrfach als falsch herausgestellt).
+- **Native CSS Scroll-Driven Animations (`animation-timeline: view()`/
+  `scroll()`, registrierte `@property`) sind KEIN Freifahrtschein für
+  "automatisch schneller, weil off-main-thread".** In der Theorie/Doku
+  für genau das gebaut (Browser berechnet Scroll-Fortschritt selbst,
+  ohne JS/`requestAnimationFrame`) — in der Praxis hat der Einsatz für
+  ein Opacity-Fade in dieser Safari-Version (26.x) einen massiven
+  Style-Neuberechnungs-Sturm ausgelöst (~260-300 Neuberechnungen/Sek.,
+  Frames bis 1000ms). Vermutlich eine Unreife der noch recht neuen
+  Feature-Kombination (`@property` + `calc()` + `view-timeline`).
+  Wieder auf eine reine JS/`requestAnimationFrame`-Lösung mit kurzer
+  CSS-Transition als Sicherheitsnetz zurückgebaut. **Lektion: auch
+  "moderne, spec-konforme" Techniken vor Vertrauen mit echten Messdaten
+  verifizieren, gerade bei frisch gelandeten Browser-Features.**
+- **Viele kleine, aber gleich-transformierte DOM-Elemente zu EINEM
+  gemeinsamen Wrapper bündeln, der als Ganzes EINEN Transform pro Frame
+  bekommt, hilft spürbar** (28 Tropfen-Elemente → 4 Gruppen-Container
+  nach Größe/Breakpoint). Ein radikalerer Schritt — alle 28 Elemente
+  durch ein einzelnes `<canvas>` mit manuellem `drawImage()` pro Tropfen
+  zu ersetzen (analog zu `birds-stage.html`) — wurde ausprobiert und
+  wieder verworfen: keine spürbare Verbesserung (eher schlechter) UND
+  visuell kaputt. **Nicht ohne triftigen neuen Grund erneut versuchen** —
+  die Wrapper-Gruppierung ist der aktuell gültige, funktionierende
+  Kompromiss für section-05.
+- **`filter: blur()` auf großen/breiten Elementen (z.B. `white-space:
+  nowrap`-Textblöcke) ist eine der teuersten Paint-Operationen und
+  gehört nicht pauschal auf alles.** Das Songtext-Modul
+  (`.eatme-lyrics-link`) hatte über die globale Link-Convention
+  automatisch `will-change: filter` + einen verstärkten `blur(14px)`-
+  Hover geerbt — bei mehreren, teils sehr breiten Instanzen auf der
+  Seite ein messbarer Kostenfaktor. Hover-Blur für dieses Modul komplett
+  entfernt (Link bleibt klickbar, kein visuelles Hover-Feedback mehr).
+- **Die globale `.fade-in-text`-Konvention (Scroll-Fade mit
+  `filter:blur()`) wurde sitewide komplett deaktiviert** (Elemente sind
+  jetzt permanent sichtbar, keine Animation, kein IntersectionObserver-
+  Overhead mehr) — bewusste Performance-Entscheidung, kein Bug. Falls
+  ein Fade-in später zurückkommen soll: leichtgewichtigere Variante
+  finden (z.B. nur `opacity`, kein `filter`), nicht 1:1 reaktivieren
+  ohne erneuten Performance-Check.
+- **Canvas-Feinheiten (aus dem `birds-stage.html`-Umbau):**
+  Objekte/Arrays/Sets, die jeden Frame neu erzeugt werden (`items.push(...)`
+  in einer Schleife, `new Set()` pro Frame), erzeugen spürbaren
+  Garbage-Collection-Druck bei 60fps — stattdessen einen persistenten
+  Objekt-Pool anlegen und pro Frame nur die Werte aktualisieren
+  (`.clear()` statt `new Set()`). Ebenso: `ctx.fillStyle` als neuer
+  String (`"rgba(...)"`) pro gezeichnetem Objekt zu setzen zwingt den
+  Browser, diesen String jedes Mal neu zu parsen — stattdessen
+  `fillStyle` einmal pro Frame auf einen konstanten RGB-String setzen
+  und die Transparenz über `ctx.globalAlpha` (reine Zahl-Zuweisung)
+  steuern.
+- **Nach einem Datei-Austausch mit mehreren gleichzeitig geänderten
+  Dateien: immer ALLE Dateien ersetzen, nicht nur die "wichtigste".**
+  Ein scheinbar unerklärlicher Rückfall (Tropfen "komplett weg" nach
+  einem CSS/HTML/JS-Rückbau) stellte sich als Datei-Mismatch heraus —
+  eine der drei zusammengehörigen Dateien war nicht mit ausgetauscht
+  worden. Vor tieferer Fehlersuche: per Diff prüfen, ob die tatsächlich
+  live befindlichen Dateien exakt dem entsprechen, was zuletzt geliefert
+  wurde, und einen Hard-Refresh (Cache leeren) nicht vergessen.
+
 ## Design-Tokens
 
 Siehe `tokens.css` + `tokens-notes.md`. Kurzfassung der Regel: **keine neuen
@@ -761,88 +901,63 @@ rechtlich riskant).
 
 Zwei getrennte Hintergrund-Systeme, nicht verwechseln:
 
-1. **Stage-Hintergrund** (section-01 only) — eigenes Bild/Asset, gehört
-   zur Sektion selbst, unabhängig vom sitewide System unten.
-2. **Durchgehender, seitenweiter Himmel-Hintergrund** (Cloud + Footer) —
-   ✅ **fertig**, siehe Details unten.
+1. **Stage-Hintergrund** (section-01 only, `.stage-bg`) — eigenes,
+   statisches Bild (`assets/visuals/backgrounds/cloud-stage-background.jpg`),
+   gehört zur Sektion selbst, kein Bezug zum seitenweiten System unten.
+   Bekommt weiterhin einen einfachen CSS-Transform-Parallax
+   (`CLOUD_SPEED = 0.3` in `script.js`, Teil des konsolidierten
+   Parallax-Loops zusammen mit den Vögeln derselben Sektion). Bewusst
+   NICHT auf das WebGL-Verfahren unten umgestellt (wurde einmal versucht,
+   war ein Missverständnis/falsches Ziel, siehe Performance-Debugging-
+   Abschnitt weiter unten) — dieses eine Bild bleibt ein normales `<img>`.
 
-### Details sitewide Hintergrund (Cloud + Footer)
+2. **Durchgehender, seitenweiter Himmel-Hintergrund** (`.bg-cloud`,
+   startet ab section-03 und blendet vor dem Footer wieder aus) — **fertig,
+   kein Platzhalter mehr.** Ersetzt das ursprünglich geplante lange
+   Cloud-Bild (`clouds.webp`) durch einen **prozeduralen WebGL-Shader**
+   (`#bg-cloud-canvas`, Logik in `script.js`: `initCloudShader()` +
+   `BG_CLOUD_PARAMS`). Kurzfassung, Details siehe Chat-Verlauf:
 
-Zwei Bild-Ebenen im `.page-background`-Layer (`index.html`), CSS in
-`styles.css` (Kommentarblock "Sitewide Himmel-Hintergrund"),
-Positionierung/Parallax im konsolidierten Loop in `script.js` (siehe
-"Parallax-Konsolidierung" unten).
-
-- **Cloud** (`assets/visuals/backgrounds/clouds.webp`): Startet bei
-  `CLOUD_ANCHOR_FRACTION = 1.2` (120% der section-02-Höhe, dynamisch aus
-  `offsetTop + offsetHeight` berechnet — nicht der feste Figma-Pixelwert,
-  da die reale Seite nie exakt die Figma-Canvas-Höhe hat). Parallax-Faktor
-  `0.5` (scrollt halb so schnell wie die Seite), berechnet aus
-  `window.scrollY` (kein `getBoundingClientRect()`, siehe
-  Performance-Abschnitt unten). Kein CSS-Fade/Maske nötig — das WebP hat
-  bereits einen eingebauten Alpha-Fade oben UND unten (Transparenz-Kanal
-  fädet im Asset selbst weich von 0 auf 255 über die ersten ~500px von
-  4658px Original-Höhe). Kein Opacity-Fade-in (war zwischenzeitlich per
-  `IntersectionObserver` geplant, aber wegen Timing-Problemen — Observer
-  wurde vor dem `eatme:content-ready`-Rendering aufgesetzt, erste
-  Intersection-Messung fiel dadurch fälschlich früh "true" aus — wieder
-  verworfen). Cloud ist permanent sichtbar, ihre Sichtbarkeit ergibt sich
-  rein aus der Scroll-Position (sitzt initial ohnehin außerhalb des
-  Viewports).
-- **Footer** (`assets/images/eatme-image-footer.jpg`): `position:
-  absolute; bottom: 0` im Hintergrund-Layer → hängt immer exakt am
-  Dokumentende, unabhängig von der realen Seitenhöhe. Kein Parallax
-  ("scrollt normal"). Höhe eingefroren ab Referenzbreite 1080px (`height:
-  min(117.2vw, 1266px)` — 1080 × 1.172, das Bildverhältnis), damit das
-  Bild auf großen Screens nicht endlos höher wächst (sonst rutschen die
-  Gesichter auf dem Bandfoto aus dem sichtbaren Bereich, da die Box vom
-  unteren Rand aus nach oben wächst). `object-position: center 36%` hält
-  den sichtbaren Ausschnitt über den gesamten Crop-Bereich (1080px bis
-  Ultra-Wide) auf den Gesichtern (sitzen bei ca. 40–49% der Bildhöhe,
-  nicht im oberen Drittel, wie zunächst angenommen). Bekommt eine echte
-  `mask-image` für den weichen oberen Rand (JPG hat keinen Alpha-Kanal,
-  im Gegensatz zur Cloud) — unproblematisch für Performance, da der
-  Footer nie animiert wird.
-- **Mobile (≤768px):** Beide Bilder frieren ihre Breite auf `768px` ein
-  (kein weiteres Schrumpfen), `.page-background` hat `overflow: hidden` →
-  werden links/rechts angeschnitten statt zu skalieren. Footer-Höhe hier
-  explizit `900px` (768 × 1.172).
-
-### Parallax-Konsolidierung (Performance)
-
-Alle Scroll-Parallax-Effekte der Seite (Stage-Wolken/-Vögel,
-section-02-Vögel, section-03-Bandfotos, section-05-Tropfen, jetzt auch
-die sitewide Cloud) laufen in **einem einzigen** `requestAnimationFrame`-
-Loop am Ende von `script.js` — nicht mehr in fünf unabhängigen Loops wie
-in früheren Sektions-Ständen. Grund: jeder einzelne Loop rief für sich
-`getBoundingClientRect()` auf und schrieb direkt danach ein
-`style.transform` — mehrere solcher Lese-Schreib-Paare **innerhalb
-desselben Frames** zwingen den Browser wiederholt zu synchronen
-Layout-Reflows. Chrome verkraftet das gut, **Safari deutlich schlechter**
-(sichtbares Ruckeln dort, obwohl Chrome smooth blieb). Der konsolidierte
-Loop liest zuerst **alle** Positionen (`getBoundingClientRect()` je
-Sektion + `window.scrollY` für die Cloud), schreibt danach **alle**
-Transforms — pro Frame maximal ein Layout-Read-Durchgang, keine
-verschachtelten Lese-/Schreibzyklen mehr.
-
-Weitere Perf-Maßnahmen aus demselben Anlass:
-- Tropfen-Parallax überspringt unsichtbare Elemente (`el.offsetParent ===
-  null`, greift für die jeweils andere Breakpoint-Variante).
-- Cloud-Asset von PNG (1,24MB, 2000×4658px) auf WebP (260KB,
-  1200×2794px) verkleinert — Dateiformat/-größe wirkt sich vor allem auf
-  die Ladezeit aus, die **Pixel-Auflösung** ist der eigentliche Hebel für
-  die Compositing-Kosten pro Frame.
-- **Ausprobiert, wieder verworfen:** `contain: layout paint` +
-  `-webkit-backface-visibility: hidden` auf `.bg-cloud`/`.bg-footer` als
-  Safari-Compositing-Hints — verursachten in der Praxis genau das
-  Gegenteil (kurzes Flackern/Verschwinden der Cloud beim Scrollen in
-  Safari, bekanntes WebKit-Verhalten bei dieser Kombination mit
-  `transform` auf großen Bildern). Ersatzlos entfernt, falls jemand
-  denselben Ansatz nochmal probieren will.
+   - **Herkunft der Optik:** Der ursprüngliche Figma-Node (3:3664) stellte
+     sich per MCP-Abfrage (`Figma:get_design_context`/Plugin-API) als
+     `fill.type === "SHADER"` heraus (Custom-Fill "Clouds": Sky-Gradient,
+     Coverage, Density, Brightness, Detail, Variation, Warp
+     amount/scale, Stretch, Phase, Transform), nicht als Bild. Figma
+     liefert für Custom-Shader-Fills nur Metadaten/Werte, keinen
+     Rohquellcode — die tatsächliche Rausch-Formel im Shader ist daher
+     eine Standard-fBm-Implementierung (Fractal Brownian Motion +
+     Domain-Warp, öffentlich bekannte Technik), kalibriert mit den
+     echten aus Figma ausgelesenen Werten/Farben (`--gradient-sky-top`/
+     `-bottom`, `--color-cloud-light` in `tokens.css`, plus
+     Wiederverwendung von `--color-blue` als Wolken-Schatten-Farbe).
+   - **Architektur:** `.bg-cloud` ist `position: fixed` (bewegt sich nie
+     als Element), volle Viewport-Größe. Die komplette Bewegung
+     (Scroll-Parallax UND horizontales Driften) passiert ausschließlich
+     als Shader-Uniform (`CLOUD_DRIFT_STRENGTH`, aktuell `1.4`; Drift
+     aktuell `15`) — kein DOM-Element-Transform, kein Compositor/
+     Main-Thread-Konflikt.
+   - **Sichtbarkeit:** Fade-in beginnt, wenn section-03 von unten
+     auftaucht; Fade-out beginnt symmetrisch, wenn der Footer von unten
+     auftaucht (`CLOUD_FADE_DISTANCE_PX = 400`, per JS/`opacity`
+     gesteuert, mit kurzer CSS-Transition als Sicherheitsnetz gegen
+     Sprung-Artefakte bei schnellem Scrollen).
+   - **Footer-Bild** (`.bg-footer`, `assets/images/eatme-image-footer.jpg`)
+     bleibt unverändert ein normales `<img>` mit echter `mask-image` für
+     den weichen oberen Rand (JPG hat keinen Alpha-Kanal), document-flow/
+     `position:absolute`, KEIN Parallax (war früher testweise vorhanden,
+     auf Wunsch entfernt — fühlte sich ruckelig an).
+   - Warum WebGL statt Bild: das ursprüngliche lange `clouds.webp`
+     (~4658px Design-Höhe) verursachte beim geplanten Scroll-Parallax
+     spürbares Ruckeln in Safari. Der Umstieg auf einen prozeduralen
+     Shader war Teil einer längeren Performance-Debugging-Session — siehe
+     eigenen Abschnitt unter "Gelernte Lektionen" für die technischen
+     Erkenntnisse daraus (Layout-Thrashing, `will-change`,
+     Canvas-vs-DOM-Elementanzahl etc.), die über dieses eine Feature
+     hinaus relevant sind.
 
 **Bewusste Reihenfolge (historisch):** Erst alle 7 Sektionen strukturell
 gebaut (Layout, Content, Responsive), das durchgehende Hintergrund-System
-zuletzt.
+kam zuletzt dazu — genau wie ursprünglich geplant.
 
 ## Content-Struktur
 
@@ -862,8 +977,9 @@ schon da.
 
 - Ein Chat pro Sektion (in diesem Projekt), um Kontext klein zu halten
 - Jeder Sektions-Chat referenziert: `tokens.css`, `content.json`,
-  `styles.css` (globale Konventionen, inkl. sitewide Hintergrund),
-  ggf. betroffene `/components`-Dateien
+  `styles.css` (globale Konventionen!), `script.js` (Himmel-Hintergrund/
+  Parallax-Loop, siehe "Hintergrund & Motion"), ggf. betroffene
+  `/components`-Dateien
 - Screenshot-Vergleich als Feedback-Loop: bauen → Screenshot → neben
   Referenzbild legen → Abweichungen benennen (konkrete Werte statt
   "sieht komisch aus")
