@@ -1,0 +1,89 @@
+/* ==========================================================================
+   imprint-and-privacy — Zwei-Spalten-Layout (Privacy links / Imprint
+   rechts), Figma-Node 178:214. Statische Seite, kein Parallax/Animation
+   (siehe ARCHITECTURE.md). Referenziert nur Werte aus tokens.css.
+
+   Logo-Link (.eatme-nav-logo-link) und die "is-current"-Footer-Link-
+   Optik gehören eigentlich zu eatme-navigation.css / eatme-footer.css,
+   sind der Übersicht halber aber hier zusammengefasst kommentiert:
+   - eatme-navigation.css bekommt die Logo-Link-Regeln (gilt auch für
+     index.html, siehe dortiges Update).
+   - .is-current lebt hier, weil nur DIESE Seite den Footer-Link gedimmt
+     als "aktive Seite" zeigen soll -- auf der Hauptseite bleibt der
+     Footer-Link normal.
+   ========================================================================== */
+
+main {
+  position: relative;
+  z-index: 1;
+}
+
+.section-legal {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  padding: 240px 32px 48px;
+  position: relative;
+}
+
+.legal-col {
+  flex: 1 0 0;
+  min-width: 0;
+  display: flex;
+  justify-content: flex-start;
+}
+.legal-col.privacy { order: 1; }
+.legal-col.imprint { order: 2; }
+
+.legal-col-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.legal-p { margin-bottom: 16px; }
+.legal-p:last-child { margin-bottom: 0; }
+
+/* Einzige echten Inline-Links im Fließtext (z.B. die Kontakt-Mail im
+   Imprint) bekommen die globale Link-Hover-Convention aus styles.css
+   automatisch mit (Opacity + Blur) -- hier nur die Underline ergänzt,
+   die Fließtext-Links optisch von reinem Text unterscheidet. */
+.legal-p a {
+  text-decoration: underline;
+  text-decoration-skip-ink: none;
+}
+
+/* ---- Mobile (768px, siehe tokens-notes.md) ----
+   Spalten brechen um, Imprint steht oben (Wunsch: Impressum zuerst
+   sichtbar auf kleinen Screens). */
+@media (max-width: 768px) {
+  .section-legal {
+    flex-direction: column;
+    padding: 140px 16px 32px;
+    gap: 48px;
+  }
+  .legal-col.privacy { order: 2; }
+  .legal-col.imprint { order: 1; }
+  .legal-col-inner { max-width: none; }
+}
+
+/* ---- Footer: nicht fixed, steht im Dokumentfluss am Seitenende ---- */
+.footer-pill-wrap {
+  width: 100%;
+  padding: 0 12px 12px;
+}
+
+/* ---- "Aktive Seite"-Optik für den Footer-Legal-Link ----
+   Nur auf dieser Seite: Link bleibt klickbar (verlinkt auf sich selbst),
+   ist aber standardmäßig auf 20% Opacity gedimmt, um anzuzeigen, dass
+   man sich bereits hier befindet. Hover greift trotzdem normal (globale
+   Link-Convention aus styles.css), macht ihn kurz sichtbarer. */
+.eatme-footer-legal.is-current {
+  opacity: 0.2;
+}
