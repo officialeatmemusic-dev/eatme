@@ -65,7 +65,6 @@ leichter für Til selbst nachvollziehbar/wartbar.
 ├── content.json                ← alle Texte, Bildpfade, Links
 ├── imprint.html                ← einfache statische Seite (Imprint +
 │                                  Datenschutz zusammen, siehe unten)
-├── /sound                      xyz.mp3 — Hintergrund-Song, an/aus schaltbar
 ├── /assets
 │   ├── /fonts                  Michroma-Regular.woff2, EBGaramond-Italic.woff2
 │   ├── /images                 eatme-image-01/02.jpg, eatme-image-04.webp
@@ -79,6 +78,12 @@ leichter für Til selbst nachvollziehbar/wartbar.
 │   │                           nötig. Bild vs. Video über Dateiendung
 │   │                           erkannt (.jpg/.jpeg/.png/.webp/.gif vs.
 │   │                           .mp4/.webm/.mov), siehe Details section-06.
+│   │   └── /music              Songs für den Sound-Toggle (section-01),
+│   │                           genau wie /insta zur Laufzeit per GitHub
+│   │                           Contents API ausgelesen (.mp3/.wav/.ogg/
+│   │                           .m4a/.aac). Mehrere Dateien = Playlist,
+│   │                           läuft alphabetisch nacheinander durch und
+│   │                           beginnt am Ende wieder von vorn.
 │   ├── /logo                   eatme_logo.png
 │   └── /visuals
 │       ├── birds-black.webp
@@ -164,11 +169,27 @@ referenziert von den Sektionen, die sie brauchen:
   siehe Details section-07-footer unten.
 - `instagram-module` — Insta-Post-Nachbildung (eigener Chat, siehe Verlauf)
 - `tropfen` (4 Shape-Varianten) — Wassertropfen-Grafiken
-- `sound-toggle` — **noch offen, eigener Chat geplant.** An/Aus-Button für
-  einen Hintergrund-Song (`/sound/xyz.mp3`), sichtbar im Nav-Bereich
-  (Label "Sound" im Referenz-Screenshot). Technisch: `<audio>`-Element +
-  Play/Pause-Button, Autoplay-Policies der Browser beachten (kein
-  automatischer Sound-Start ohne Nutzer-Interaktion möglich).
+- `sound-toggle` — ✅ fertig. An/Aus-Button in der secondary-nav
+  (section-01-stage), Songs kommen NICHT aus `content.json`, sondern werden
+  LIVE aus `assets/music/` geladen (GitHub Contents API, gleiches Muster
+  wie beim Instagram-Modul) -- Til kann Dateien einfach hochladen/löschen,
+  kein Code-/JSON-Edit nötig. Erkannte Endungen: `.mp3/.wav/.ogg/.m4a/.aac`.
+  Verhalten:
+  - Default: aus. Aus-Zustand = echter Stopp (Pause + `currentTime = 0`),
+    kein Pause/Resume.
+  - Einschalten: kurzer Fade-in (Volume 0 -> 1, ~400ms).
+  - Mehrere Songs laufen alphabetisch nacheinander durch (`ended`-Event
+    triggert den nächsten Track), nach dem letzten Song beginnt die
+    Playlist wieder von vorn. Kein erneuter Fade-in zwischen Songs, nur
+    beim manuellen Einschalten.
+  - Playlist wird bereits beim Seitenaufbau im Hintergrund vorab abgerufen
+    (nicht erst beim Klick), damit `audio.play()` im Klick-Handler synchron
+    bleibt -- sonst verweigert Safari den Play-Aufruf, weil der
+    User-Gesture-Kontext durch das vorherige `await` schon verloren wäre.
+  - Hover bewusst wie ein `<a>`-Link (Opacity + Blur), nicht der generische
+    Button-Hover -- siehe Interaktions-Conventions unten.
+  - Logik: `script.js` (`fetchMusicFolder()`, Click-Handler ab
+    `soundToggleBtn`). Styling: `sections/section-01-stage.css`.
 
 ## Globale Interaktions-Conventions (in `styles.css`, gelten überall)
 
@@ -366,6 +387,54 @@ bekommt das automatisch:
   Spalte 100px statt 200px. Alignment pro Spalte bleibt unverändert (links
   weiterhin oben-links, rechts weiterhin oben-zentriert bzw. modulintern
   linksbündig).
+- **Vogel-Silhouetten** (`assets/visuals/birds-black.webp`, Figma-Node
+  169:212 "birds-black") — **Design-Update, war ursprünglich als
+  eigenständiges Cross-Section-Overlay über section-03/04 geplant** (siehe
+  "Gelernte Lektionen" für die damalige mix-blend-mode/aspect-ratio-
+  Problematik), sitzt jetzt stattdessen HIER, in `.image-container`
+  (linke Spalte), und überlappt Bandfoto 1 leicht am unteren Rand.
+  Eigenes `<div class="birds-black">` direkt nach `.eatme-image-01` im
+  Markup (Stapel-Reihenfolge über Bandfoto 1 kommt allein aus der
+  DOM-Reihenfolge, kein `z-index` nötig).
+  **Zwei unterschiedliche Bezugsgrößen für die Positionierung, nicht
+  verwechseln (siehe "Gelernte Lektionen" -- erster Versuch mit
+  durchgehend fixen px-Werten war falsch):**
+  - `top` ist FIX (218px), weil er sich auf Bandfoto 1 bezieht, das
+    IMMER 288px hoch bleibt, unabhängig von der Viewport-Breite.
+  - `left`/`width` sind dagegen PROZENTUAL (13.12%/73.92% von
+    `.image-container`, mit `max-width: 445px` gedeckelt), weil das
+    Vogelbild in Figma fast doppelt so breit ist wie das Bandfoto
+    (445px vs. 216px) und weit in den leeren, FLUIDEN Spaltenraum
+    rechts daneben hineinragt. `aspect-ratio: 445/311` hält Breite und
+    Höhe im Gleichschritt (kein Quetschen).
+  **Asset hat echte Alpha-Transparenz statt `mix-blend-mode`** (weißer
+  Hintergrund → Alpha 0, schwarze Vögel → Alpha 255, aus der Luminanz pro
+  Pixel berechnet) — siehe "Gelernte Lektionen". `pointer-events: none`
+  lässt Klicks/Drag ungehindert an Bandfoto 1 darunter durch — gleiche
+  Konvention wie die blauen Vögel in section-02.
+  **Performance-Hinweis:** die vorherige Cross-Section-Variante (über
+  section-03/04, teilweise über dem WebGL-Wolken-Canvas liegend) hatte zu
+  spürbaren Performance-Einbußen geführt — großflächiges Alpha-Blending
+  gegen einen pausenlos neu gerenderten Shader ist teuer (Overdraw jeden
+  Frame neu, nichts cachebar). Diese neue Platzierung liegt ausschließlich
+  über einem normalen, statischen `<img>` (Bandfoto 1), nicht mehr über
+  dem Shader — das Performance-Problem entfällt dadurch von selbst, ohne
+  dass am Overlay selbst etwas dafür geändert werden musste.
+  **Mobile-Fix:** im gestapelten Layout (≤768px) schrumpft
+  `.image-container` auf Hug-Höhe (nur die 288px des Bandfotos) --
+  ohne Gegenmaßnahme ragt die Vogel-Grafik (die unten deutlich über das
+  Bandfoto hinausragt, siehe oben) dann in den Songtext darunter hinein
+  (sah aus wie "Text wird überlagert"/"Bild unten abgeschnitten", war in
+  Wirklichkeit der Songtext, der über den unteren Teil der Vogel-Grafik
+  gezeichnet wurde). Fix: `.image-container` bekommt im Mobile-Media-
+  Query ein `padding-bottom: min(241px, calc(51.66% - 70px))` -- reserviert
+  exakt so viel Platz, wie die Vogel-Grafik bei der jeweiligen (fluiden)
+  Spaltenbreite unten übersteht, rein in CSS (padding-bottom-Prozente
+  beziehen sich immer auf die Breite, daher ohne JS möglich). 51.66% =
+  Vogel-Höhe im Verhältnis zur Container-Breite (73.92% × 311/445),
+  -70px = wie viel `top` (218px) unter der Bildhöhe (288px) liegt,
+  `min(241px, …)` deckelt bei dem Wert, der ab der 445px-Breitenobergrenze
+  der Vogel-Grafik gilt (218 + 311 − 288).
 
 ### Details section-04-text-02 (für Anschluss-Kontext)
 
@@ -389,34 +458,13 @@ bekommt das automatisch:
 - Mobile (≤768px): keine Layout-Umstellung nötig (schon einspaltig), nur
   horizontales Padding auf `16px` reduziert — identisch zum Muster bei
   section-02/section-03.
-- **Vogel-Silhouetten-Übergang: implementiert** (`assets/visuals/
-  birds-black.webp`, Figma-Node 3:5415 "birds-black"). Liegt NICHT
-  innerhalb von section-04 selbst, sondern als eigenständiges Overlay-
-  `<div class="birds-black-transition">` zwischen section-04 und
-  section-05 im Markup (Position ist ohnehin `absolute`, DOM-Reihenfolge
-  ist egal), eigene Komponente `components/birds-black-transition.css`.
-  Deckt sowohl das Ende von section-03 als auch fast die gesamte Höhe von
-  section-04 ab.
-  **Asset hat echte Alpha-Transparenz statt `mix-blend-mode`** (weißer
-  Hintergrund → Alpha 0, schwarze Vögel → Alpha 255, aus der Luminanz pro
-  Pixel berechnet) — `mix-blend-mode: multiply` wurde zuerst versucht,
-  hat aber gegen `.bg-cloud` (position: fixed) nicht geblendet, siehe
-  "Gelernte Lektionen". `pointer-events: none` lässt Klicks/Drag
-  ungehindert an die Elemente darunter durch (Bandfotos, Songtext-Modul,
-  Fließtext) — gleiche Konvention wie die blauen Vögel in section-02.
-  **Größe über `aspect-ratio` (1280/1147), nicht per JS berechnet:**
-  verhindert zuverlässig jedes Quetschen/Stauchen bei fluider Breite,
-  siehe "Gelernte Lektionen". **Nur `top` wird per JS positioniert**
-  (`measureBirdsBlackTransition()`, im selben konsolidierten Parallax-IIFE
-  wie die übrigen Sektions-Messungen in `script.js`): 728px oberhalb von
-  section-04s Oberkante im Figma-Referenzrahmen (1280px Breite), skaliert
-  mit dem aktuellen Breitenverhältnis (gerenderte Breite / 1280), neu
-  berechnet bei echten Resizes und nach `eatme:content-ready`. **Kein
-  Parallax** auf diesem Element (nicht angefragt) — nur statische, aber
-  content-abhängige Positionierung.
-  **Offen:** Mobile-Verhalten ungetestet, da kein eigener Figma-Mobile-Node
-  für dieses Asset vorliegt — die Werte sind 1:1 vom Desktop-Node
-  übernommen; ggf. im Screenshot-Vergleich auf Mobile nachjustieren.
+- **Vogel-Silhouetten:** ursprünglich als eigenständiges Cross-Section-
+  Overlay über section-03 UND section-04 geplant (siehe "Gelernte
+  Lektionen" zur damaligen mix-blend-mode/aspect-ratio-Problematik) — per
+  **Design-Update verworfen und ersetzt**: das Vogelbild sitzt jetzt
+  ausschließlich in section-03 (linke Spalte, überlappt Bandfoto 1),
+  siehe "Details section-03-images" unten. section-04 hat dadurch wieder
+  **keine** Vogel-Grafik, exakt wie ursprünglich hier beschrieben.
 
 ### Details section-05-images-drops (für Anschluss-Kontext)
 
@@ -719,36 +767,60 @@ bekommt das automatisch:
   Betrifft nur die Vorschau-Datei, nicht die Produktionsversion (die nutzt
   die echten relativen Repo-Pfade).
 - **`mix-blend-mode` blendet NICHT zuverlässig gegen `position: fixed`-
-  Elemente.** Bei `birds-black-transition` (Vogel-Silhouetten-Übergang
-  über section-03/04) sollte `mix-blend-mode: multiply` den weißen
-  Hintergrund des PNG/WebP-Assets gegen `.bg-cloud` (den sitewide
-  Himmel-Hintergrund) verschwinden lassen. Ergebnis: hat gegen normale
-  Dokumentfluss-Elemente (Bandfotos) funktioniert, aber NICHT gegen
-  `.bg-cloud` selbst — dort blieb der weiße Hintergrund sichtbar. Grund:
-  `.bg-cloud` ist bewusst `position: fixed` (siehe "Hintergrund & Motion"
-  oben, eigener Compositing-Layer aus Performance-Gründen) — Blend-Modi
-  überschreiten in der Praxis nicht zuverlässig Compositing-Layer-Grenzen,
-  auch wenn die Spezifikation das nicht explizit ausschließt. **Fix:**
-  kein `mix-blend-mode` mehr für dieses Asset, stattdessen echte
-  Alpha-Transparenz direkt in der Bilddatei (Weiß → Alpha 0, Schwarz →
-  Alpha 255, per Skript aus der Luminanz jedes Pixels berechnet) —
-  funktioniert unabhängig von Compositing-Layern, weil es sich um
-  normale Transparenz statt eines Blend-Modus handelt. Faustregel: für
-  Deko-Overlays, die gegen `.bg-cloud`/`.bg-footer` (beide `position:
-  fixed`/-anteilig) "verschwinden" sollen, IMMER echte Transparenz im
-  Asset verwenden, nicht `mix-blend-mode`.
+  Elemente.** Trat auf, als die Vogel-Silhouette (`birds-black.webp`)
+  noch als eigenständiges Cross-Section-Overlay über section-03/04 lag
+  (mittlerweile per Design-Update ersetzt, siehe "Details
+  section-03-images" — das Overlay liegt jetzt über einem normalen
+  `<img>`, nicht mehr über `.bg-cloud`, betroffen wäre nur ein künftiges
+  Overlay mit demselben Muster). Damals sollte `mix-blend-mode: multiply`
+  den weißen Hintergrund des PNG/WebP-Assets gegen `.bg-cloud` (den
+  sitewide Himmel-Hintergrund) verschwinden lassen. Ergebnis: hat gegen
+  normale Dokumentfluss-Elemente (Bandfotos) funktioniert, aber NICHT
+  gegen `.bg-cloud` selbst — dort blieb der weiße Hintergrund sichtbar.
+  Grund: `.bg-cloud` ist bewusst `position: fixed` (siehe "Hintergrund &
+  Motion" oben, eigener Compositing-Layer aus Performance-Gründen) —
+  Blend-Modi überschreiten in der Praxis nicht zuverlässig
+  Compositing-Layer-Grenzen, auch wenn die Spezifikation das nicht
+  explizit ausschließt. **Fix, weiterhin relevant für das Asset selbst:**
+  kein `mix-blend-mode` mehr, stattdessen echte Alpha-Transparenz direkt
+  in der Bilddatei (Weiß → Alpha 0, Schwarz → Alpha 255, per Skript aus
+  der Luminanz jedes Pixels berechnet) — funktioniert unabhängig von
+  Compositing-Layern, weil es sich um normale Transparenz statt eines
+  Blend-Modus handelt. Faustregel: für Deko-Overlays, die gegen
+  `.bg-cloud`/`.bg-footer` (beide `position: fixed`/-anteilig)
+  "verschwinden" sollen, IMMER echte Transparenz im Asset verwenden,
+  nicht `mix-blend-mode`.
 - **Prozentuale Bildgrößen (`width`/`height` in %) verzerren, sobald der
   umgebende Container ein anderes Seitenverhältnis hat als das
-  Figma-Original.** Bei `birds-black-transition` wurde die Container-Höhe
-  anfangs aus einer Rechnung abgeleitet, die nicht dem tatsächlichen
-  Bild-Seitenverhältnis entsprach — Ergebnis: das Bild wirkte gequetscht
-  UND wurde am unteren Rand abgeschnitten (weil der Container zu klein
-  war). Fix: Container bekommt `aspect-ratio` (aus den Figma-Maßen,
-  hier 1280/1147) statt einer unabhängig berechneten Höhe — dadurch
-  skaliert das Bild IMMER proportional mit seiner (fluiden) Breite, egal
-  bei welcher Viewport-Größe. Faustregel: bei vollflächigen/full-bleed
-  Deko-Grafiken lieber `aspect-ratio` auf dem Container setzen als Höhe
-  und Breite unabhängig voneinander zu berechnen.
+  Figma-Original.** Trat aus demselben Grund auf (damalige
+  Cross-Section-Variante der Vogel-Silhouette, siehe oben): die
+  Container-Höhe wurde anfangs aus einer Rechnung abgeleitet, die nicht
+  dem tatsächlichen Bild-Seitenverhältnis entsprach — Ergebnis: das Bild
+  wirkte gequetscht UND wurde am unteren Rand abgeschnitten (weil der
+  Container zu klein war). Fix damals: Container bekommt `aspect-ratio`
+  (aus den Figma-Maßen) statt einer unabhängig berechneten Höhe. Die
+  aktuelle Platzierung braucht das nicht mehr (siehe "Details
+  section-03-images"), aber die Faustregel bleibt für künftige
+  full-bleed Deko-Grafiken mit fluider Breite gültig: lieber
+  `aspect-ratio` auf dem Container setzen als Höhe und Breite unabhängig
+  voneinander zu berechnen.
+- **Nicht automatisch annehmen, dass ein Deko-Element dieselbe
+  Bezugsgröße (fix vs. fluid) hat wie das Element, das es überlappt.**
+  Bei den Vogel-Silhouetten in section-03 (siehe "Details
+  section-03-images") war der erste Reflex: Bandfoto 1 ist fix (216×288,
+  ändert sich nie), also auch die Vogel-Grafik komplett in fixen px
+  positionieren. Ergebnis: bei jeder Viewport-Breite unter der
+  Figma-Referenzbreite wirkte die Grafik unverhältnismäßig riesig, weil
+  sie in Wirklichkeit NICHT proportional zum fixen Bandfoto gehört,
+  sondern zum FLUIDEN Spaltenraum daneben (445px Vogel-Breite vs. 216px
+  Bandfoto -- fast doppelt so breit, ragt weit in den leeren,
+  mitskalierenden Spaltenbereich hinein). Fix: `left`/`width` prozentual
+  zur Spalte (mit `max-width`-Deckel + `aspect-ratio`), NUR `top` fix
+  (weil der sich tatsächlich auf die feste Bandfoto-Höhe bezieht).
+  Faustregel: bei jedem Deko-Element, das über ein fixes Bild hinausragt,
+  genau prüfen, ob es *anteilig größer* als das Bezugsbild ist (Hinweis
+  auf "gehört eigentlich zur fluiden Spalte") oder tatsächlich 1:1 mit
+  dem fixen Bild mitgeht.
 - **`.fade-in-text` + eigener Hover auf demselben Element verträgt sich
   nicht ohne Weiteres.** Der gemeinsame `IntersectionObserver`
   (`initFadeInText()`) setzt pro Element zusätzlich ein individuelles

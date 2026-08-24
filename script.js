@@ -63,21 +63,140 @@ document.addEventListener("DOMContentLoaded", () => initFadeInText());
 // ==========================================================================
 
 // Sound-Toggle: startet aus (Label durchgestrichen, siehe section-01-stage.css).
-// Klick aktiviert Loop-Playback und entfernt die Durchstreichung.
-const stageAudio = new Audio("sound/xyz.mp3");
-stageAudio.loop = true;
+// Songs werden LIVE aus assets/music/ geladen (GitHub Contents API, gleiches
+// Muster wie beim Instagram-Modul, siehe fetchInstaFolder() weiter unten) --
+// Til muss nur Dateien hochladen/löschen, kein Code-/JSON-Edit nötig.
+// Verhalten:
+//   - Default: aus. Im Aus-Zustand ist der Song wirklich GESTOPPT (Pause +
+//     currentTime = 0), läuft im Hintergrund also nicht weiter -- kein
+//     Pause/Resume wie bei einem klassischen Play/Pause-Button.
+//   - Einschalten: kurzer Fade-in (Volume 0 -> Zielwert).
+//   - Mehrere Songs im Ordner spielen der Reihe nach (alphabetisch, wie von
+//     der GitHub API geliefert); nach dem letzten Song beginnt die Playlist
+//     wieder von vorn. Zwischen zwei Songs kein erneuter Fade-in, nur beim
+//     manuellen Einschalten über den Button.
+//   - Die Playlist wird bereits beim Laden der Seite im Hintergrund
+//     vorab abgerufen (nicht erst beim Klick), damit der spätere
+//     audio.play()-Aufruf synchron im Klick-Handler bleibt -- Safari
+//     verweigert Audio-Play sonst, wenn der Aufruf den User-Gesture-Kontext
+//     bereits verlassen hat (await vor play()).
+
+const MUSIC_FOLDER_API = "https://api.github.com/repos/t-i-l/eatme/contents/assets/music";
+const MUSIC_CACHE_KEY = "eatme-music-folder-cache";
+const MUSIC_CACHE_TTL_MS = 5 * 60 * 1000;
+const MUSIC_AUDIO_EXT = ["mp3", "wav", "ogg", "m4a", "aac"];
+const MUSIC_FADE_IN_MS = 400;
+const MUSIC_VOLUME = 1;
+
+// Fragt den Inhalt von assets/music/ über die GitHub Contents API ab
+// (funktioniert nur auf einer echten gehosteten Seite, nicht in manchen
+// Vorschau-Sandboxes -- siehe "Gelernte Lektionen" in ARCHITECTURE.md).
+// Liefert eine flache Liste aus Datei-Pfaden, alphabetisch sortiert.
+async function fetchMusicFolder() {
+  try {
+    const cached = sessionStorage.getItem(MUSIC_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Date.now() - parsed.timestamp < MUSIC_CACHE_TTL_MS) return parsed.items;
+    }
+  } catch (err) {
+    // sessionStorage evtl. nicht verfügbar -- dann live laden, nur der
+    // Cache fällt aus.
+  }
+
+  const res = await fetch(MUSIC_FOLDER_API);
+  if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+  const listing = await res.json();
+
+  const items = listing
+    .filter((entry) => entry.type === "file")
+    .filter((entry) => MUSIC_AUDIO_EXT.includes(entry.name.split(".").pop().toLowerCase()))
+    .map((entry) => entry.path)
+    .sort();
+
+  try {
+    sessionStorage.setItem(MUSIC_CACHE_KEY, JSON.stringify({ timestamp: Date.now(), items }));
+  } catch (err) {
+    // nicht kritisch, betrifft nur den Cache.
+  }
+
+  return items;
+}
+
 const soundToggleBtn = document.querySelector("#section-01-stage .sound-toggle");
 if (soundToggleBtn) {
-  soundToggleBtn.addEventListener("click", () => {
-    const isOn = soundToggleBtn.dataset.state === "on";
-    soundToggleBtn.dataset.state = isOn ? "off" : "on";
-    if (isOn) {
-      stageAudio.pause();
-    } else {
-      stageAudio.play().catch(() => {
-        console.log("Autoplay/Play blockiert (Browser-Policy) oder Datei nicht gefunden.");
-      });
+  const stageAudio = new Audio();
+  let musicPlaylist = [];
+  let musicTrackIndex = 0;
+  let musicFadeRafId = null;
+
+  // Playlist direkt beim Seitenaufbau im Hintergrund laden (siehe Kommentar
+  // oben zum Safari-Gesture-Problem).
+  const musicPlaylistReady = fetchMusicFolder()
+    .then((items) => {
+      musicPlaylist = items;
+    })
+    .catch(() => {
+      musicPlaylist = [];
+    });
+
+  function fadeInStageAudio() {
+    if (musicFadeRafId) cancelAnimationFrame(musicFadeRafId);
+    stageAudio.volume = 0;
+    const start = performance.now();
+    function step(now) {
+      const progress = Math.min((now - start) / MUSIC_FADE_IN_MS, 1);
+      stageAudio.volume = progress * MUSIC_VOLUME;
+      musicFadeRafId = progress < 1 ? requestAnimationFrame(step) : null;
     }
+    musicFadeRafId = requestAnimationFrame(step);
+  }
+
+  function playMusicTrack(index) {
+    if (!musicPlaylist.length) return;
+    musicTrackIndex = ((index % musicPlaylist.length) + musicPlaylist.length) % musicPlaylist.length;
+    stageAudio.src = musicPlaylist[musicTrackIndex];
+    stageAudio.currentTime = 0;
+    stageAudio.play().catch(() => {
+      console.log("Autoplay/Play blockiert (Browser-Policy) oder Datei nicht gefunden.");
+    });
+  }
+
+  // Nächster Song in der Playlist, am Ende (letzter Song fertig) wieder
+  // von vorn -- kein Fade-in zwischen Songs, nur beim Einschalten per Klick.
+  stageAudio.addEventListener("ended", () => {
+    playMusicTrack(musicTrackIndex + 1);
+  });
+
+  soundToggleBtn.addEventListener("click", async () => {
+    const isOn = soundToggleBtn.dataset.state === "on";
+
+    if (isOn) {
+      // Ausschalten: sofortiger Stopp (nicht Pause) -- läuft im
+      // Hintergrund nicht weiter, nächstes Einschalten startet den
+      // aktuellen Song wieder bei 0.
+      soundToggleBtn.dataset.state = "off";
+      if (musicFadeRafId) {
+        cancelAnimationFrame(musicFadeRafId);
+        musicFadeRafId = null;
+      }
+      stageAudio.pause();
+      stageAudio.currentTime = 0;
+      return;
+    }
+
+    if (!musicPlaylist.length) {
+      // Playlist evtl. noch nicht geladen (sehr früher Klick) --
+      // nachladen. Danach kann Safari den play()-Aufruf ggf. blockieren,
+      // da der User-Gesture-Kontext bereits verloren ist; im Normalfall
+      // (Playlist längst im Hintergrund geladen) tritt das nicht auf.
+      await musicPlaylistReady;
+    }
+    if (!musicPlaylist.length) return; // Ordner leer/nicht erreichbar.
+
+    soundToggleBtn.dataset.state = "on";
+    fadeInStageAudio();
+    playMusicTrack(musicTrackIndex);
   });
 }
 
