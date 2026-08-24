@@ -67,14 +67,17 @@ document.addEventListener("DOMContentLoaded", () => initFadeInText());
 // Muster wie beim Instagram-Modul, siehe fetchInstaFolder() weiter unten) --
 // Til muss nur Dateien hochladen/löschen, kein Code-/JSON-Edit nötig.
 // Verhalten:
-//   - Default: aus. Im Aus-Zustand ist der Song wirklich GESTOPPT (Pause +
-//     currentTime = 0), läuft im Hintergrund also nicht weiter -- kein
-//     Pause/Resume wie bei einem klassischen Play/Pause-Button.
-//   - Einschalten: kurzer Fade-in (Volume 0 -> Zielwert).
+//   - Default: aus.
+//   - Einschalten: deutlich hörbarer Fade-in (Volume 0 -> Zielwert über
+//     MUSIC_FADE_MS). Ausschalten: derselbe Fade rückwärts (Zielwert -> 0),
+//     danach erst pausiert -- kein hartes Abschneiden in beide Richtungen.
+//   - Ausschalten ist ein PAUSE, kein Stopp: die Wiedergabeposition bleibt
+//     erhalten, nächstes Einschalten setzt an exakt der Stelle fort, an der
+//     zuvor ausgeschaltet wurde.
 //   - Mehrere Songs im Ordner spielen der Reihe nach (alphabetisch, wie von
 //     der GitHub API geliefert); nach dem letzten Song beginnt die Playlist
-//     wieder von vorn. Zwischen zwei Songs kein erneuter Fade-in, nur beim
-//     manuellen Einschalten über den Button.
+//     wieder von vorn. Zwischen zwei Songs kein Fade, nur beim manuellen
+//     Ein-/Ausschalten über den Button.
 //   - Die Playlist wird bereits beim Laden der Seite im Hintergrund
 //     vorab abgerufen (nicht erst beim Klick), damit der spätere
 //     audio.play()-Aufruf synchron im Klick-Handler bleibt -- Safari
@@ -85,7 +88,7 @@ const MUSIC_FOLDER_API = "https://api.github.com/repos/t-i-l/eatme/contents/asse
 const MUSIC_CACHE_KEY = "eatme-music-folder-cache";
 const MUSIC_CACHE_TTL_MS = 5 * 60 * 1000;
 const MUSIC_AUDIO_EXT = ["mp3", "wav", "ogg", "m4a", "aac"];
-const MUSIC_FADE_IN_MS = 400;
+const MUSIC_FADE_MS = 1500; // deutlich hörbar, sowohl beim Ein- als auch Ausschalten
 const MUSIC_VOLUME = 1;
 
 // Fragt den Inhalt von assets/music/ über die GitHub Contents API ab
@@ -140,14 +143,23 @@ if (soundToggleBtn) {
       musicPlaylist = [];
     });
 
-  function fadeInStageAudio() {
+  // Blendet stageAudio.volume von seinem aktuellen Wert auf targetVolume,
+  // über MUSIC_FADE_MS. onComplete (optional) läuft, sobald der Zielwert
+  // erreicht ist -- genutzt, um beim Ausschalten erst NACH dem Ausblenden
+  // zu pausieren.
+  function fadeStageAudio(targetVolume, onComplete) {
     if (musicFadeRafId) cancelAnimationFrame(musicFadeRafId);
-    stageAudio.volume = 0;
+    const startVolume = stageAudio.volume;
     const start = performance.now();
     function step(now) {
-      const progress = Math.min((now - start) / MUSIC_FADE_IN_MS, 1);
-      stageAudio.volume = progress * MUSIC_VOLUME;
-      musicFadeRafId = progress < 1 ? requestAnimationFrame(step) : null;
+      const progress = Math.min((now - start) / MUSIC_FADE_MS, 1);
+      stageAudio.volume = startVolume + (targetVolume - startVolume) * progress;
+      if (progress < 1) {
+        musicFadeRafId = requestAnimationFrame(step);
+      } else {
+        musicFadeRafId = null;
+        if (onComplete) onComplete();
+      }
     }
     musicFadeRafId = requestAnimationFrame(step);
   }
@@ -172,16 +184,10 @@ if (soundToggleBtn) {
     const isOn = soundToggleBtn.dataset.state === "on";
 
     if (isOn) {
-      // Ausschalten: sofortiger Stopp (nicht Pause) -- läuft im
-      // Hintergrund nicht weiter, nächstes Einschalten startet den
-      // aktuellen Song wieder bei 0.
+      // Ausschalten: erst ausblenden, danach pausieren -- Position bleibt
+      // erhalten, kein Reset auf 0.
       soundToggleBtn.dataset.state = "off";
-      if (musicFadeRafId) {
-        cancelAnimationFrame(musicFadeRafId);
-        musicFadeRafId = null;
-      }
-      stageAudio.pause();
-      stageAudio.currentTime = 0;
+      fadeStageAudio(0, () => stageAudio.pause());
       return;
     }
 
@@ -195,8 +201,19 @@ if (soundToggleBtn) {
     if (!musicPlaylist.length) return; // Ordner leer/nicht erreichbar.
 
     soundToggleBtn.dataset.state = "on";
-    fadeInStageAudio();
-    playMusicTrack(musicTrackIndex);
+
+    if (!stageAudio.src) {
+      // Allererstes Einschalten -- ersten Track laden und starten.
+      playMusicTrack(musicTrackIndex);
+    } else {
+      // Wieder-Einschalten -- an der Stelle fortsetzen, an der zuvor
+      // pausiert wurde (kein currentTime-Reset).
+      stageAudio.play().catch(() => {
+        console.log("Autoplay/Play blockiert (Browser-Policy) oder Datei nicht gefunden.");
+      });
+    }
+    stageAudio.volume = 0;
+    fadeStageAudio(MUSIC_VOLUME);
   });
 }
 

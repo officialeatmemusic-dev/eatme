@@ -175,13 +175,17 @@ referenziert von den Sektionen, die sie brauchen:
   wie beim Instagram-Modul) -- Til kann Dateien einfach hochladen/löschen,
   kein Code-/JSON-Edit nötig. Erkannte Endungen: `.mp3/.wav/.ogg/.m4a/.aac`.
   Verhalten:
-  - Default: aus. Aus-Zustand = echter Stopp (Pause + `currentTime = 0`),
-    kein Pause/Resume.
-  - Einschalten: kurzer Fade-in (Volume 0 -> 1, ~400ms).
+  - Default: aus.
+  - Ein-/Ausschalten: deutlich hörbarer, symmetrischer Fade (Volume 0 <-> 1
+    über 1500ms) in beide Richtungen -- beim Ausschalten wird erst
+    ausgeblendet, danach erst pausiert.
+  - Ausschalten ist ein PAUSE, kein Stopp: Wiedergabeposition bleibt
+    erhalten, nächstes Einschalten setzt an exakt der Stelle fort (kein
+    `currentTime`-Reset).
   - Mehrere Songs laufen alphabetisch nacheinander durch (`ended`-Event
     triggert den nächsten Track), nach dem letzten Song beginnt die
-    Playlist wieder von vorn. Kein erneuter Fade-in zwischen Songs, nur
-    beim manuellen Einschalten.
+    Playlist wieder von vorn. Kein Fade zwischen Songs, nur beim manuellen
+    Ein-/Ausschalten.
   - Playlist wird bereits beim Seitenaufbau im Hintergrund vorab abgerufen
     (nicht erst beim Klick), damit `audio.play()` im Klick-Handler synchron
     bleibt -- sonst verweigert Safari den Play-Aufruf, weil der
