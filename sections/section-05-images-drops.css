@@ -101,54 +101,22 @@
    (40px) bewegen sich stärker (wirken näher), kleinere (24px) dezenter
    (wirken weiter weg) -- simple Tiefenwirkung, siehe initDropsParallax().
    ========================================================================== */
-/* Gruppen-Wrapper: buendelt alle Tropfen EINER Groesse (24px oder 40px)
-   in einen gemeinsamen Container, der als Ganzes EINEN Transform pro
-   Frame bekommt (siehe initDropsParallax() in script.js), statt vorher
-   19 (Desktop) bzw. 9 (Mobile) Tropfen EINZELN zu transformieren. Til hat
-   per Web-Inspector-Aufnahme (25.08.2026) verifiziert, dass das Entfernen
-   von will-change (siehe .tropfen unten) allein nicht ausreichte -- die
-   schiere Anzahl individuell transformierter/gemalter Elemente war
-   weiterhin ein grosser Paint/Composite-Kostenfaktor. Position/Groesse
-   der einzelnen .tropfen-Kinder bleibt unveraendert (weiterhin absolute
-   %/px-Werte, 1:1 aus Figma) -- der Wrapper deckt einfach die komplette
-   Sektion ab (inset:0), damit sich daran nichts aendert. */
-#section-05-images-drops .tropfen-group {
+/* Tropfen jetzt als EIN <canvas> statt 28 einzelner DOM-Elemente (siehe
+   DESKTOP_DROPS/MOBILE_DROPS + initDropsCanvas() in script.js). Til hat
+   per Web-Inspector-Aufnahme UND gezieltem Ein-/Ausblenden (Bilder
+   austauschen, will-change entfernen, Gruppierung) verifiziert, dass
+   keiner dieser Zwischenschritte ausreichte -- die schiere ANZAHL an
+   DOM-Elementen selbst war der Kostenfaktor, unabhaengig von Bild-Inhalt
+   oder Compositor-Hints. Ein einzelnes Canvas umgeht das komplett,
+   analog zu birds-stage.html (dort schon erfolgreich). Positions-/
+   Groessen-/Bild-Werte sind 1:1 in die JS-Datenarrays uebernommen.
+   Sichtbarkeit (Mobile vs. Desktop) wird jetzt in JS anhand des
+   768px-Breakpoints entschieden (window.innerWidth), nicht mehr per
+   CSS-Media-Query auf mehreren Elementen. */
+#section-05-images-drops #drops-canvas {
   position: absolute;
   inset: 0;
   pointer-events: none;
-}
-
-#section-05-images-drops .tropfen {
-  position: absolute;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-  /* KEIN will-change: transform mehr -- Til hat per Web-Inspector-
-     Aufnahme (24./25.08.2026) verifiziert, dass das Entfernen die
-     Ruckel-/Sprung-Haeufigkeit deutlich senkt. Vermutung: 19 (Desktop)
-     bzw. 9 (Mobile) einzeln dauerhaft promotete Compositor-Ebenen
-     gleichzeitig ueberschreiten offenbar ein internes Budget in Safari
-     und kosten dadurch mehr an Paint/Composite-Zeit, als sie an
-     Transform-Performance einsparen. Falls in Zukunft ein aehnliches
-     Performance-Problem auftaucht: NICHT direkt wieder will-change auf
-     viele Einzelelemente packen, sondern zuerst mit einer Web-Inspector-
-     Aufnahme verifizieren. */
-}
-
-#section-05-images-drops .tropfen img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* Sichtbarkeit jetzt auf Gruppen-Ebene gesteuert (ein display:none auf
-   dem Wrapper versteckt automatisch alle Kinder mit) -- die einzelnen
-   .tropfen--desktop/--mobile-Klassen bleiben nur noch fuer den
-   Parallax-Faktor (data-size) und Styling relevant, nicht mehr fuers
-   Ein-/Ausblenden. */
-#section-05-images-drops .tropfen-group--mobile {
-  display: none;
 }
 
 /* ---- Mobile (siehe tokens-notes.md: 768px ist der verbindliche,
@@ -156,8 +124,7 @@
    Verhält sich wie section-03: rechte Spalte rutscht unter die linke,
    100px Gap zwischen den Spalten statt 12px, Bild-Bottom-Padding (200px,
    war Desktop-Kompositionsabstand) auf 48px reduziert. Tropfen: eigener,
-   kleinerer Satz (.tropfen--mobile) statt der %-positionierten Desktop-
-   Tropfen, siehe Kommentar oben. */
+   kleinerer Satz (MOBILE_DROPS in script.js), siehe Kommentar oben. */
 @media (max-width: 768px) {
   #section-05-images-drops {
     flex-direction: column;
@@ -180,13 +147,5 @@
   #section-05-images-drops .col-text-image {
     width: 100%;
     align-self: auto;
-  }
-
-  #section-05-images-drops .tropfen-group--desktop {
-    display: none;
-  }
-
-  #section-05-images-drops .tropfen-group--mobile {
-    display: block;
   }
 }
