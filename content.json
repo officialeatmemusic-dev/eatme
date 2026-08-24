@@ -98,7 +98,7 @@
     "cta_text": "Open for Booking",
     "cta_link": "mailto:contact@eatmemusic.com",
     "contact_email": "contact@eatmemusic.com",
-    "footer_link_label": "Imprint and data",
-    "footer_link_href": "imprint.html"
+    "footer_link_label": "Imprint and privacy",
+    "footer_link_href": "imprint-and-privacy.html"
   }
 }
