@@ -1327,6 +1327,34 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
 
   let cloudFadeInDocTop = 0;
   let cloudFadeOutDocTop = 0;
+
+  // Grobe Sichtbarkeits-Vorpruefung: Dokument-Position + Hoehe jeder
+  // Sektion EINMAL gecacht (offsetTop/offsetHeight sind ebenfalls
+  // Layout-Reads -- deshalb hier NICHT pro Frame, sondern nur bei
+  // resize/content-ready neu gemessen, siehe measureSectionBounds()
+  // unten). Damit kann der Frame-Loop unten scrollY (kein Layout-Read)
+  // gegen diese gecachten Werte pruefen und getBoundingClientRect() +
+  // die zugehoerigen Writes komplett ueberspringen, wenn eine Sektion
+  // gerade weit ausserhalb des sichtbaren Bereichs liegt -- spart Arbeit
+  // ohne einen einzigen zusaetzlichen Layout-Read.
+  const sectionBounds = new Map(); // el -> { top, bottom }
+  const VIEWPORT_BUFFER_PX = 600; // Puffer, damit nichts abrupt kurz vor Sichtbarkeit noch uebersprungen wird
+
+  function measureSectionBounds() {
+    [stageEl, section02El, section03El, section05El].forEach((el) => {
+      if (!el) return;
+      sectionBounds.set(el, { top: el.offsetTop, bottom: el.offsetTop + el.offsetHeight });
+    });
+  }
+
+  function isNearViewport(el, scrollY, viewportHeight) {
+    const bounds = sectionBounds.get(el);
+    if (!bounds) return true; // noch nicht gemessen -> sicherheitshalber nicht ueberspringen
+    const viewTop = scrollY - VIEWPORT_BUFFER_PX;
+    const viewBottom = scrollY + viewportHeight + VIEWPORT_BUFFER_PX;
+    return bounds.bottom >= viewTop && bounds.top <= viewBottom;
+  }
+
   function measureCloudAnchor() {
     if (!bgCloudEl) return;
     // Fade-IN beginnt, wenn section-03 von unten im Viewport auftaucht
@@ -1362,11 +1390,17 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     if (window.innerWidth === lastViewportWidth) return; // nur Hoehe geaendert (Safari-Toolbar) -> ignorieren
     lastViewportWidth = window.innerWidth;
     measureCloudAnchor();
+    measureSectionBounds();
   }
+
+  measureSectionBounds();
+  window.addEventListener("resize", handleResize);
+  document.addEventListener("eatme:content-ready", () => {
+    requestAnimationFrame(() => requestAnimationFrame(measureSectionBounds));
+  });
 
   if (bgCloudEl) {
     measureCloudAnchor();
-    window.addEventListener("resize", handleResize);
     document.addEventListener("eatme:content-ready", () => {
       requestAnimationFrame(() => requestAnimationFrame(measureCloudAnchor));
     });
@@ -1374,11 +1408,19 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
 
   function parallaxLoop() {
     // ---- 1) ALLE READS ZUERST (ein Layout-Durchgang, keine Writes dazwischen) ----
-    const stageRect = stageEl ? stageEl.getBoundingClientRect() : null;
-    const section02Rect = section02El ? section02El.getBoundingClientRect() : null;
-    const section03Rect = section03El ? section03El.getBoundingClientRect() : null;
-    const section05Rect = section05El ? section05El.getBoundingClientRect() : null;
     const scrollY = window.scrollY; // kein Layout-Read, daher hier unproblematisch
+    const viewportHeight = window.innerHeight; // ebenfalls kein Layout-Read
+
+    // Grobe Vorpruefung gegen die gecachten Sektions-Grenzen (siehe
+    // measureSectionBounds() oben) -- spart den eigentlichen
+    // getBoundingClientRect()-Read (erzwingt Layout) komplett fuer
+    // Sektionen, die gerade weit ausserhalb des sichtbaren Bereichs
+    // liegen. scrollY/viewportHeight sind beide keine Layout-Reads,
+    // die Pruefung selbst kostet also nichts.
+    const stageRect = (stageEl && isNearViewport(stageEl, scrollY, viewportHeight)) ? stageEl.getBoundingClientRect() : null;
+    const section02Rect = (section02El && isNearViewport(section02El, scrollY, viewportHeight)) ? section02El.getBoundingClientRect() : null;
+    const section03Rect = (section03El && isNearViewport(section03El, scrollY, viewportHeight)) ? section03El.getBoundingClientRect() : null;
+    const section05Rect = (section05El && isNearViewport(section05El, scrollY, viewportHeight)) ? section05El.getBoundingClientRect() : null;
 
     // WICHTIG (Fix, siehe Chat/Profiling 24.08.2026): offsetParent ist
     // ebenfalls ein Layout-Read wie getBoundingClientRect() -- gehoert
