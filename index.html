@@ -16,7 +16,6 @@
   <link rel="stylesheet" href="components/eatme-lyrics.css" />
   <link rel="stylesheet" href="components/instagram-module.css" />
   <link rel="stylesheet" href="components/eatme-footer.css" />
-  <link rel="stylesheet" href="components/birds-black-transition.css" />
 
   <!-- Sektions-CSS: eine Datei pro Sektion, siehe ARCHITECTURE.md -->
   <link rel="stylesheet" href="sections/section-01-stage.css" />
@@ -94,6 +93,20 @@
       <div class="col-image-left">
         <div class="image-container">
           <img class="eatme-image-01" id="section-03-image-01" src="" alt="" />
+          <!--
+            Vogel-Silhouetten (assets/visuals/birds-black.webp,
+            Figma-Node 169:212) -- liegt in der linken Spalte, überlappt
+            Bandfoto 1 leicht am unteren Rand (Design-Update, siehe
+            ARCHITECTURE.md). Fixe px-Maße/-Position wie das Bandfoto
+            selbst (das ebenfalls bewusst nicht fluid ist), daher keine
+            JS-Positionierung nötig. Asset hat echte Alpha-Transparenz
+            (weißer Hintergrund entfernt) statt mix-blend-mode, siehe
+            ARCHITECTURE.md "Gelernte Lektionen". pointer-events: none,
+            rein dekorativ.
+          -->
+          <div class="birds-black" aria-hidden="true">
+            <img class="birds-black-img" src="assets/visuals/birds-black.webp" alt="" />
+          </div>
         </div>
       </div>
       <div class="col-text-image">
@@ -126,26 +139,6 @@
         </div>
       </div>
     </section>
-
-    <!--
-      Vogel-Silhouetten-Übergang (assets/visuals/birds-black.webp,
-      Figma-Node 3:5415) -- liegt als eigenständiges Overlay ÜBER
-      section-03-images UND section-04-text-02 (siehe ARCHITECTURE.md).
-      Das Asset selbst hat echte Alpha-Transparenz (weißer Hintergrund
-      entfernt, siehe ARCHITECTURE.md "Gelernte Lektionen") -- kein
-      mix-blend-mode nötig/verwendet, das hätte gegen den fixed
-      Himmel-Hintergrund ohnehin nicht funktioniert. `aspect-ratio` in
-      birds-black-transition.css hält das Bild proportional (kein
-      Quetschen/Stauchen responsiv); nur `top` wird zur Laufzeit in
-      script.js berechnet (measureBirdsBlackTransition()), da section-04
-      "Height Hug" ist. pointer-events: none, damit man weiterhin mit den
-      Elementen darunter (Bilder, Songtext-Modul, Fließtext) interagieren
-      kann -- rein dekorativ, gleiche Konvention wie die blauen Vögel in
-      section-02.
-    -->
-    <div class="birds-black-transition" id="birds-black-transition" aria-hidden="true">
-      <img class="birds-black-img" src="assets/visuals/birds-black.webp" alt="" />
-    </div>
 
     <section id="section-05-images-drops" class="section">
       <div class="col-image-left">

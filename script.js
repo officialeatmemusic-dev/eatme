@@ -1287,9 +1287,6 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
   const section03Img1El = document.querySelector("#section-03-image-01");
   const section03Img2El = document.querySelector("#section-03-image-02");
 
-  const section04El = document.querySelector("#section-04-text-02");
-  const birdsBlackEl = document.querySelector("#birds-black-transition");
-
   const section05El = document.querySelector("#section-05-images-drops");
   const dropGroupEls = document.querySelectorAll("#section-05-images-drops .tropfen-group");
 
@@ -1358,28 +1355,6 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     }
   }
 
-  // Vogel-Silhouetten-Übergang (birds-black.webp, Figma-Node 3:5415) --
-  // liegt über section-03 UND section-04. Höhe kommt jetzt komplett aus
-  // CSS (`aspect-ratio: 1280/1147` in birds-black-transition.css) --
-  // dadurch kann das Bild nie gequetscht/gestaucht werden, es skaliert
-  // immer proportional mit seiner eigenen (fluiden) Breite.
-  //
-  // Hier wird NUR NOCH `top` berechnet: im Figma-Referenzrahmen
-  // (1280px Design-Breite) beginnt birds-black 728px oberhalb von
-  // section-04s Oberkante. Dieser Wert wird mit dem aktuellen
-  // Breiten-Verhältnis (gerenderte Breite / 1280) skaliert, damit der
-  // Versatz mit der (fluiden) Bildgröße mitwächst/-schrumpft, statt bei
-  // schmaleren Viewports relativ zu groß zu werden.
-  const BIRDS_BLACK_REF_WIDTH = 1280;
-  const BIRDS_BLACK_INTO_SECTION03_PX = 728;
-
-  function measureBirdsBlackTransition() {
-    if (!birdsBlackEl || !section04El) return;
-    const scale = birdsBlackEl.offsetWidth / BIRDS_BLACK_REF_WIDTH;
-    const topOffset = BIRDS_BLACK_INTO_SECTION03_PX * scale;
-    birdsBlackEl.style.top = `${section04El.offsetTop - topOffset}px`;
-  }
-
   // Anker einmal sofort setzen (Fallback, falls Content-Ready schon
   // gefeuert war) UND nach echtem Content-Rendering neu messen -- vorher
   // (direkt beim Script-Start) kann section-02 noch leer/kollabiert sein,
@@ -1400,7 +1375,6 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     lastViewportWidth = window.innerWidth;
     measureCloudAnchor();
     measureSectionBounds();
-    measureBirdsBlackTransition();
   }
 
   measureSectionBounds();
@@ -1413,17 +1387,6 @@ const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PA
     measureCloudAnchor();
     document.addEventListener("eatme:content-ready", () => {
       requestAnimationFrame(() => requestAnimationFrame(measureCloudAnchor));
-    });
-  }
-
-  if (birdsBlackEl) {
-    // Doppeltes rAF wie bei measureCloudAnchor()/measureSectionBounds():
-    // section-04 ist beim ersten Frame nach "eatme:content-ready" evtl.
-    // noch nicht final ausgemessen (Text-Reflow braucht einen Frame),
-    // daher zwei Frames abwarten statt nur einem.
-    measureBirdsBlackTransition();
-    document.addEventListener("eatme:content-ready", () => {
-      requestAnimationFrame(() => requestAnimationFrame(measureBirdsBlackTransition));
     });
   }
 
