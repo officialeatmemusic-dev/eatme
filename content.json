@@ -8,7 +8,7 @@
       "instagram": "https://www.instagram.com/eatme.music/",
       "youtube": "https://www.youtube.com/@eatme.music.official"
     },
-    "contact_email": "contact@eatmemusic.com",
+    "contact_email": "official.eatme.music@gmail.com",
     "audio_track": "sound/xyz.mp3"
   },
   "section-01-stage": {
@@ -96,8 +96,8 @@
       ]
     },
     "cta_text": "Open for Booking",
-    "cta_link": "mailto:contact@eatmemusic.com",
-    "contact_email": "contact@eatmemusic.com",
+    "cta_link": "mailto:official.eatme.music@gmail.com",
+    "contact_email": "official.eatme.music@gmail.com",
     "footer_link_label": "Imprint and privacy",
     "footer_link_href": "imprint-and-privacy.html"
   }
