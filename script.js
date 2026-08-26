@@ -1050,7 +1050,7 @@ function renderFooterBar(data) {
 
   if (data.contact_email) {
     contactLink.href = `mailto:${data.contact_email}`;
-    contactLink.textContent = data.contact_email;
+    contactLink.textContent = data.contact_label || "Contact";
   }
 
   if (data.footer_link_href) {

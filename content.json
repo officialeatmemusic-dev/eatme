@@ -35,7 +35,7 @@
     ],
     "lyrics": {
       "song_title": "Trustfalling",
-      "song_link": "",
+      "song_link": "https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg",
       "lines": [
         "Trustfalling in your eyes",
         "Don't wanna lose myself",
@@ -60,7 +60,7 @@
     ],
     "lyrics": {
       "song_title": "Drizzle",
-      "song_link": "",
+      "song_link": "https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg",
       "lines": [
         "Drizzle in my hair",
         "Always good",
@@ -85,8 +85,8 @@
     "background_image": "assets/images/eatme-image-footer.jpg",
     "background_image_alt": "Platzhalter Alt-Text – Bandfoto Footer (Duoton)",
     "lyrics": {
-      "song_title": "Drown",
-      "song_link": "",
+      "song_title": "Close Enough",
+      "song_link": "https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg",
       "lines": [
         "Let me drown",
         "But I might never",
@@ -98,6 +98,7 @@
     "cta_text": "Open for Booking",
     "cta_link": "mailto:official.eatme.music@gmail.com",
     "contact_email": "official.eatme.music@gmail.com",
+    "contact_label": "Contact",
     "footer_link_label": "Imprint and privacy",
     "footer_link_href": "imprint-and-privacy.html"
   }

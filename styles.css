@@ -46,6 +46,17 @@ img {
 
 html {
   scroll-behavior: smooth;
+  /* Verhindert automatisches Hochskalieren der Schriftgröße durch den
+     Browser (iOS Safari/Chrome "Text Autosizing"), das bei langen
+     Textblöcken in schmalen Spalten auf Mobile greift und die per CSS
+     gesetzte font-size ignoriert. War die Ursache für den zu großen
+     Privacy-Text auf Mobil (imprint-and-privacy.html): die Privacy-Spalte
+     ist deutlich länger als die Imprint-Spalte und wurde deshalb vom
+     Browser automatisch hochskaliert, obwohl beide dieselbe
+     .text-copy-s-Klasse nutzen. Global hier gesetzt, damit künftige
+     lange Textblöcke in anderen Sektionen nicht denselben Bug bekommen. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {

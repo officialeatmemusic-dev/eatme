@@ -22,8 +22,15 @@ leichter für Til selbst nachvollziehbar/wartbar.
 
 ## Hosting & Repo
 
-- Live unter GitHub Pages: `https://t-i-l.github.io/eatme/` (Repo:
-  `t-i-l/eatme`, Branch `main`, Ordner `/ (root)`).
+- **Live unter der Custom Domain `https://eatmemusic.com`** (seit
+  26.08.2026, Registrar Strato). Der bisherige GitHub-Pages-Link
+  `https://t-i-l.github.io/eatme/` ist damit veraltet — nicht mehr als
+  primäre URL verwenden, auch wenn er technisch weiterhin auf denselben
+  Content zeigt/zeigen kann. Repo bleibt vorerst `t-i-l/eatme`, Branch
+  `main`, Ordner `/ (root)`. `CNAME`-Datei im Repo-Root enthält
+  `eatmemusic.com`, `canonical`/`og:url`/JSON-LD in `index.html` sowie
+  `sitemap.xml`/`robots.txt` zeigen bereits konsistent auf die neue
+  Domain.
 - Content-Pflege durch den Kunden **direkt im GitHub-Web-Interface**
   (Datei anklicken → Stift-Icon → Wert ändern → Commit). Kein CMS, kein
   Admin-Panel — bewusste Entscheidung, siehe Verlauf dieses Projekts.
@@ -48,10 +55,14 @@ leichter für Til selbst nachvollziehbar/wartbar.
   automatisch weiter, kurz gegenchecken.
 - Weil alle Pfade relativ sind (siehe oben), funktioniert die Seite
   automatisch unter jeder neuen URL/jedem Unterordner, ohne Anpassungen.
-- **Custom Domain** (falls später gewünscht, z.B. `eatmemusic.com`):
-  Domain-Registrierung/DNS läuft komplett getrennt vom GitHub-Repo, über
-  den Domain-Anbieter des Kunden. GitHub-Pages-Hosting selbst bleibt
-  kostenlos, nur die Domain-Registrierung kostet (Registrar-abhängig).
+- **Custom Domain: erledigt.** `eatmemusic.com` (Registrar Strato) ist seit
+  26.08.2026 live und zeigt auf dieses GitHub-Pages-Repo (`CNAME`-Datei im
+  Root). Domain-Registrierung/DNS lief komplett getrennt vom Repo, über
+  Strato; das GitHub-Pages-Hosting selbst bleibt kostenlos, nur die
+  Domain-Registrierung kostet. Offen bleibt weiterhin die geplante
+  GitHub-Account-Migration (siehe "Outstanding" im Chat-Gedächtnis) —
+  danach `CNAME`-Zielaccount und ggf. DNS-A-Records/-CNAME-Eintrag beim
+  neuen `.github.io`-Ziel gegenchecken.
 
 ## Ordnerstruktur
 
@@ -63,7 +74,7 @@ leichter für Til selbst nachvollziehbar/wartbar.
 ├── styles.css                  ← globales Grundgerüst + globale Konventionen (Hover, Fade-In, Bild-Drag)
 ├── script.js                   ← globale Logik + eine Sektion pro Kommentarblock (inkl. Himmel-Hintergrund/Parallax, siehe "Hintergrund & Motion")
 ├── content.json                ← alle Texte, Bildpfade, Links
-├── imprint.html                ← einfache statische Seite (Imprint +
+├── imprint-and-privacy.html     ← einfache statische Seite (Imprint +
 │                                  Datenschutz zusammen, siehe unten)
 ├── /assets
 │   ├── /fonts                  Michroma-Regular.woff2, EBGaramond-Italic.woff2
@@ -131,14 +142,26 @@ Kontext-Bleed zu vermeiden.
 
 ## Zusätzliche Seiten (kein eigener Sektions-Chat nötig)
 
-- `imprint.html` — einfache statische Seite, minimaler Aufwand.
-  **Update:** enthält Imprint- UND Datenschutz-Inhalt zusammen — Til hat
+- `imprint-and-privacy.html` — einfache statische Seite, minimaler
+  Aufwand. Enthält Imprint- UND Datenschutz-Inhalt zusammen — Til hat
   entschieden, sich die zweite Seite (`datenschutz.html`, ursprünglich
-  separat geplant) zu sparen. Der Footer-Link ("Imprint and data" in der
-  `eatme-footer`-Pill) zeigt entsprechend nur noch auf diese eine Seite.
+  separat geplant) zu sparen. Der Footer-Link ("Imprint and privacy" in
+  der `eatme-footer`-Pill) zeigt entsprechend nur noch auf diese eine
+  Seite.
 
 Nutzt dieselben Tokens (Fonts/Farben) wie die Hauptseite, aber ohne
 Parallax/Animation — reine Textseite.
+
+- **Mobile-Fix (26.08.2026):** iOS Safari/Chrome skalieren die
+  Schriftgröße bei langen Textblöcken auf schmalen Viewports automatisch
+  hoch ("Text Autosizing"), unabhängig von der per CSS gesetzten
+  `font-size`. Die Privacy-Spalte ist deutlich länger als die
+  Imprint-Spalte und wurde dadurch auf Mobil sichtbar größer dargestellt,
+  obwohl beide Spalten dieselbe `.text-copy-s`-Klasse nutzen. Fix:
+  `-webkit-text-size-adjust: 100%; text-size-adjust: 100%;` global auf
+  `html` in `styles.css` (nicht nur scoped auf diese Seite, damit
+  künftige lange Textblöcke in anderen Sektionen denselben Bug nicht
+  bekommen).
 
 ## Komponenten (aus Figma bekannt)
 
