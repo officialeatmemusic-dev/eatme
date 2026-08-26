@@ -1085,9 +1085,32 @@ document.addEventListener("eatme:content-ready", (e) => {
 // speziellen Bilds. Bei Bedarf einzeln in BG_CLOUD_PARAMS nachjustierbar.
 // ==========================================================================
 
+// Fallback-Werte, falls getComputedStyle() beim Shader-Start noch keine
+// gueltigen Werte aus tokens.css liefert (Bugfix 26.08.2026: "Wolken-Visual
+// wird zufaellig komplett schwarz, ein Reload behebt es"). Ursache: wenn
+// tokens.css beim allerersten Lesen noch nicht angewendet war, lieferte
+// getPropertyValue() einen leeren String zurueck -- hexToRgbFloat() wandelte
+// das bisher OHNE Fehlermeldung in NaN und damit (per stillschweigender
+// JS-Bitoperator-Regel) in 0 um. Ergebnis: alle 5 Farb-Uniforms schwarz,
+// keine Konsolen-Warnung, nichts, woran man es haette erkennen koennen.
+// 1:1 Kopie der aktuellen tokens.css-Werte -- bei Aenderung dort bitte
+// auch hier nachziehen.
+const CLOUD_COLOR_FALLBACK = {
+  skyTop: "#87c8d7",
+  skyBottom: "#fbfdfe",
+  cloudLight: "#edf8ff",
+  cloudShadow: "#6b9ea9", // --color-blue
+  fadeColor: "#ffffff",   // --color-white
+};
+
 function hexToRgbFloat(hex) {
-  const clean = hex.replace("#", "").trim();
-  const bigint = parseInt(clean.slice(0, 6), 16);
+  const clean = (hex || "").replace("#", "").trim();
+  // Nur echte 6-stellige Hex-Werte akzeptieren -- bei leer/ungueltig lieber
+  // explizit null zurueckgeben, statt NaN still zu Schwarz zu machen. Der
+  // Aufrufer (readColorWithFallback()) entscheidet dann bewusst ueber den
+  // Fallback.
+  if (!/^[0-9a-fA-F]{6}$/.test(clean)) return null;
+  const bigint = parseInt(clean, 16);
   return [
     ((bigint >> 16) & 255) / 255,
     ((bigint >> 8) & 255) / 255,
@@ -1097,6 +1120,21 @@ function hexToRgbFloat(hex) {
 
 function readToken(name) {
   return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// Liest eine CSS-Variable + wandelt sie in RGB-Floats um. Faellt bei
+// leerem/ungueltigem Wert auf die entsprechende Fallback-Farbe zurueck
+// (siehe CLOUD_COLOR_FALLBACK oben) und loggt das einmalig als Warnung --
+// so ist im Fehlerfall wenigstens sichtbar/nachvollziehbar, DASS und WANN
+// der Fallback gegriffen hat, statt dass die Seite kommentarlos schwarz
+// bleibt.
+function readColorWithFallback(tokenName, fallbackKey) {
+  const rgb = hexToRgbFloat(readToken(tokenName));
+  if (rgb) return rgb;
+  console.warn(
+    `Cloud-Shader: Token ${tokenName} war beim Lesen leer/ungueltig (tokens.css evtl. noch nicht angewendet) -- nutze Fallback-Farbe.`
+  );
+  return hexToRgbFloat(CLOUD_COLOR_FALLBACK[fallbackKey]);
 }
 
 const CLOUD_VERTEX_SRC = `
@@ -1250,11 +1288,11 @@ function compileShader(gl, type, src) {
 // zu duplizieren.
 function readCloudColors() {
   return {
-    skyTop: hexToRgbFloat(readToken("--gradient-sky-top")),
-    skyBottom: hexToRgbFloat(readToken("--gradient-sky-bottom")),
-    cloudLight: hexToRgbFloat(readToken("--color-cloud-light")),
-    cloudShadow: hexToRgbFloat(readToken("--color-blue")),
-    fadeColor: hexToRgbFloat(readToken("--color-white")),
+    skyTop: readColorWithFallback("--gradient-sky-top", "skyTop"),
+    skyBottom: readColorWithFallback("--gradient-sky-bottom", "skyBottom"),
+    cloudLight: readColorWithFallback("--color-cloud-light", "cloudLight"),
+    cloudShadow: readColorWithFallback("--color-blue", "cloudShadow"),
+    fadeColor: readColorWithFallback("--color-white", "fadeColor"),
   };
 }
 
@@ -1298,12 +1336,22 @@ function initCloudShader(canvas, params, edgeFade, renderScale) {
     "uSkyTop", "uSkyBottom", "uCloudLight", "uCloudShadow", "uFadeColor",
   ].forEach((name) => { u[name] = gl.getUniformLocation(program, name); });
 
-  const colors = readCloudColors();
-  gl.uniform3fv(u.uSkyTop, colors.skyTop);
-  gl.uniform3fv(u.uSkyBottom, colors.skyBottom);
-  gl.uniform3fv(u.uCloudLight, colors.cloudLight);
-  gl.uniform3fv(u.uCloudShadow, colors.cloudShadow);
-  gl.uniform3fv(u.uFadeColor, colors.fadeColor);
+  // Setzt die 5 Farb-Uniforms aus readCloudColors() (aktueller CSS-Stand).
+  // Einmal direkt beim Init aufgerufen; zusaetzlich als Sicherheitsnetz
+  // spaeter erneut ueber refreshColors() (siehe return-Objekt unten) --
+  // falls beim allerersten Aufruf der Fallback gegriffen hat, korrigiert
+  // sich der Shader dann von selbst auf die echten tokens.css-Werte,
+  // sobald diese sicher verfuegbar sind (kein Reload noetig).
+  function applyColors() {
+    gl.useProgram(program);
+    const colors = readCloudColors();
+    gl.uniform3fv(u.uSkyTop, colors.skyTop);
+    gl.uniform3fv(u.uSkyBottom, colors.skyBottom);
+    gl.uniform3fv(u.uCloudLight, colors.cloudLight);
+    gl.uniform3fv(u.uCloudShadow, colors.cloudShadow);
+    gl.uniform3fv(u.uFadeColor, colors.fadeColor);
+  }
+  applyColors();
 
   gl.uniform1f(u.uCoverage, params.coverage);
   gl.uniform1f(u.uDensity, params.density);
@@ -1360,6 +1408,11 @@ function initCloudShader(canvas, params, edgeFade, renderScale) {
       gl.uniform1f(u.uScroll, scrollValue);
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     },
+    // Sicherheitsnetz gegen den Schwarz-Bug (siehe Kommentar bei
+    // applyColors() oben): liest die Farben einmal erneut aus tokens.css
+    // und schreibt sie neu in die Uniforms. Guenstig genug (5 kleine
+    // Uniform-Writes), um sie im Zweifel einfach nochmal aufzurufen.
+    refreshColors: applyColors,
   };
 }
 
@@ -1372,13 +1425,14 @@ const BG_CLOUD_PARAMS = {
   // Gleiche Optik/Regler-Werte wie beim Stage-Shader fuer einen
   // konsistenten Look (siehe Kommentarblock oben -- kein eigener
   // Figma-Node fuer dieses konkrete Asset).
-  // Drift jetzt aktiv (dezenter Wert, 15 statt section-01s 30 -- diese
-  // Cloud ist grossflaechiger/langsamer): kostet KEINE zusaetzliche
-  // Performance, die Drift-Rechnung laeuft im Shader ohnehin immer mit,
-  // vorher war der Wert nur 0 (= wirkungslos, aber nicht "billiger").
+  // Drift-Tempo (26.08.2026, per interaktiver Vorschau/Regler
+  // abgestimmt): jetzt 30, identisch zu section-01s Stage-Tempo (vorher
+  // 15, dezenter/langsamer gedacht fuer die grossflaechigere Cloud --
+  // Til wollte stattdessen mehr Bewegung). Kostet KEINE zusaetzliche
+  // Performance, die Drift-Rechnung laeuft im Shader ohnehin immer mit.
   coverage: 52, density: 50, brightness: 70, detail: 55, variation: 100,
   warpAmount: 100, warpScale: 6, stretch: 0, phase: 12, radius: 60,
-  drift: 15, rise: 0,
+  drift: 30, rise: 0,
 };
 
 const bgCloudCanvas = document.getElementById("bg-cloud-canvas");
@@ -1396,6 +1450,18 @@ const bgCloudCanvas = document.getElementById("bg-cloud-canvas");
 // Framerate. Falls sich das jetzt als Ursache bestaetigt, koennen wir bei
 // Bedarf einen Mittelweg (z.B. 0.75) fuer schwaechere Geraete finden.
 const bgCloudShader = bgCloudCanvas ? initCloudShader(bgCloudCanvas, BG_CLOUD_PARAMS, true, 1) : null;
+
+// Sicherheitsnetz gegen den Schwarz-Bug (siehe Kommentarblock bei
+// hexToRgbFloat()/readColorWithFallback() weiter oben): spaetestens beim
+// "load"-Event ist tokens.css garantiert vollstaendig angewendet -- an
+// diesem Punkt einmal die echten Farben nachlesen und die Uniforms damit
+// ueberschreiben, falls beim allerersten Shader-Init (moeglicherweise vor
+// vollstaendigem CSS) der Fallback gegriffen hat. Kostet praktisch nichts
+// (5 kleine Uniform-Writes) und macht den Bug selbst dann harmlos, wenn
+// die Fallback-Farben aus tokens.css irgendwann mal veralten wuerden.
+if (bgCloudShader) {
+  window.addEventListener("load", () => bgCloudShader.refreshColors());
+}
 
 // ==========================================================================
 // KONSOLIDIERTER Parallax-Loop -- ersetzt die vorher getrennten rAF-Loops
