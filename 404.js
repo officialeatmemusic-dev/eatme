@@ -388,12 +388,15 @@ const CLOUD_SITEWIDE_START_COLORS = {
 
 // Mit Til per Regler-Vorschau final abgestimmte Werte (28.08.2026,
 // zweite Runde inkl. eigenem Farbschema -- siehe CLOUD_404_COLORS oben).
-// edgeFade: 0 -- diese Seite hat nur einen Viewport (kein Scroll), daher
-// kein Rand-Fade wie beim sitewide .bg-cloud nötig.
+// edgeFade: 1 -- weicher Rand-Fade oben/unten zu Weiß, identisch zum
+// sitewide Wolken-Visual (dort ebenfalls edgeFade:1, siehe
+// CLOUD_SITEWIDE_START_PARAMS oben) -- auf Til's Wunsch angeglichen
+// (28.08.2026, dritte Runde). Ändert sich während der 30s-Überblendung
+// dadurch nicht mehr (Start- und Zielwert sind jetzt identisch).
 const BG_CLOUD_404_PARAMS = {
   coverage: 36, density: 52, brightness: 71, detail: 65, variation: 160,
   warpAmount: 54, warpScale: 8, stretch: 0, phase: 100, radius: 150,
-  drift: 100, rise: -100, edgeFade: 0,
+  drift: 100, rise: -100, edgeFade: 1,
 };
 
 const cloud404Canvas = document.getElementById("cloud-canvas-404");

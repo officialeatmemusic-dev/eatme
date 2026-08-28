@@ -71,11 +71,13 @@
 
 /* ---- Mobile (768px, siehe tokens-notes.md) ----
    Layout ist bereits vollständig fluid (Nav/Footer-Komponenten fluid,
-   Canvas viewport-groß) -- 404-Text bekommt dieselben, kleineren Abstände
-   wie die Nav auf Mobile (16px statt 24px). */
+   Canvas viewport-groß) -- 404-Text bekommt dieselben, kleineren
+   Seiten-Abstände wie die Nav auf Mobile (16px statt 24px), sitzt aber
+   bewusst höher als der reine Nav-Wert (bottom: 56px statt 16px, auf
+   Til's Wunsch, 28.08.2026 dritte Runde). */
 @media (max-width: 768px) {
   .notfound-text {
     left: 16px;
-    bottom: 16px;
+    bottom: 56px;
   }
 }
