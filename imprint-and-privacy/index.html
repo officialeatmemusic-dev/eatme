@@ -1,1 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!--
+    SEO / Social Meta
+    ==================
+    canonical + og:url + JSON-LD zeigen auf die Custom-Domain
+    eatmemusic.com (Umzug via Strato). Diese Tags stehen bewusst
+    statisch im HTML (nicht per script.js aus content.json injiziert),
+    weil Social-Crawler (WhatsApp, iMessage, Facebook) kein JavaScript
+    ausführen und nur den rohen <head> lesen.
+  -->
+  <title>EatMe – Alternative Pop between Nostalgia and New Beginnings</title>
+  <meta name="description" content="EatMe is an independent pop/rock project from Hamburg blending shoegaze, hyperpop and folk influences — alternative pop between nostalgia and new beginnings." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://eatmemusic.com/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="EatMe" />
+  <meta property="og:title" content="EatMe – Alternative Pop between Nostalgia and New Beginnings" />
+  <meta property="og:description" content="Independent pop/rock from Hamburg with shoegaze, hyperpop and folk influences." />
+  <meta property="og:url" content="https://eatmemusic.com/" />
+  <meta property="og:image" content="https://eatmemusic.com/assets/images/eatme-og-image.webp" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="en_US" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="EatMe – Alternative Pop between Nostalgia and New Beginnings" />
+  <meta name="twitter:description" content="Independent pop/rock from Hamburg with shoegaze, hyperpop and folk influences." />
+  <meta name="twitter:image" content="https://eatmemusic.com/assets/images/eatme-og-image.webp" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="assets/favicon/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/favicon/favicon.png" />
+
+  <!--
+    Structured Data (JSON-LD): hilft Google, EatMe als Musik-Act zu
+    verstehen und die Social-Profile zu verknüpfen (sameAs). Werte
+    stammen aus content.json (site.social_links) -- bei Änderungen dort
+    auch hier nachziehen, da dieser Block statisch ist.
+  -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MusicGroup",
+    "name": "EatMe",
+    "url": "https://eatmemusic.com/",
+    "genre": ["Alternative Pop", "Indie Pop", "Shoegaze"],
+    "email": "official.eatme.music@gmail.com",
+    "sameAs": [
+      "https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg",
+      "https://www.instagram.com/eatme.music/",
+      "https://www.youtube.com/@eatme.music.official",
+      "https://www.tiktok.com/@eatme.music"
+    ]
+  }
+  </script>
+
+  <!-- Design-Tokens: Farben, Fonts, Font-Faces — einzige Quelle, siehe tokens-notes.md -->
+  <link rel="stylesheet" href="tokens.css" />
+
+  <!-- Globales Layout-Grundgerüst (Hintergrund-Layer, Sektions-Wrapper-Basics) -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Komponenten-CSS: wiederverwendbare Bausteine, siehe ARCHITECTURE.md -->
+  <link rel="stylesheet" href="components/eatme-navigation.css" />
+  <link rel="stylesheet" href="components/eatme-lyrics.css" />
+  <link rel="stylesheet" href="components/instagram-module.css" />
+  <link rel="stylesheet" href="components/eatme-footer.css" />
+
+  <!-- Sektions-CSS: eine Datei pro Sektion, siehe ARCHITECTURE.md -->
+  <link rel="stylesheet" href="sections/section-01-stage.css" />
+  <link rel="stylesheet" href="sections/section-02-text-01.css" />
+  <link rel="stylesheet" href="sections/section-03-images.css" />
+  <link rel="stylesheet" href="sections/section-04-text-02.css" />
+  <link rel="stylesheet" href="sections/section-05-images-drops.css" />
+  <link rel="stylesheet" href="sections/section-06-text-social.css" />
+  <link rel="stylesheet" href="sections/section-07-footer.css" />
+</head>
+<body>
+
+  <!--
+    Durchgehender Himmel-Hintergrund über alle Sektionen: Cloud (startet
+    unterhalb section-02, langsamerer Parallax) + Footer-Bandfoto (hängt
+    am Dokumentende, kein Parallax). Details/Begründung siehe styles.css
+    (Kommentarblock "Sitewide Himmel-Hintergrund") und script.js
+    (Positionierung/Parallax-Loop). Liegt hinter allen Sektionen (z-index).
+  -->
+  <div class="page-background" aria-hidden="true">
+    <div class="bg-cloud">
+      <canvas id="bg-cloud-canvas" aria-hidden="true"></canvas>
+    </div>
+    <div class="bg-footer">
+      <img src="assets/images/eatme-image-footer.jpg" alt="" aria-hidden="true" />
+    </div>
+  </div>
+
+  <!--
+    Wiederkehrende Navigation (Logo, Social-Links, Sound-Toggle später).
+    Wird eigener Chat / eigene Komponente, siehe ARCHITECTURE.md
+    -> Komponenten: eatme-navigation
+  -->
+  <header id="site-nav">
+    <!-- component: eatme-navigation -->
+    <div class="eatme-nav">
+      <a class="eatme-nav-logo-link" href="/" aria-label="EatMe – Startseite">
+        <img class="eatme-nav-logo" id="nav-logo" src="" alt="EatMe" />
+      </a>
+      <nav class="eatme-nav-links" id="nav-links" aria-label="Social Links">
+        <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!--
+      Jede Sektion bekommt ihren eigenen Chat + eigene CSS-Datei unter
+      /sections. Platzhalter hier halten nur die Reihenfolge und IDs fest,
+      damit background-and-motion.md und spätere Sektions-Chats sich darauf
+      beziehen können.
+    -->
+    <section id="section-01-stage" class="section">
+      <div class="stage">
+        <img class="stage-bg" src="assets/visuals/backgrounds/cloud-stage-background.jpg" alt="" aria-hidden="true" />
+        <iframe class="stage-birds" src="assets/visuals/birds-stage.html" title="" aria-hidden="true" tabindex="-1"></iframe>
+      </div>
+      <nav class="secondary-nav">
+        <a href="mailto:official.eatme.music@gmail.com" class="text-copy-s">official.eatme.music@gmail.com</a>
+        <button class="sound-toggle text-copy-s" type="button" data-state="off">Sound</button>
+      </nav>
+    </section>
+
+    <section id="section-02-text-01" class="section">
+      <div class="birds-blue-container" aria-hidden="true">
+        <img class="bird-blue-lg" src="assets/visuals/birds-blue/bird-blue-lg.svg" alt="" />
+        <img class="bird-blue-sm" src="assets/visuals/birds-blue/bird-blue-sm.svg" alt="" />
+      </div>
+      <div class="text-container">
+        <div class="text-01-copy text-copy-l" id="section-02-copy">
+          <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+        </div>
+      </div>
+    </section>
+
+    <section id="section-03-images" class="section">
+      <div class="col-image-left">
+        <div class="image-container">
+          <img class="eatme-image-01" id="section-03-image-01" src="" alt="" />
+          <!--
+            Vogel-Silhouetten (assets/visuals/birds-black.webp,
+            Figma-Node 169:212) -- liegt in der linken Spalte, überlappt
+            Bandfoto 1 leicht am unteren Rand (Design-Update, siehe
+            ARCHITECTURE.md). Fixe px-Maße/-Position wie das Bandfoto
+            selbst (das ebenfalls bewusst nicht fluid ist), daher keine
+            JS-Positionierung nötig. Asset hat echte Alpha-Transparenz
+            (weißer Hintergrund entfernt) statt mix-blend-mode, siehe
+            ARCHITECTURE.md "Gelernte Lektionen". pointer-events: none,
+            rein dekorativ.
+          -->
+          <div class="birds-black" aria-hidden="true">
+            <img class="birds-black-img" src="assets/visuals/birds-black.webp" alt="" />
+          </div>
+        </div>
+      </div>
+      <div class="col-text-image">
+        <!--
+          Songtext-Modul: komplett klickbar (siehe components/eatme-lyrics.css
+          für Styling + verstärkten Blur). href wird zur Laufzeit aus
+          content.json (lyrics.song_link) gesetzt, siehe script.js --
+          Platzhalter-# hier nur als Fallback, falls content.json mal nicht
+          lädt.
+        -->
+        <a href="#" class="eatme-lyrics-link" id="section-03-lyrics-link" aria-label="Song abspielen">
+          <div class="lyrics-lines text-lyrics" id="section-03-lyrics-lines">
+            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+          </div>
+          <div class="song-link">
+            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
+            </svg>
+            <span class="text-copy-xs" id="section-03-song-title"></span>
+          </div>
+        </a>
+        <img class="eatme-image-02" id="section-03-image-02" src="" alt="" />
+      </div>
+    </section>
+
+    <section id="section-04-text-02" class="section">
+      <div class="text-container">
+        <div class="text-04-copy text-copy-l" id="section-04-copy">
+          <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+        </div>
+      </div>
+    </section>
+
+    <section id="section-05-images-drops" class="section">
+      <div class="col-image-left">
+        <div class="image-container">
+          <!--
+            eatme-image-04 (Querformat) ersetzt das bisherige eatme-image-03
+            (Hochformat) -- Klassenname + Bildmaße dazu angepasst, siehe
+            sections/section-05-images-drops.css und ARCHITECTURE.md.
+          -->
+          <img class="eatme-image-04" id="section-05-image-01" src="" alt="" />
+        </div>
+      </div>
+      <div class="col-text-image">
+        <!--
+          Songtext-Modul: identisch zu section-03 (siehe dort), komplett
+          klickbar (siehe components/eatme-lyrics.css für Styling +
+          verstärkten Blur). href wird zur Laufzeit aus content.json
+          (lyrics.song_link) gesetzt, siehe script.js.
+        -->
+        <a href="#" class="eatme-lyrics-link" id="section-05-lyrics-link" aria-label="Song abspielen">
+          <div class="lyrics-lines text-lyrics" id="section-05-lyrics-lines">
+            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+          </div>
+          <div class="song-link">
+            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
+            </svg>
+            <span class="text-copy-xs" id="section-05-song-title"></span>
+          </div>
+        </a>
+      </div>
+
+      <!-- ==== Desktop-Tropfen-Layer: 19 Instanzen, Positionen % relativ zum
+           aktuellen 1280x657-Referenzrahmen (Figma Node 1:3415 -- Update:
+           Rahmen war vorher 1280x688, hat sich mit dem eatme-image-04-
+           Wechsel verschoben, alle top%-Werte unten sind neu berechnet).
+           Rein dekorativ, nicht content.json-gesteuert -- Positionen/Assets
+           fest im Markup, siehe ARCHITECTURE.md Details section-05. 4 Formen
+           (assets/visuals/drops/01-04.png) x 2 Größen (24px/40px).
+           data-size steuert den Parallax-Faktor, siehe script.js
+           initDropsParallax(). ==== -->
+      <div class="tropfen-group tropfen-group--desktop" data-size="24">
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:49.786%; top:27.019%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/01.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:40.887%; top:58.617%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/01.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:63.465%; top:82.620%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/02.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:53.379%; top:65.090%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/02.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:53.222%; top:46.400%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/02.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:48.433%; top:39.647%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/02.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:32.260%; top:37.033%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/02.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:24.987%; top:68.216%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/03.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:25.629%; top:12.325%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/04.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:66.861%; top:41.836%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/04.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="24" style="left:33.972%; top:44.876%; width:24px; height:24px;">
+          <img src="assets/visuals/drops/04.png" alt="" />
+        </div>
+      </div>
+
+      <div class="tropfen-group tropfen-group--desktop" data-size="40">
+        <div class="tropfen tropfen--desktop" data-size="40" style="left:53.178%; top:30.454%; width:40px; height:40px;">
+          <img src="assets/visuals/drops/01.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="40" style="left:42.516%; top:32.414%; width:40px; height:40px;">
+          <img src="assets/visuals/drops/01.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="40" style="left:32.805%; top:59.001%; width:40px; height:40px;">
+          <img src="assets/visuals/drops/02.png" alt="" />
+        </div>
+        <!-- Update: dieser Tropfen (40px) ist laut aktuellem Figma-Stand
+             deutlich weiter nach links gerückt -- vorher left:17.226% -->
+        <div class="tropfen tropfen--desktop" data-size="40" style="left:5.313%; top:34.857%; width:40px; height:40px;">
+          <img src="assets/visuals/drops/02.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="40" style="left:48.535%; top:71.401%; width:40px; height:40px;">
+          <img src="assets/visuals/drops/03.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="40" style="left:65.613%; top:75.780%; width:40px; height:40px;">
+          <img src="assets/visuals/drops/03.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="40" style="left:41.522%; top:45.717%; width:40px; height:40px;">
+          <img src="assets/visuals/drops/03.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--desktop" data-size="40" style="left:74.852%; top:67.888%; width:40px; height:40px;">
+          <img src="assets/visuals/drops/04.png" alt="" />
+        </div>
+      </div>
+
+      <!-- ==== Mobile-Tropfen-Layer: eigener, kleinerer Satz (9 Stück),
+           in px verankert statt % (siehe ARCHITECTURE.md Details
+           section-05 für die Begründung). Zone 1 oben rechts neben dem
+           Bild, Zone 2 im Gap zwischen Bild und Lyrics-Modul. Vom
+           eatme-image-04-Update unberührt. ==== -->
+      <div class="tropfen-group tropfen-group--mobile" data-size="24">
+        <div class="tropfen tropfen--mobile" data-size="24" style="left:78%; top:110px; width:24px; height:24px;">
+          <img src="assets/visuals/drops/01.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--mobile" data-size="24" style="left:87%; top:250px; width:24px; height:24px;">
+          <img src="assets/visuals/drops/03.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--mobile" data-size="24" style="left:68%; top:335px; width:24px; height:24px;">
+          <img src="assets/visuals/drops/04.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--mobile" data-size="24" style="left:45%; top:450px; width:24px; height:24px;">
+          <img src="assets/visuals/drops/02.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--mobile" data-size="24" style="left:28%; top:520px; width:24px; height:24px;">
+          <img src="assets/visuals/drops/04.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--mobile" data-size="24" style="left:58%; top:545px; width:24px; height:24px;">
+          <img src="assets/visuals/drops/01.png" alt="" />
+        </div>
+      </div>
+
+      <div class="tropfen-group tropfen-group--mobile" data-size="40">
+        <div class="tropfen tropfen--mobile" data-size="40" style="left:58%; top:170px; width:40px; height:40px;">
+          <img src="assets/visuals/drops/02.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--mobile" data-size="40" style="left:12%; top:405px; width:40px; height:40px;">
+          <img src="assets/visuals/drops/01.png" alt="" />
+        </div>
+        <div class="tropfen tropfen--mobile" data-size="40" style="left:74%; top:475px; width:40px; height:40px;">
+          <img src="assets/visuals/drops/03.png" alt="" />
+        </div>
+      </div>
+    </section>
+
+    <section id="section-06-text-social" class="section">
+      <!-- Zwei gleich breite Spalten: links Ankündigungstext, rechts das
+           Instagram-Modul (Komponente, siehe components/instagram-module.css
+           + initInstagramModule() in script.js). Details zum Hug-Verhalten
+           der rechten Spalte + z-index-Schichtung siehe ARCHITECTURE.md
+           Details section-06. -->
+      <div class="col-text">
+        <div class="text-06-copy" id="section-06-copy">
+          <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+        </div>
+      </div>
+      <div class="col-instagram">
+        <div class="instagram-module-stage" id="instagram-module-stage">
+          <div class="instagram-module" id="instagram-module">
+            <div class="insta-header">
+              <div class="insta-top-bar" id="instagram-drag-handle">
+                <p class="insta-top-bar-label">Instagram</p>
+                <span class="insta-fake-button"></span>
+                <span class="insta-fake-button"></span>
+                <span class="insta-fake-button"></span>
+              </div>
+              <a class="insta-header-link" id="instagram-header-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="Zu Instagram">
+                <div class="insta-avatar">
+                  <img id="instagram-avatar" src="" alt="" />
+                </div>
+                <div class="insta-handle">
+                  <p class="insta-handle-name" id="instagram-handle-name"></p>
+                  <p class="insta-handle-caption" id="instagram-handle-caption"></p>
+                </div>
+                <span class="eatme-button">Follow</span>
+              </a>
+            </div>
+
+            <a class="insta-content-scroll" id="instagram-scroll" href="#" target="_blank" rel="noopener noreferrer" aria-label="Zu Instagram">
+              <div class="insta-grid" id="instagram-grid">
+                <!-- wird zur Laufzeit aus assets/images/insta/ befüllt
+                     (GitHub Contents API), siehe script.js -->
+              </div>
+            </a>
+
+            <div class="resize-edge n" data-dir="n"></div>
+            <div class="resize-edge s" data-dir="s"></div>
+            <div class="resize-edge e" data-dir="e"></div>
+            <div class="resize-edge w" data-dir="w"></div>
+            <div class="resize-corner nw" data-dir="nw"></div>
+            <div class="resize-corner ne" data-dir="ne"></div>
+            <div class="resize-corner sw" data-dir="sw"></div>
+            <div class="resize-corner se" data-dir="se"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="section-07-footer" class="section">
+      <!-- Zwei-Spalten-Grid: links eatme-lyrics + scribble-sm ("Height
+           Fill"), rechts scribble-lg (vertikal zentriert, rechtsbündig).
+           Mittig absolut zentrierter Booking-CTA. eatme-footer-Pille
+           unten, absolut positioniert. Details siehe ARCHITECTURE.md
+           ("Details section-07-footer") und sections/section-07-footer.css. -->
+      <div class="footer-col-left">
+        <!-- component: eatme-lyrics (identisches Markup wie section-03/05) -->
+        <a href="#" class="eatme-lyrics-link" id="section-07-lyrics-link" aria-label="Song abspielen">
+          <div class="lyrics-lines text-lyrics" id="section-07-lyrics-lines">
+            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+          </div>
+          <div class="song-link">
+            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
+            </svg>
+            <span class="text-copy-xs" id="section-07-song-title"></span>
+          </div>
+        </a>
+        <img class="footer-scribble-sm" src="assets/visuals/scribble/scribble-sm.svg" alt="" aria-hidden="true" />
+      </div>
+      <div class="footer-col-right">
+        <img class="footer-scribble-lg" src="assets/visuals/scribble/scribble-lg.svg" alt="" aria-hidden="true" />
+      </div>
+
+      <!-- Booking-CTA: Text + Umbruch nach dem ersten Wort wird zur
+           Laufzeit über renderFooterCta() in script.js eingefügt. -->
+      <a href="#" class="footer-cta text-highlight" id="section-07-cta"></a>
+
+      <!-- component: eatme-footer -->
+      <nav class="eatme-footer" aria-label="Footer">
+        <a href="#" id="footer-contact-link" class="eatme-footer-contact text-copy-s"></a>
+        <a href="#" id="footer-legal-link" class="eatme-footer-legal text-copy-s"></a>
+      </nav>
+    </section>
+  </main>
+
+  <!-- Content wird zur Laufzeit aus content.json geladen -->
+  <script src="script.js" defer></script>
+</body>
+</html>
