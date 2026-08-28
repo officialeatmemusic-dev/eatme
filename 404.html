@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EatMe — 404</title>
+  <meta name="robots" content="noindex" />
+
+  <!-- Design-Tokens: Farben, Fonts, Font-Faces -- einzige Quelle -->
+  <link rel="stylesheet" href="tokens.css" />
+
+  <!-- Globales Grundgerüst (Reset, Link-/Button-Hover-Convention, Selection) -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <!-- Komponenten: gleiche Nav + Footer wie auf der Hauptseite -->
+  <link rel="stylesheet" href="components/eatme-navigation.css" />
+  <link rel="stylesheet" href="components/eatme-footer.css" />
+
+  <!-- Seiteneigenes CSS: Layout + eigenes Wolken-Visual -->
+  <link rel="stylesheet" href="404.css" />
+</head>
+<body>
+
+  <!--
+    Eigenständige, nicht scrollende Seite (Figma-Node 221:3395, "eatme-404")
+    -- ein einziger Viewport, kein content.json-getriebenes Sektions-
+    Rendering wie auf der Hauptseite. Root-Datei (relative Pfade, siehe
+    ARCHITECTURE.md), von GitHub Pages automatisch als 404-Fehlerseite
+    ausgeliefert (muss dafür zwingend im Repo-Root liegen, nicht in einem
+    Unterordner).
+
+    Nav: Logo + Social-Links sind Teil der wiederverwendeten Nav-Komponente
+    und kommen dynamisch aus content.json (site.social_links,
+    section-01-stage.logo_image) -- genau wie auf der Hauptseite, siehe
+    404.js (renderNav()). NICHT hart codiert wie bei
+    imprint-and-privacy.html (dortige Seite ist bewusst komplett statisch).
+
+    Footer-Pille: hier bewusst HART CODIERT (anders als die Nav) -- der
+    Figma-Node für diese Seite zeigt als Kontakt-Label die volle
+    E-Mail-Adresse statt "Contact" (Abweichung vom Hauptseiten-Footer, wo
+    contact_label aus content.json "Contact" ist). Damit ist dieser Text
+    eine seiteneigene Override-Variante der eatme-footer-Komponente, nicht
+    identisch mit section-07-footer -- daher kein renderFooterBar()-Reuse
+    hier, um das Label nicht versehentlich mit "Contact" zu überschreiben.
+    Legal-Link zeigt bewusst OHNE "is-current"-Dimming (404 ist nicht die
+    Imprint-Seite).
+  -->
+  <div id="cloud-canvas-wrap">
+    <canvas id="cloud-canvas-404"></canvas>
+  </div>
+
+  <!-- component: eatme-navigation -->
+  <header id="site-nav">
+    <div class="eatme-nav">
+      <a class="eatme-nav-logo-link" href="/" aria-label="EatMe – Startseite">
+        <img class="eatme-nav-logo" id="nav-logo" src="" alt="EatMe" />
+      </a>
+      <nav class="eatme-nav-links" id="nav-links" aria-label="Social Links">
+        <!-- wird zur Laufzeit aus content.json befüllt, siehe 404.js -->
+      </nav>
+    </div>
+  </header>
+
+  <p class="notfound-text">404</p>
+
+  <!-- component: eatme-footer -->
+  <div class="footer-pill-wrap">
+    <nav class="eatme-footer" aria-label="Footer">
+      <a href="mailto:official.eatme.music@gmail.com" class="eatme-footer-contact text-copy-s">contact@eatmemusic.com</a>
+      <a href="imprint-and-privacy/" class="eatme-footer-legal text-copy-s">Imprint and privacy</a>
+    </nav>
+  </div>
+
+  <script src="404.js" defer></script>
+</body>
+</html>
