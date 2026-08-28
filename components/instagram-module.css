@@ -33,6 +33,27 @@
      (opacity 0 -> 1, siehe .insta-media/.is-loaded unten) statt instant
      zu erscheinen.
 
+   Update 3 (Mobile: horizontaler statt vertikaler Scroll, siehe Chat):
+   - Auf Mobile (<=768px) verhält sich der Content-Bereich komplett anders
+     als auf Desktop: quadratisch (aspect-ratio 1/1, Breite = volle
+     Modulbreite) statt fest 520px hoch, EINE Zeile statt gestapelter
+     Sets/Spalten, Bilder in voller Höhe bei Original-Seitenverhältnis
+     (height:100%, width:auto) statt voller Breite. Endloser Loop läuft
+     entsprechend horizontal (scrollLeft statt scrollTop, siehe script.js
+     measureAndReset()/scroll-Listener).
+   - Damit die Höhe wirklich "hugt" (Header + quadratischer Bereich,
+     nicht mehr die feste Default-Höhe), wird .instagram-module auf
+     Mobile von position:absolute (Desktop: JS-verwaltete px-Werte für
+     freies Draggen/Resizen) auf position:static umgestellt --
+     applyState() in script.js setzt auf Mobile bewusst KEINE inline
+     left/top/width/height mehr (siehe Kommentar dort), die Größe kommt
+     dann vollständig aus dem normalen Content-Flow + dieser CSS.
+   - Die 2-Spalten-Logik (.insta-set.is-row / .insta-col, siehe
+     WIDE_BREAKPOINT in script.js) ist eine reine Desktop-Angelegenheit
+     und wird auf Mobile per JS erzwungen deaktiviert (isWide bleibt
+     immer false) -- entsprechend gibt es dafür keine Mobile-Regeln
+     hier, .insta-set ist auf Mobile immer die flache Bild-Zeile.
+
    Update 2 (Bugfixes + Figma-Padding-Anpassung, siehe Chat):
    - BUGFIX: .insta-content-scroll fehlte margin:0 -- dadurch griff die
      globale a-Konvention (margin:-10px -6px, styles.css) durch und schob
@@ -411,5 +432,65 @@
 
   .insta-top-bar {
     cursor: default;
+  }
+
+  /* ---- Modul: statt frei positioniert (Desktop) jetzt normaler
+     Block-Fluss, volle Breite. Höhe ergibt sich aus Header + dem
+     quadratischen Content-Bereich unten (kein "Hug" auf feste 520px
+     mehr -- das war die Default-Modulhöhe fürs freie Resizen, die es
+     auf Mobile gar nicht gibt). script.js setzt hier bewusst KEINE
+     inline left/top/width/height mehr (siehe applyState()), sonst
+     würden die von Desktop übernommenen px-Werte diese Regeln
+     überschreiben. */
+  .instagram-module-stage {
+    height: auto;
+  }
+
+  .instagram-module {
+    position: static;
+    width: 100%;
+  }
+
+  /* ---- Content-Bereich: quadratisch statt vertikal scrollend.
+     aspect-ratio 1/1 auf der vollen Modulbreite ersetzt die feste
+     Höhe -- overflow-x scrollt, overflow-y ist gesperrt (nur noch eine
+     Zeile, kein vertikaler Inhalt mehr). */
+  .insta-content-scroll {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    margin: 0;
+    padding: 4px;
+    overflow-x: scroll;
+    overflow-y: hidden;
+  }
+
+  /* Sets liegen jetzt NEBENEINANDER (statt gestapelt) -- jedes Set ist
+     wie im schmalen Desktop-Fall (isWide:false, siehe script.js) eine
+     flache Liste ohne Spalten, hier per flex-direction:row einfach zu
+     einer Bild-Zeile gedreht. */
+  .insta-grid {
+    flex-direction: row;
+    height: 100%;
+  }
+
+  .insta-set {
+    flex-direction: row;
+    width: auto;
+    height: 100%;
+    flex-shrink: 0;
+  }
+
+  /* Kein width:100% mehr -- die Breite jedes Bildes ergibt sich jetzt
+     aus seiner Höhe (=volle Containerhöhe) x Original-Seitenverhältnis,
+     nicht umgekehrt wie auf Desktop. */
+  .insta-image {
+    width: auto;
+    height: 100%;
+    flex-shrink: 0;
+  }
+
+  .insta-media {
+    width: auto;
+    height: 100%;
   }
 }
