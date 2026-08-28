@@ -25,11 +25,11 @@
   "section-03-images": {
     "images": [
       {
-        "src": "assets/images/eatme-image-01.jpg",
+        "src": "assets/images/eatme-image-01.webp",
         "alt": "Platzhalter Alt-Text – Bandfoto 1"
       },
       {
-        "src": "assets/images/eatme-image-02.jpg",
+        "src": "assets/images/eatme-image-02.webp",
         "alt": "Platzhalter Alt-Text – Bandfoto 2"
       }
     ],
