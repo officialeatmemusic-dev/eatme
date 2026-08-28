@@ -43,13 +43,24 @@
 
 /* Bildwechsel: eatme-image-01.webp (Querformat) ersetzt eatme-image-01.jpg
    (Hochformat). Design-Maß aus Figma jetzt 410x273 statt vorher 216x288
-   (Node 221:232). Bleibt weiterhin bewusst fix (nicht fluid) -- Begründung
-   unverändert, siehe Kommentar bei .birds-black unten: top dort bezieht
-   sich auf diese feste Höhe. */
+   (Node 221:232).
+   FIX (28.08.2026): war bisher bewusst fix (nicht fluid) -- das verursachte
+   auf schmalen Mobile-Viewports (Spaltenbreite < 410px, z.B. iPhone SE/
+   Standard) einen horizontalen Overflow, weil width:410px nicht schrumpfen
+   konnte. Jetzt fluid nach demselben Muster wie .eatme-image-02 unten
+   (width:100% + max-width als Deckel + aspect-ratio statt fixer Höhe).
+   Auf Desktop UND den meisten Mobile-Breiten ändert sich dadurch optisch
+   nichts, weil die Spalte praktisch immer >= 410px breit ist und der
+   Deckel greift -- nur unterhalb 410px Spaltenbreite schrumpft das Bild
+   jetzt proportional mit, statt zu überlaufen.
+   Wichtig: .birds-black unten geht NICHT mehr von einer garantiert fixen
+   273px-Höhe aus, sondern von "fix, SOLANGE die Spalte >= 410px breit ist" --
+   siehe dortiger Kommentar zu margin-top/min(). */
 #section-03-images .eatme-image-01 {
   display: block;
-  width: 410px;
-  height: 273px;
+  width: 100%;
+  max-width: 410px;
+  aspect-ratio: 410 / 273;
   object-fit: cover;
   will-change: transform;
 }
@@ -61,9 +72,25 @@
    alten Variante).
 
    WICHTIG -- zwei unterschiedliche Bezugsgrößen, nicht verwechseln:
-   - `top` ist FIX (218px), weil er sich auf Bandfoto 1 bezieht, und das
-     bleibt IMMER 273px hoch, unabhängig von der Viewport-Breite (siehe
-     .eatme-image-01 oben, bewusst nicht fluid).
+   - `top`/`margin-top` sind FIX (218px), SOLANGE Bandfoto 1 seine volle
+     Design-Höhe (273px) erreicht -- das ist ab 410px Spaltenbreite immer
+     der Fall (siehe .eatme-image-01 oben, Deckel bei max-width:410px).
+     FIX (28.08.2026): seit .eatme-image-01 unterhalb 410px Spaltenbreite
+     fluid mitschrumpft (vorher Overflow-Bug), muss auch dieser Offset ab
+     dort proportional mitschrumpfen, sonst würde die Vogel-Grafik auf sehr
+     schmalen Viewports zu weit unten sitzen bzw. über das (jetzt kleinere)
+     Bandfoto hinausragen. Umsetzung: `margin-top: min(218px, 53.17%)` --
+     53.17% = 218/410, also derselbe Anteil, den 218px an der vollen
+     410px-Bildbreite ausmacht. Bewusst `margin-top` statt `top` für den
+     Prozent-Anteil: Prozentwerte bei `top`/`bottom` beziehen sich auf die
+     HÖHE des containing blocks (hier .image-container, auf Desktop durch
+     align-self:stretch/height:100% sehr groß -- ungeeignet), während
+     Prozentwerte bei `margin-top`/`margin-bottom` sich IMMER auf dessen
+     BREITE beziehen (CSS-Spezialfall, gilt auch für absolut positionierte
+     Elemente) -- also dieselbe Bezugsgröße wie bei `left`/`width` unten.
+     `top: 0` bleibt als Anker stehen, `margin-top` verschiebt von dort aus.
+     Unterhalb 410px Spaltenbreite gewinnt der Prozentwert (kleiner als
+     218px), ab 410px gewinnt der Fixwert 218px -- exakt wie vorher.
    - `left`/`width` sind PROZENTUAL (relativ zu .image-container, dessen
      Breite mit der Spalte mitschrumpft/-wächst), weil das Vogelbild in
      Figma breiter ist als das Bandfoto (445px vs. 410px) und in den
@@ -95,7 +122,8 @@
 #section-03-images .birds-black {
   position: absolute;
   left: 13.12%; /* 79/602 aus Figma */
-  top: 218px;
+  top: 0;
+  margin-top: min(218px, 53.17%); /* 218/410 -- siehe Kommentar oben */
   width: 73.92%; /* 445/602 aus Figma */
   max-width: 445px;
   aspect-ratio: 3286 / 2294; /* echtes Bildverhältnis -- zeigt die komplette Grafik unbeschnitten */
@@ -178,8 +206,19 @@
        (Vogel-Höhe - 55px). `min()` deckelt das Ganze bei 256px (= 218 +
        311 - 273, vorher 241px, der Wert ab der 445px-Breitenobergrenze
        der Vogel-Grafik), damit auch kurz unter der 768px-Grenze nicht
-       mehr Platz reserviert wird als nötig. */
-    padding-bottom: min(256px, calc(51.6% - 55px));
+       mehr Platz reserviert wird als nötig.
+       FIX (28.08.2026): Diese Formel gilt nur, SOLANGE Bandfoto 1 seine
+       vollen 273px Höhe erreicht (Spaltenbreite >= 410px, siehe
+       .eatme-image-01/.birds-black oben). Unterhalb 410px Spaltenbreite
+       schrumpft jetzt auch das Bandfoto proportional, wodurch der
+       Überhang nicht mehr (Vogel-Höhe - 55px) ist, sondern durchgehend
+       38.2% der Spaltenbreite beträgt (hergeleitet aus denselben
+       Verhältnissen wie oben: 218/410 + (445/602)*(2294/3286) - 273/410).
+       `max()` wählt automatisch die richtige der beiden Formeln: unterhalb
+       410px liefert 38.2% den größeren (= korrekten) Wert, ab 410px
+       übernimmt wieder die ursprüngliche Formel -- kein Bruch am
+       Übergang, keine zusätzliche Breakpoint-Abfrage nötig. */
+    padding-bottom: max(38.2%, min(256px, calc(51.6% - 55px)));
   }
 
   #section-03-images .col-text-image {
