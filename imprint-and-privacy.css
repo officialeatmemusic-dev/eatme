@@ -50,6 +50,18 @@ main {
 .legal-p { margin-bottom: 16px; }
 .legal-p:last-child { margin-bottom: 0; }
 
+/* FIX (28.08.2026): Mehrere Privacy-Absätze bestehen aus einer einzelnen
+   URL als reiner Fließtext (50+ Zeichen ohne Leerzeichen, z.B.
+   "https://www.dataprivacyframework.gov/participant/5780"). Ohne
+   overflow-wrap behandelt der Browser so ein "Wort" als unteilbar und
+   sprengt auf schmalen Mobile-Spalten die Breite von .legal-col-inner ->
+   horizontaler Overflow der ganzen Seite. `anywhere` statt `break-word`,
+   weil es auch in Breite-Berechnungen (z.B. min-content) korrekt
+   berücksichtigt wird; normaler Text mit Leerzeichen bricht dadurch
+   NICHT anders um als vorher -- die Regel greift nur, wenn ein einzelnes
+   Token breiter als die verfügbare Spalte ist. */
+.legal-p { overflow-wrap: anywhere; }
+
 /* Einzige echten Inline-Links im Fließtext (z.B. die Kontakt-Mail im
    Imprint) bekommen die globale Link-Hover-Convention aus styles.css
    automatisch mit (Opacity + Blur) -- hier nur die Underline ergänzt,

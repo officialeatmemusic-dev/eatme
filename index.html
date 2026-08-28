@@ -154,9 +154,12 @@
             Vogel-Silhouetten (assets/visuals/birds-black.webp,
             Figma-Node 169:212) -- liegt in der linken Spalte, überlappt
             Bandfoto 1 leicht am unteren Rand (Design-Update, siehe
-            ARCHITECTURE.md). Fixe px-Maße/-Position wie das Bandfoto
-            selbst (das ebenfalls bewusst nicht fluid ist), daher keine
-            JS-Positionierung nötig. Asset hat echte Alpha-Transparenz
+            ARCHITECTURE.md). Position/Größe rein über CSS (kein JS
+            nötig) -- siehe section-03-images.css für die aktuelle,
+            fluide Berechnung (Stand 28.08.2026: Bandfoto 1 ist seit dem
+            Mobile-Overflow-Fix width:100%/max-width:410px statt fix,
+            die Vogel-Grafik skaliert entsprechend mit). Asset hat echte
+            Alpha-Transparenz
             (weißer Hintergrund entfernt) statt mix-blend-mode, siehe
             ARCHITECTURE.md "Gelernte Lektionen". pointer-events: none,
             rein dekorativ.
