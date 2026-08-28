@@ -1,24 +1,24 @@
 /* ==========================================================================
    404 — Layout + eigenes Wolken-Visual
-   Figma: node-id 221-3395 ("eatme-404"). Referenziert nur Werte aus
-   tokens.css, siehe ARCHITECTURE.md. Eigenständige Seite, kein Bezug zum
-   sitewide .bg-cloud/.page-background-System aus styles.css (siehe
-   Kommentarblock in 404.html).
+   Figma: node-id 221-3395 ("eatme-404"), Layout seither in Absprache mit
+   Til angepasst (28.08.2026, zweite Runde -- siehe Kommentare unten).
+   Referenziert nur Werte aus tokens.css, siehe ARCHITECTURE.md.
+   Eigenständige Seite, kein Bezug zum sitewide .bg-cloud/.page-background-
+   System aus styles.css (siehe Kommentarblock in 404.html).
    ========================================================================== */
 
-/* Ein einziger Viewport, kein Scroll -- anders als die Hauptseite. */
-html, body {
-  height: 100%;
-  overflow: hidden;
-}
+/* Seite scrollt jetzt bewusst (anders als die erste Layout-Runde) --
+   Seitenlänge = .hero-spacer (100vh) + Footer-Bereich, siehe unten. Kein
+   eigenes height/overflow auf html/body nötig, Höhe ergibt sich aus dem
+   normalen Dokumentfluss. */
 
 /* ---- Eigenes Wolken-Visual (WebGL, siehe 404.js initCloudShader()) ----
    Eigene Canvas-Instanz, unabhängig vom sitewide .bg-cloud in script.js --
-   eigene Parameter (BG_CLOUD_404_PARAMS), mit Til per Regler-Vorschau
-   abgestimmt (28.08.2026). position: fixed + volle Viewport-Größe, exakt
-   wie beim sitewide Pendant (siehe styles.css-Kommentar zum
-   Compositor-Perf-Fix) -- hier zusätzlich unproblematisch, weil diese
-   Seite ohnehin nicht scrollt. */
+   eigene Parameter (BG_CLOUD_404_PARAMS) + 30s-Übergang, siehe 404.js.
+   position: fixed + volle Viewport-Größe -- bleibt dadurch als
+   durchgehender Hintergrund sichtbar, auch wenn man in den Footer-Bereich
+   scrollt (kein separates Footer-Bild wie beim sitewide .bg-footer
+   nötig). */
 #cloud-canvas-wrap {
   position: fixed;
   inset: 0;
@@ -31,13 +31,26 @@ html, body {
   height: 100%;
 }
 
-/* ---- 404-Text: text-highlight, absolut zentriert (Figma-Node 221:4985) ---- */
+/* ---- 1. Viewport: haelt Platz frei, bis zum Footer muss man einen
+   kurzen Schritt scrollen. Enthaelt "404" (unten links, siehe unten) --
+   ist selbst kein eigenes visuelles Element, nur ein Platzhalter im
+   Dokumentfluss (Nav/Cloud liegen als fixed Elemente ohnehin darueber). ---- */
+.hero-spacer {
+  position: relative;
+  height: 100vh;
+  z-index: 1;
+}
+
+/* ---- 404-Text: text-highlight, unten links -- ersetzt die urspruenglich
+   zentrierte Figma-Position (Node 221:4985). Sitzt an der Stelle, an der
+   in der ersten Layout-Runde die Footer-Pille war (24px/24px, symmetrisch
+   zur Nav oben links), da die Pille jetzt in den Dokumentfluss gewandert
+   ist (siehe .footer-pill-wrap unten). Position ist relativ zu
+   .hero-spacer, scrollt also mit dem 1. Viewport weg. ---- */
 .notfound-text {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 1;
+  left: 24px;
+  bottom: 24px;
   font-family: var(--font-highlight-family);
   font-size: var(--font-highlight-size);
   line-height: var(--font-highlight-line-height);
@@ -46,20 +59,23 @@ html, body {
   white-space: nowrap;
 }
 
-/* ---- Footer-Pille: fixed statt Dokumentfluss (anders als bei
-   imprint-and-privacy.html), weil diese Seite nur einen einzigen,
-   nicht scrollenden Viewport hat -- Pille bleibt daher wie die Nav
-   dauerhaft sichtbar am unteren Rand. ---- */
+/* ---- Footer-Pille: jetzt im Dokumentfluss (nicht mehr fixed/position:
+   absolute wie in der ersten Layout-Runde) -- sitzt direkt nach
+   .hero-spacer und wird dadurch erst nach dem Scrollen sichtbar. ---- */
 .footer-pill-wrap {
-  position: fixed;
-  left: 0;
-  bottom: 0;
+  position: relative;
+  z-index: 1;
   width: 100%;
-  padding: 0 12px 12px;
-  z-index: 2;
+  padding: 24px 12px 24px;
 }
 
 /* ---- Mobile (768px, siehe tokens-notes.md) ----
    Layout ist bereits vollständig fluid (Nav/Footer-Komponenten fluid,
-   404-Text absolut zentriert, Canvas viewport-groß) -- keine eigene
-   Mobile-Regel nötig. */
+   Canvas viewport-groß) -- 404-Text bekommt dieselben, kleineren Abstände
+   wie die Nav auf Mobile (16px statt 24px). */
+@media (max-width: 768px) {
+  .notfound-text {
+    left: 16px;
+    bottom: 16px;
+  }
+}

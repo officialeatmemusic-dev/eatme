@@ -22,12 +22,20 @@
 <body>
 
   <!--
-    Eigenständige, nicht scrollende Seite (Figma-Node 221:3395, "eatme-404")
-    -- ein einziger Viewport, kein content.json-getriebenes Sektions-
-    Rendering wie auf der Hauptseite. Root-Datei (relative Pfade, siehe
-    ARCHITECTURE.md), von GitHub Pages automatisch als 404-Fehlerseite
-    ausgeliefert (muss dafür zwingend im Repo-Root liegen, nicht in einem
-    Unterordner).
+    Eigenständige Seite (Figma-Node 221:3395, "eatme-404"), kein
+    content.json-getriebenes Sektions-Rendering wie auf der Hauptseite.
+    Root-Datei (relative Pfade, siehe ARCHITECTURE.md), von GitHub Pages
+    automatisch als 404-Fehlerseite ausgeliefert (muss dafür zwingend im
+    Repo-Root liegen, nicht in einem Unterordner).
+
+    Layout (Stand 28.08.2026, zweite Runde): Seite ist NICHT mehr auf
+    einen einzigen, nicht scrollenden Viewport begrenzt -- Seitenlänge ist
+    jetzt 1. Viewport (.hero-spacer) + Footer-Bereich. "404" sitzt unten
+    links im 1. Viewport (dort, wo urspruenglich mal die Footer-Pille
+    geplant war, siehe erste Layout-Runde), die Footer-Pille selbst ist
+    dafür in den Dokumentfluss gewandert und wird erst nach etwas Scrollen
+    sichtbar. Wolken-Visual bleibt position:fixed und läuft unverändert
+    als durchgehender Hintergrund über beide Bereiche mit (siehe 404.css).
 
     Nav: Logo + Social-Links sind Teil der wiederverwendeten Nav-Komponente
     und kommen dynamisch aus content.json (site.social_links,
@@ -61,7 +69,12 @@
     </div>
   </header>
 
-  <p class="notfound-text">404</p>
+  <!-- 1. Viewport: haelt Platz frei, damit der Footer erst nach dem
+       Scrollen erscheint. "404" ist Teil dieses Bereichs (unten links)
+       und scrollt mit weg, sobald man weiter nach unten scrollt. -->
+  <div class="hero-spacer">
+    <p class="notfound-text">404</p>
+  </div>
 
   <!-- component: eatme-footer -->
   <div class="footer-pill-wrap">
