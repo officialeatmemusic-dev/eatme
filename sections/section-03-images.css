@@ -41,10 +41,15 @@
   position: relative;
 }
 
+/* Bildwechsel: eatme-image-01.webp (Querformat) ersetzt eatme-image-01.jpg
+   (Hochformat). Design-Maß aus Figma jetzt 410x273 statt vorher 216x288
+   (Node 221:232). Bleibt weiterhin bewusst fix (nicht fluid) -- Begründung
+   unverändert, siehe Kommentar bei .birds-black unten: top dort bezieht
+   sich auf diese feste Höhe. */
 #section-03-images .eatme-image-01 {
   display: block;
-  width: 216px;
-  height: 288px;
+  width: 410px;
+  height: 273px;
   object-fit: cover;
   will-change: transform;
 }
@@ -57,13 +62,20 @@
 
    WICHTIG -- zwei unterschiedliche Bezugsgrößen, nicht verwechseln:
    - `top` ist FIX (218px), weil er sich auf Bandfoto 1 bezieht, und das
-     bleibt IMMER 288px hoch, unabhängig von der Viewport-Breite (siehe
+     bleibt IMMER 273px hoch, unabhängig von der Viewport-Breite (siehe
      .eatme-image-01 oben, bewusst nicht fluid).
    - `left`/`width` sind PROZENTUAL (relativ zu .image-container, dessen
      Breite mit der Spalte mitschrumpft/-wächst), weil das Vogelbild in
-     Figma fast doppelt so breit ist wie das Bandfoto (445px vs. 216px)
-     und weit in den leeren Spaltenraum rechts daneben hineinragt --
-     dieser leere Raum ist NICHT fix, sondern skaliert mit der Spalte.
+     Figma breiter ist als das Bandfoto (445px vs. 410px) und in den
+     leeren Spaltenraum rechts daneben hineinragt -- dieser leere Raum ist
+     NICHT fix, sondern skaliert mit der Spalte.
+   Bildwechsel eatme-image-01 (Quer- statt Hochformat, siehe .eatme-image-01
+   oben): per get_metadata gegen Figma-Node 1:3408 (image-container,
+   602x717) geprüft -- left/top/width/height dieses Elements sind dabei
+   NICHT verrutscht (weiterhin 79/218/445/311), nur das Bandfoto darunter
+   hat sich geändert. Diese Regel bleibt daher unverändert, nur der
+   Mobile-Wert unten (abhängig von der neuen Bildhöhe 273 statt 288)
+   musste neu berechnet werden.
    `aspect-ratio` nutzt bewusst das ECHTE Seitenverhältnis der Bilddatei
    (3286×2294), NICHT den Figma-Rahmen (445×311, der bei genauerem
    Hinsehen leicht abweicht) -- vorher wurden Figmas exportierte
@@ -159,13 +171,15 @@
        51.66% = wie viel die Vogel-HÖHE (aus width * 311/445) im
        Verhältnis zur Container-BREITE ausmacht (padding-bottom-Prozente
        beziehen sich immer auf die Breite, nicht die Höhe -- daher lässt
-       sich das rein in CSS ausdrücken, ohne JS). -70px, weil `top`
-       (218px) 70px WENIGER ist als die Bildhöhe (288px) -- der
-       Überhang unten ist also (Vogel-Höhe - 70px). `min()` deckelt das
-       Ganze bei 241px (= 218 + 311 - 288, der Wert ab der 445px-
-       Breitenobergrenze der Vogel-Grafik), damit auch kurz unter der
-       768px-Grenze nicht mehr Platz reserviert wird als nötig. */
-    padding-bottom: min(241px, calc(51.6% - 70px));
+       sich das rein in CSS ausdrücken, ohne JS, und ändert sich durch den
+       Bildwechsel unten NICHT, da rein von der Vogel-Grafik abhängig).
+       -55px, weil `top` (218px) 55px WENIGER ist als die neue Bildhöhe
+       (273px, vorher 288px/70px) -- der Überhang unten ist also
+       (Vogel-Höhe - 55px). `min()` deckelt das Ganze bei 256px (= 218 +
+       311 - 273, vorher 241px, der Wert ab der 445px-Breitenobergrenze
+       der Vogel-Grafik), damit auch kurz unter der 768px-Grenze nicht
+       mehr Platz reserviert wird als nötig. */
+    padding-bottom: min(256px, calc(51.6% - 55px));
   }
 
   #section-03-images .col-text-image {
