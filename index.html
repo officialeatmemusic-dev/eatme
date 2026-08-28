@@ -3,435 +3,363 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EatMe — Imprint and Privacy</title>
 
-  <!--
-    SEO / Social Meta
-    ==================
-    canonical + og:url + JSON-LD zeigen auf die Custom-Domain
-    eatmemusic.com (Umzug via Strato). Diese Tags stehen bewusst
-    statisch im HTML (nicht per script.js aus content.json injiziert),
-    weil Social-Crawler (WhatsApp, iMessage, Facebook) kein JavaScript
-    ausführen und nur den rohen <head> lesen.
-  -->
-  <title>EatMe – Alternative Pop between Nostalgia and New Beginnings</title>
-  <meta name="description" content="EatMe is an independent pop/rock project from Hamburg blending shoegaze, hyperpop and folk influences — alternative pop between nostalgia and new beginnings." />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://eatmemusic.com/" />
+  <!-- Design-Tokens: Farben, Fonts, Font-Faces -- einzige Quelle -->
+  <link rel="stylesheet" href="/tokens.css" />
 
-  <meta property="og:type" content="website" />
-  <meta property="og:site_name" content="EatMe" />
-  <meta property="og:title" content="EatMe – Alternative Pop between Nostalgia and New Beginnings" />
-  <meta property="og:description" content="Independent pop/rock from Hamburg with shoegaze, hyperpop and folk influences." />
-  <meta property="og:url" content="https://eatmemusic.com/" />
-  <meta property="og:image" content="https://eatmemusic.com/assets/images/eatme-og-image.webp" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
-  <meta property="og:locale" content="en_US" />
+  <!-- Globales Grundgerüst (Reset, Link-/Button-Hover-Convention, Selection) -->
+  <link rel="stylesheet" href="/styles.css" />
 
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="EatMe – Alternative Pop between Nostalgia and New Beginnings" />
-  <meta name="twitter:description" content="Independent pop/rock from Hamburg with shoegaze, hyperpop and folk influences." />
-  <meta name="twitter:image" content="https://eatmemusic.com/assets/images/eatme-og-image.webp" />
+  <!-- Komponenten: gleiche Nav + Footer wie auf der Hauptseite -->
+  <link rel="stylesheet" href="/components/eatme-navigation.css" />
+  <link rel="stylesheet" href="/components/eatme-footer.css" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="assets/favicon/favicon.png" />
-  <link rel="apple-touch-icon" href="assets/favicon/favicon.png" />
-
-  <!--
-    Structured Data (JSON-LD): hilft Google, EatMe als Musik-Act zu
-    verstehen und die Social-Profile zu verknüpfen (sameAs). Werte
-    stammen aus content.json (site.social_links) -- bei Änderungen dort
-    auch hier nachziehen, da dieser Block statisch ist.
-  -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "MusicGroup",
-    "name": "EatMe",
-    "url": "https://eatmemusic.com/",
-    "genre": ["Alternative Pop", "Indie Pop", "Shoegaze"],
-    "email": "official.eatme.music@gmail.com",
-    "sameAs": [
-      "https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg",
-      "https://www.instagram.com/eatme.music/",
-      "https://www.youtube.com/@eatme.music.official",
-      "https://www.tiktok.com/@eatme.music"
-    ]
-  }
-  </script>
-
-  <!-- Design-Tokens: Farben, Fonts, Font-Faces — einzige Quelle, siehe tokens-notes.md -->
-  <link rel="stylesheet" href="tokens.css" />
-
-  <!-- Globales Layout-Grundgerüst (Hintergrund-Layer, Sektions-Wrapper-Basics) -->
-  <link rel="stylesheet" href="styles.css" />
-
-  <!-- Komponenten-CSS: wiederverwendbare Bausteine, siehe ARCHITECTURE.md -->
-  <link rel="stylesheet" href="components/eatme-navigation.css" />
-  <link rel="stylesheet" href="components/eatme-lyrics.css" />
-  <link rel="stylesheet" href="components/instagram-module.css" />
-  <link rel="stylesheet" href="components/eatme-footer.css" />
-
-  <!-- Sektions-CSS: eine Datei pro Sektion, siehe ARCHITECTURE.md -->
-  <link rel="stylesheet" href="sections/section-01-stage.css" />
-  <link rel="stylesheet" href="sections/section-02-text-01.css" />
-  <link rel="stylesheet" href="sections/section-03-images.css" />
-  <link rel="stylesheet" href="sections/section-04-text-02.css" />
-  <link rel="stylesheet" href="sections/section-05-images-drops.css" />
-  <link rel="stylesheet" href="sections/section-06-text-social.css" />
-  <link rel="stylesheet" href="sections/section-07-footer.css" />
+  <!-- Seiteneigenes CSS: Zwei-Spalten-Layout Privacy/Imprint -->
+  <link rel="stylesheet" href="/imprint-and-privacy.css" />
 </head>
 <body>
 
   <!--
-    Durchgehender Himmel-Hintergrund über alle Sektionen: Cloud (startet
-    unterhalb section-02, langsamerer Parallax) + Footer-Bandfoto (hängt
-    am Dokumentende, kein Parallax). Details/Begründung siehe styles.css
-    (Kommentarblock "Sitewide Himmel-Hintergrund") und script.js
-    (Positionierung/Parallax-Loop). Liegt hinter allen Sektionen (z-index).
-  -->
-  <div class="page-background" aria-hidden="true">
-    <div class="bg-cloud">
-      <canvas id="bg-cloud-canvas" aria-hidden="true"></canvas>
-    </div>
-    <div class="bg-footer">
-      <img src="assets/images/eatme-image-footer.jpg" alt="" aria-hidden="true" />
-    </div>
-  </div>
-
-  <!--
-    Wiederkehrende Navigation (Logo, Social-Links, Sound-Toggle später).
-    Wird eigener Chat / eigene Komponente, siehe ARCHITECTURE.md
-    -> Komponenten: eatme-navigation
+    Statische Seite (kein content.json-Fetch, kein script.js, kein
+    Parallax/Animation) -- siehe ARCHITECTURE.md "Zusätzliche Seiten".
+    Nav-Links/Logo/Footer-Kontakt sind hier bewusst hart codiert, nicht
+    dynamisch geladen, da diese Seite unabhängig von der Haupt-Sektion-
+    Pipeline bleiben soll.
   -->
   <header id="site-nav">
-    <!-- component: eatme-navigation -->
     <div class="eatme-nav">
-      <a class="eatme-nav-logo-link" href="index.html" aria-label="EatMe – Startseite">
-        <img class="eatme-nav-logo" id="nav-logo" src="" alt="EatMe" />
+      <a class="eatme-nav-logo-link" href="/" aria-label="EatMe — Startseite">
+        <img class="eatme-nav-logo" src="/assets/logo/eatme_logo.png" alt="EatMe" />
       </a>
-      <nav class="eatme-nav-links" id="nav-links" aria-label="Social Links">
-        <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
+      <nav class="eatme-nav-links" aria-label="Social Links">
+        <a href="https://open.spotify.com/intl-de/artist/4FGZux9nAZR4DANmMObYZg" target="_blank" rel="noopener">Spotify</a>
+        <a href="https://www.tiktok.com/@eatme.music" target="_blank" rel="noopener">TikTok</a>
+        <a href="https://www.instagram.com/eatme.music/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.youtube.com/@eatme.music.official" target="_blank" rel="noopener">YouTube</a>
       </nav>
     </div>
   </header>
 
   <main>
-    <!--
-      Jede Sektion bekommt ihren eigenen Chat + eigene CSS-Datei unter
-      /sections. Platzhalter hier halten nur die Reihenfolge und IDs fest,
-      damit background-and-motion.md und spätere Sektions-Chats sich darauf
-      beziehen können.
-    -->
-    <section id="section-01-stage" class="section">
-      <div class="stage">
-        <img class="stage-bg" src="assets/visuals/backgrounds/cloud-stage-background.jpg" alt="" aria-hidden="true" />
-        <iframe class="stage-birds" src="assets/visuals/birds-stage.html" title="" aria-hidden="true" tabindex="-1"></iframe>
+    <section class="section-legal">
+      <div class="legal-col privacy">
+        <div class="legal-col-inner">
+          <p class="legal-heading text-copy-l">Privacy Policy</p>
+          <p class="legal-p text-copy-s">1. Data Protection at a Glance</p>
+          <p class="legal-p text-copy-s">General Information</p>
+          <p class="legal-p text-copy-s">The following notes provide a simple overview of what happens to your personal data when you visit this website.</p>
+          <p class="legal-p text-copy-s">Personal data are all data by which you can be personally identified.</p>
+          <p class="legal-p text-copy-s">Detailed information on the subject of data protection can be found in our Privacy Policy set out below.</p>
+          <p class="legal-p text-copy-s">Data Collection on This Website</p>
+          <p class="legal-p text-copy-s">Who is responsible for data collection on this website?</p>
+          <p class="legal-p text-copy-s">The data processing on this website is carried out by the website operator.</p>
+          <p class="legal-p text-copy-s">The operator’s contact details can be found in the section “Information on the Responsible Controller” of this Privacy Policy.</p>
+          <p class="legal-p text-copy-s">How do we collect your data?</p>
+          <p class="legal-p text-copy-s">On the one hand, your data are collected when you provide them to us.</p>
+          <p class="legal-p text-copy-s">This may, for example, be data that you enter into a contact form.</p>
+          <p class="legal-p text-copy-s">Other data are collected automatically or after your consent when visiting the website by our IT systems.</p>
+          <p class="legal-p text-copy-s">These are primarily technical data (e.g. internet browser, operating system, or the time of page access).</p>
+          <p class="legal-p text-copy-s">The collection of this data takes place automatically as soon as you enter this website.</p>
+          <p class="legal-p text-copy-s">What do we use your data for?</p>
+          <p class="legal-p text-copy-s">Part of the data is collected to ensure the error-free provision of the website.</p>
+          <p class="legal-p text-copy-s">Other data may be used to analyse your user behaviour.</p>
+          <p class="legal-p text-copy-s">Insofar as contracts can be concluded or initiated via the website, the data transmitted will also be processed for contractual offers, orders, or other business enquiries.</p>
+          <p class="legal-p text-copy-s">What rights do you have regarding your data?</p>
+          <p class="legal-p text-copy-s">You have the right at any time to obtain free information about the origin, recipients, and purpose of your stored personal data.</p>
+          <p class="legal-p text-copy-s">You also have the right to request the rectification or erasure of these data.</p>
+          <p class="legal-p text-copy-s">If you have given your consent to data processing, you may revoke this consent at any time with effect for the future.</p>
+          <p class="legal-p text-copy-s">Furthermore, you have the right, under certain circumstances, to request the restriction of the processing of your personal data.</p>
+          <p class="legal-p text-copy-s">In addition, you have a right to lodge a complaint with the competent supervisory authority.</p>
+          <p class="legal-p text-copy-s">You may contact us at any time regarding this and any other questions concerning data protection.</p>
+          <p class="legal-p text-copy-s">Analysis Tools and Third-Party Tools</p>
+          <p class="legal-p text-copy-s">When visiting this website, your browsing behaviour may be statistically analysed.</p>
+          <p class="legal-p text-copy-s">This is done primarily by means of analysis programmes.</p>
+          <p class="legal-p text-copy-s">Detailed information about these analysis programmes can be found in the following Privacy Policy.</p>
+          <p class="legal-p text-copy-s">2. Hosting</p>
+          <p class="legal-p text-copy-s">We host the contents of our website with the following provider:</p>
+          <p class="legal-p text-copy-s">Strato</p>
+          <p class="legal-p text-copy-s">The provider is Strato AG, Otto-Ostrowski-Straße 7, 10249 Berlin, Germany (hereinafter referred to as “Strato”).</p>
+          <p class="legal-p text-copy-s">When you visit our website, Strato records various log files, including your IP addresses.</p>
+          <p class="legal-p text-copy-s">Further information can be found in Strato’s privacy policy:</p>
+          <p class="legal-p text-copy-s">https://www.strato.de/datenschutz/</p>
+          <p class="legal-p text-copy-s">The use of Strato is based on Article 6 (1) (f) of the General Data Protection Regulation (GDPR).</p>
+          <p class="legal-p text-copy-s">We have a legitimate interest in ensuring that our website is presented as reliably as possible.</p>
+          <p class="legal-p text-copy-s">If corresponding consent has been requested, processing takes place exclusively on the basis of Article 6 (1) (a) GDPR and Section 25 (1) of the German Telecommunications-Digital Services Data Protection Act (TDDDG), insofar as the consent includes the storage of cookies or access to information on the user’s device (e.g. device fingerprinting) within the meaning of the TDDDG.</p>
+          <p class="legal-p text-copy-s">Consent may be withdrawn at any time.</p>
+          <p class="legal-p text-copy-s">Commissioned Data Processing</p>
+          <p class="legal-p text-copy-s">We have concluded a Data Processing Agreement (DPA) for the use of the aforementioned service.</p>
+          <p class="legal-p text-copy-s">This is a contract required by data-protection law, which ensures that Strato processes the personal data of our website visitors only in accordance with our instructions and in compliance with the GDPR.</p>
+          <p class="legal-p text-copy-s">3. General Information and Mandatory Notices</p>
+          <p class="legal-p text-copy-s">Data Protection</p>
+          <p class="legal-p text-copy-s">The operators of these pages take the protection of your personal data very seriously.</p>
+          <p class="legal-p text-copy-s">We treat your personal data confidentially and in accordance with the statutory data protection regulations as well as this Privacy Policy.</p>
+          <p class="legal-p text-copy-s">When you use this website, various items of personal data are collected.</p>
+          <p class="legal-p text-copy-s">Personal data are data by which you can be personally identified.</p>
+          <p class="legal-p text-copy-s">This Privacy Policy explains which data we collect and for what purpose we use them.</p>
+          <p class="legal-p text-copy-s">It also explains how and for what purpose this is done.</p>
+          <p class="legal-p text-copy-s">Please note that data transmission over the Internet (e.g. when communicating by email) may be subject to security vulnerabilities.</p>
+          <p class="legal-p text-copy-s">Complete protection of data against access by third parties is not possible.</p>
+          <p class="legal-p text-copy-s">Information on the Responsible Controller</p>
+          <p class="legal-p text-copy-s">The controller responsible for data processing on this website is:</p>
+          <p class="legal-p text-copy-s">Weronika Jankowiak</p>
+          <p class="legal-p text-copy-s">Stralsunder Straße 4</p>
+          <p class="legal-p text-copy-s">20099 Hamburg</p>
+          <p class="legal-p text-copy-s">Germany</p>
+          <p class="legal-p text-copy-s">Telephone: 0176 43800960</p>
+          <p class="legal-p text-copy-s">Email: official.eatme.music@gmail.com</p>
+          <p class="legal-p text-copy-s">The controller is the natural or legal person who, alone or jointly with others, determines the purposes and means of the processing of personal data (e.g. names, email addresses, etc.).</p>
+          <p class="legal-p text-copy-s">Storage Period</p>
+          <p class="legal-p text-copy-s">Unless a more specific storage period is stated within this Privacy Policy, your personal data will remain with us until the purpose for which the data were collected no longer applies.</p>
+          <p class="legal-p text-copy-s">If you assert a legitimate request for erasure or withdraw your consent to data processing, your data will be deleted unless we have other legally permissible grounds for storing your personal data (e.g. retention periods under tax or commercial law); in the latter case, deletion will take place once these reasons no longer apply.</p>
+          <p class="legal-p text-copy-s">General Information on the Legal Bases for Data Processing on This Website</p>
+          <p class="legal-p text-copy-s">If you have consented to data processing, we process your personal data on the basis of Article 6 (1) (a) GDPR or Article 9 (2) (a) GDPR, insofar as special categories of data pursuant to Article 9 (1) GDPR are processed.</p>
+          <p class="legal-p text-copy-s">In the case of an explicit consent to the transfer of personal data to third countries, processing also takes place on the basis of Article 49 (1) (a) GDPR.</p>
+          <p class="legal-p text-copy-s">If you have consented to the storage of cookies or access to information on your end device (e.g. via device fingerprinting), processing additionally takes place on the basis of Section 25 (1) TDDDG.</p>
+          <p class="legal-p text-copy-s">Consent may be withdrawn at any time.</p>
+          <p class="legal-p text-copy-s">If your data are required for the performance of a contract or for pre-contractual measures, we process your data on the basis of Article 6 (1) (b) GDPR.</p>
+          <p class="legal-p text-copy-s">Furthermore, if the processing of your data is required to fulfil a legal obligation, this is done on the basis of Article 6 (1) (c) GDPR.</p>
+          <p class="legal-p text-copy-s">Data processing may also be carried out on the basis of our legitimate interest pursuant to Article 6 (1) (f) GDPR.</p>
+          <p class="legal-p text-copy-s">The relevant legal bases applicable in each individual case are specified in the following paragraphs of this Privacy Policy.</p>
+          <p class="legal-p text-copy-s">Recipients of Personal Data</p>
+          <p class="legal-p text-copy-s">In the course of our business activities, we work with various external parties.</p>
+          <p class="legal-p text-copy-s">This may sometimes require the transmission of personal data to such external parties.</p>
+          <p class="legal-p text-copy-s">We only transfer personal data to external parties if this is necessary for the performance of a contract, if we are legally obliged to do so (e.g. transmission of data to tax authorities), if we have a legitimate interest pursuant to Article 6 (1) (f) GDPR in such transmission, or if another legal basis permits the transfer of data.</p>
+          <p class="legal-p text-copy-s">When using processors, we only transfer personal data of our customers on the basis of a valid Data Processing Agreement.</p>
+          <p class="legal-p text-copy-s">In the case of joint processing, a Joint Controller Agreement is concluded.</p>
+          <p class="legal-p text-copy-s">Withdrawal of Your Consent to Data Processing</p>
+          <p class="legal-p text-copy-s">Many data processing operations are only possible with your explicit consent.</p>
+          <p class="legal-p text-copy-s">You may withdraw consent already given at any time.</p>
+          <p class="legal-p text-copy-s">The lawfulness of the data processing carried out before the withdrawal remains unaffected by the withdrawal.</p>
+          <p class="legal-p text-copy-s">Right to Object to Data Collection in Particular Cases and to Direct Marketing (Article 21 GDPR)</p>
+          <p class="legal-p text-copy-s">IF DATA PROCESSING IS CARRIED OUT ON THE BASIS OF ARTICLE 6 (1) (E) OR (F) GDPR, YOU HAVE THE RIGHT, AT ANY TIME, TO OBJECT TO THE PROCESSING OF YOUR PERSONAL DATA FOR REASONS ARISING FROM YOUR PARTICULAR SITUATION; THIS ALSO APPLIES TO PROFILING BASED ON THESE PROVISIONS.</p>
+          <p class="legal-p text-copy-s">THE RESPECTIVE LEGAL BASIS ON WHICH PROCESSING IS BASED CAN BE FOUND IN THIS PRIVACY POLICY.</p>
+          <p class="legal-p text-copy-s">IF YOU OBJECT, WE WILL NO LONGER PROCESS YOUR AFFECTED PERSONAL DATA, UNLESS WE CAN DEMONSTRATE COMPELLING LEGITIMATE GROUNDS FOR THE PROCESSING WHICH OVERRIDE YOUR INTERESTS, RIGHTS, AND FREEDOMS, OR THE PROCESSING SERVES THE ESTABLISHMENT, EXERCISE, OR DEFENCE OF LEGAL CLAIMS (OBJECTION PURSUANT TO ARTICLE 21 (1) GDPR).</p>
+          <p class="legal-p text-copy-s">IF YOUR PERSONAL DATA ARE PROCESSED FOR DIRECT MARKETING PURPOSES, YOU HAVE THE RIGHT TO OBJECT AT ANY TIME TO THE PROCESSING OF PERSONAL DATA CONCERNING YOU FOR SUCH MARKETING; THIS ALSO APPLIES TO PROFILING INSOFAR AS IT IS RELATED TO SUCH DIRECT MARKETING.</p>
+          <p class="legal-p text-copy-s">IF YOU OBJECT, YOUR PERSONAL DATA WILL SUBSEQUENTLY NO LONGER BE USED FOR DIRECT MARKETING PURPOSES (OBJECTION PURSUANT TO ARTICLE 21 (2) GDPR).</p>
+          <p class="legal-p text-copy-s">Right to Lodge a Complaint with the Competent Supervisory Authority</p>
+          <p class="legal-p text-copy-s">In the event of violations of the GDPR, data subjects have the right to lodge a complaint with a supervisory authority, in particular in the Member State of their habitual residence, place of work, or place of the alleged infringement.</p>
+          <p class="legal-p text-copy-s">The right to lodge a complaint is without prejudice to other administrative or judicial remedies.</p>
+          <p class="legal-p text-copy-s">Right to Data Portability</p>
+          <p class="legal-p text-copy-s">You have the right to receive data that we process automatically on the basis of your consent or in performance of a contract, in a commonly used, machine-readable format, or to have it transmitted to a third party.</p>
+          <p class="legal-p text-copy-s">If you request the direct transfer of the data to another controller, this will only be done to the extent that it is technically feasible.</p>
+          <p class="legal-p text-copy-s">Access, Rectification and Erasure</p>
+          <p class="legal-p text-copy-s">Within the framework of the applicable legal provisions, you have the right at any time to obtain free information about your stored personal data, their origin, recipients, and the purpose of the data processing, and, where applicable, the right to rectification or erasure of these data.</p>
+          <p class="legal-p text-copy-s">For this purpose, as well as for further questions on the subject of personal data, you may contact us at any time.</p>
+          <p class="legal-p text-copy-s">Right to Restrict Processing</p>
+          <p class="legal-p text-copy-s">You have the right to request the restriction of the processing of your personal data.</p>
+          <p class="legal-p text-copy-s">For this purpose, you may contact us at any time.</p>
+          <p class="legal-p text-copy-s">The right to restrict processing applies in the following cases:</p>
+          <p class="legal-p text-copy-s">• If you contest the accuracy of your personal data stored by us, we usually need time to verify this.</p>
+          <p class="legal-p text-copy-s">For the duration of the verification, you have the right to request the restriction of the processing of your personal data.</p>
+          <p class="legal-p text-copy-s">• If the processing of your personal data was or is unlawful, you may request restriction of data processing instead of erasure.</p>
+          <p class="legal-p text-copy-s">• If we no longer need your personal data, but you require them for the establishment, exercise, or defence of legal claims, you have the right to request restriction of processing instead of erasure.</p>
+          <p class="legal-p text-copy-s">• If you have lodged an objection pursuant to Article 21(1) GDPR, a balancing of your interests and ours must be carried out.</p>
+          <p class="legal-p text-copy-s">As long as it has not yet been determined whose interests prevail, you have the right to request restriction of the processing of your personal data.</p>
+          <p class="legal-p text-copy-s">If you have restricted the processing of your personal data, such data – apart from their storage – may only be processed with your consent or for the establishment, exercise, or defence of legal claims, or for the protection of the rights of another natural or legal person, or for reasons of important public interest of the European Union or a Member State.</p>
+          <p class="legal-p text-copy-s">SSL or TLS Encryption</p>
+          <p class="legal-p text-copy-s">For security reasons and to protect the transmission of confidential content, such as orders or enquiries that you send to us as the site operator, this site uses SSL or TLS encryption.</p>
+          <p class="legal-p text-copy-s">You can recognise an encrypted connection by the change in the address line of your browser from “http://” to “https://” and by the lock symbol displayed in your browser line.</p>
+          <p class="legal-p text-copy-s">When SSL or TLS encryption is activated, the data you transmit to us cannot be read by third parties.</p>
+          <p class="legal-p text-copy-s">Objection to Promotional Emails</p>
+          <p class="legal-p text-copy-s">The use of contact details published within the framework of the legal notice obligations for the purpose of sending unsolicited advertising or informational materials is hereby expressly prohibited.</p>
+          <p class="legal-p text-copy-s">The operators of the pages expressly reserve the right to take legal action in the event of the unsolicited sending of promotional information, such as spam emails.</p>
+          <p class="legal-p text-copy-s">4. Data Collection on This Website</p>
+          <p class="legal-p text-copy-s">Cookies</p>
+          <p class="legal-p text-copy-s">Our website uses so-called “cookies”. Cookies are small data packages that do not cause any harm to your end device.</p>
+          <p class="legal-p text-copy-s">They are stored either temporarily for the duration of a session (session cookies) or permanently (persistent cookies) on your device.</p>
+          <p class="legal-p text-copy-s">Session cookies are automatically deleted after your visit.</p>
+          <p class="legal-p text-copy-s">Persistent cookies remain stored on your end device until you delete them yourself or they are automatically deleted by your web browser.</p>
+          <p class="legal-p text-copy-s">Cookies may originate from us (first-party cookies) or from third-party companies (so-called third-party cookies).</p>
+          <p class="legal-p text-copy-s">Third-party cookies enable the integration of certain services provided by third-party companies within websites (e.g. cookies for processing payment services).</p>
+          <p class="legal-p text-copy-s">Cookies have various functions.</p>
+          <p class="legal-p text-copy-s">Many cookies are technically necessary, as certain website functions would not work without them (e.g. the shopping basket function or the display of videos).</p>
+          <p class="legal-p text-copy-s">Other cookies may be used to analyse user behaviour or for advertising purposes.</p>
+          <p class="legal-p text-copy-s">Cookies that are necessary to carry out the electronic communication process, to provide certain functions requested by you (e.g. for the shopping basket function), or to optimise the website (e.g. cookies for measuring web audience), are stored on the basis of Article 6 (1) (f) GDPR, unless another legal basis is specified.</p>
+          <p class="legal-p text-copy-s">The website operator has a legitimate interest in storing necessary cookies to ensure the technically error-free and optimised provision of its services.</p>
+          <p class="legal-p text-copy-s">Insofar as consent to the storage of cookies and comparable recognition technologies has been requested, processing is carried out exclusively on the basis of this consent (Article 6 (1) (a) GDPR and Section 25 (1) TDDDG); such consent may be revoked at any time.</p>
+          <p class="legal-p text-copy-s">You can configure your browser so that you are informed about the setting of cookies and only allow cookies in individual cases, exclude the acceptance of cookies for certain cases or in general, as well as activate the automatic deletion of cookies when closing the browser.</p>
+          <p class="legal-p text-copy-s">If cookies are deactivated, the functionality of this website may be limited.</p>
+          <p class="legal-p text-copy-s">Information on which cookies and services are used on this website can be found in this Privacy Policy.</p>
+          <p class="legal-p text-copy-s">5. Social Media</p>
+          <p class="legal-p text-copy-s">Instagram</p>
+          <p class="legal-p text-copy-s">Functions of the Instagram service are integrated into this website.</p>
+          <p class="legal-p text-copy-s">These functions are provided by Meta Platforms Ireland Limited, Merrion Road, Dublin 4, D04 X2K5, Ireland.</p>
+          <p class="legal-p text-copy-s">When the social media element is active, a direct connection between your device and the Instagram server is established.</p>
+          <p class="legal-p text-copy-s">Instagram thereby receives information that you have visited this website.</p>
+          <p class="legal-p text-copy-s">If you are logged into your Instagram account, you can link the content of this website to your Instagram profile by clicking the Instagram button.</p>
+          <p class="legal-p text-copy-s">This allows Instagram to associate your visit to this website with your user account.</p>
+          <p class="legal-p text-copy-s">We would like to point out that, as the provider of these pages, we have no knowledge of the content of the transmitted data or of how Instagram uses such data.</p>
+          <p class="legal-p text-copy-s">The use of this service is based on your consent pursuant to Article 6 (1) (a) GDPR and Section 25 (1) TDDDG.</p>
+          <p class="legal-p text-copy-s">Consent may be withdrawn at any time.</p>
+          <p class="legal-p text-copy-s">Insofar as personal data collected on our website with the help of the tool described here are transmitted to Facebook or Instagram, we and Meta Platforms Ireland Limited, 4 Grand Canal Square, Grand Canal Harbour, Dublin 2, Ireland, are jointly responsible for this data processing within the meaning of Article 26 GDPR.</p>
+          <p class="legal-p text-copy-s">This joint responsibility is limited solely to the collection of data and their transfer to Facebook and/or Instagram.</p>
+          <p class="legal-p text-copy-s">Any subsequent processing by Facebook or Instagram after such transfer does not fall under the scope of joint responsibility.</p>
+          <p class="legal-p text-copy-s">The obligations incumbent upon us jointly are set out in an agreement on joint processing.</p>
+          <p class="legal-p text-copy-s">The text of this agreement can be found here:</p>
+          <p class="legal-p text-copy-s">https://www.facebook.com/legal/controller_addendum</p>
+          <p class="legal-p text-copy-s">According to this agreement, we are responsible for providing the data protection information when using the Facebook or Instagram tool and for the data-protection-compliant integration of the tool on our website.</p>
+          <p class="legal-p text-copy-s">Facebook is responsible for the security of the Facebook and Instagram products.</p>
+          <p class="legal-p text-copy-s">Data subject rights (e.g. access requests) regarding data processed by Facebook or Instagram may be exercised directly with Facebook.</p>
+          <p class="legal-p text-copy-s">If you exercise such rights with us, we are obliged to forward them to Facebook.</p>
+          <p class="legal-p text-copy-s">Data transfer to the USA is based on the European Commission’s Standard Contractual Clauses (SCCs).</p>
+          <p class="legal-p text-copy-s">Further details can be found here:</p>
+          <p class="legal-p text-copy-s">https://www.facebook.com/legal/EU_data_transfer_addendum,</p>
+          <p class="legal-p text-copy-s">https://privacycenter.instagram.com/policy/,</p>
+          <p class="legal-p text-copy-s">and https://de-de.facebook.com/help/566994660333381.</p>
+          <p class="legal-p text-copy-s">Further information can be found in Instagram’s Privacy Policy:</p>
+          <p class="legal-p text-copy-s">https://privacycenter.instagram.com/policy/</p>
+          <p class="legal-p text-copy-s">The company is certified under the EU-US Data Privacy Framework (DPF).</p>
+          <p class="legal-p text-copy-s">The DPF is an agreement between the European Union and the United States ensuring compliance with European data protection standards for data processing in the USA.</p>
+          <p class="legal-p text-copy-s">Each company certified under the DPF undertakes to adhere to these data protection standards.</p>
+          <p class="legal-p text-copy-s">Further information can be obtained from the provider under the following link:</p>
+          <p class="legal-p text-copy-s">https://www.dataprivacyframework.gov/participant/4452</p>
+          <p class="legal-p text-copy-s">6. Analytics Tools and Advertising</p>
+          <p class="legal-p text-copy-s">WP Statistics</p>
+          <p class="legal-p text-copy-s">This website uses the analytics tool WP Statistics to statistically evaluate visitor access.</p>
+          <p class="legal-p text-copy-s">The provider is Veronalabs, Tatari 64, 10134 Tallinn, Estonia (https://veronalabs.com).</p>
+          <p class="legal-p text-copy-s">WP Statistics enables us to analyse the use of our website.</p>
+          <p class="legal-p text-copy-s">Among other things, WP Statistics collects log files (IP address, referrer, browsers used, origin of the user, search engine used) and actions performed by website visitors on the page (e.g. clicks and views).</p>
+          <p class="legal-p text-copy-s">The data collected with WP Statistics are stored exclusively on our own server.</p>
+          <p class="legal-p text-copy-s">The use of this analysis tool is based on Article 6 (1) (f) GDPR.</p>
+          <p class="legal-p text-copy-s">We have a legitimate interest in the anonymised analysis of user behaviour in order to optimise both our web offering and our advertising.</p>
+          <p class="legal-p text-copy-s">If the corresponding consent has been requested, processing takes place exclusively on the basis of Article 6 (1) (a) GDPR and Section 25 (1) TDDDG, insofar as consent includes the storage of cookies or access to information on the user’s end device (e.g. device fingerprinting) within the meaning of the TDDDG.</p>
+          <p class="legal-p text-copy-s">Consent may be withdrawn at any time.</p>
+          <p class="legal-p text-copy-s">IP Anonymisation</p>
+          <p class="legal-p text-copy-s">We use WP Statistics with anonymised IP.</p>
+          <p class="legal-p text-copy-s">In this case, your IP address is shortened so that it can no longer be directly assigned to you.</p>
+          <p class="legal-p text-copy-s">7. Newsletter</p>
+          <p class="legal-p text-copy-s">Newsletter Data</p>
+          <p class="legal-p text-copy-s">If you would like to subscribe to the newsletter offered on this website, we require an email address from you and information that allows us to verify that you are the owner of the email address provided and that you agree to receive the newsletter.</p>
+          <p class="legal-p text-copy-s">No further data are collected, or only on a voluntary basis.</p>
+          <p class="legal-p text-copy-s">We use these data exclusively for sending the requested information and do not pass them on to third parties.</p>
+          <p class="legal-p text-copy-s">The processing of the data entered into the newsletter subscription form takes place solely on the basis of your consent (Article 6 (1) (a) GDPR).</p>
+          <p class="legal-p text-copy-s">You may withdraw your consent to the storage of your data, your email address, and their use for sending the newsletter at any time, for example by using the “unsubscribe” link in the newsletter.</p>
+          <p class="legal-p text-copy-s">The legality of data processing already carried out remains unaffected by the withdrawal.</p>
+          <p class="legal-p text-copy-s">The data you have provided for the purpose of receiving the newsletter will be stored by us until you unsubscribe from the newsletter and will be deleted from the newsletter mailing list after you cancel your subscription or once the purpose no longer applies.</p>
+          <p class="legal-p text-copy-s">We reserve the right to delete or block email addresses from our newsletter distribution list at our own discretion within the scope of our legitimate interest pursuant to Article 6 (1) (f) GDPR.</p>
+          <p class="legal-p text-copy-s">Data stored by us for other purposes remain unaffected by this.</p>
+          <p class="legal-p text-copy-s">After you have unsubscribed from the newsletter mailing list, your email address may be stored by us or by the newsletter service provider in a blacklist, insofar as this is necessary to prevent future mailings.</p>
+          <p class="legal-p text-copy-s">The data in the blacklist are used only for this purpose and are not combined with other data.</p>
+          <p class="legal-p text-copy-s">This serves both your interest and our interest in complying with the legal requirements for the sending of newsletters (legitimate interest within the meaning of Article 6 (1) (f) GDPR).</p>
+          <p class="legal-p text-copy-s">Storage in the blacklist is not time-limited.</p>
+          <p class="legal-p text-copy-s">You may object to this storage if your interests outweigh our legitimate interest.</p>
+          <p class="legal-p text-copy-s">8. Plugins and Tools</p>
+          <p class="legal-p text-copy-s">YouTube with Enhanced Privacy Mode</p>
+          <p class="legal-p text-copy-s">This website integrates videos from the YouTube website.</p>
+          <p class="legal-p text-copy-s">The operator of the website is Google Ireland Limited (“Google”), Gordon House, Barrow Street, Dublin 4, Ireland.</p>
+          <p class="legal-p text-copy-s">When you visit one of our web pages that includes a YouTube video, a connection to the YouTube servers is established.</p>
+          <p class="legal-p text-copy-s">In doing so, the YouTube server is informed about which of our pages you have visited.</p>
+          <p class="legal-p text-copy-s">If you are logged into your YouTube account, YouTube enables your browsing behaviour to be directly associated with your personal profile.</p>
+          <p class="legal-p text-copy-s">You can prevent this by logging out of your YouTube account.</p>
+          <p class="legal-p text-copy-s">We use YouTube in enhanced privacy mode.</p>
+          <p class="legal-p text-copy-s">According to YouTube, videos played in enhanced privacy mode are not used to personalise browsing on YouTube.</p>
+          <p class="legal-p text-copy-s">Advertisements displayed in enhanced privacy mode are likewise not personalised.</p>
+          <p class="legal-p text-copy-s">In enhanced privacy mode, no cookies are set; however, so-called local storage elements are stored in the user’s browser, which, similar to cookies, may contain personal data and be used for recognition purposes.</p>
+          <p class="legal-p text-copy-s">Details about enhanced privacy mode can be found here:</p>
+          <p class="legal-p text-copy-s">https://support.google.com/youtube/answer/171780</p>
+          <p class="legal-p text-copy-s">Further data processing operations may be triggered after activating a YouTube video, over which we have no control.</p>
+          <p class="legal-p text-copy-s">The use of YouTube takes place in the interest of presenting our online offerings in an appealing manner.</p>
+          <p class="legal-p text-copy-s">This constitutes a legitimate interest within the meaning of Article 6 (1) (f) GDPR.</p>
+          <p class="legal-p text-copy-s">If the corresponding consent has been requested, processing takes place exclusively on the basis of Article 6 (1) (a) GDPR and Section 25 (1) TDDDG, insofar as consent includes the storage of cookies or access to information on the user’s end device (e.g. device fingerprinting) within the meaning of the TDDDG.</p>
+          <p class="legal-p text-copy-s">Consent may be withdrawn at any time.</p>
+          <p class="legal-p text-copy-s">Further information on data protection at YouTube can be found in their Privacy Policy:</p>
+          <p class="legal-p text-copy-s">https://policies.google.com/privacy?hl=en</p>
+          <p class="legal-p text-copy-s">The company is certified under the EU–US Data Privacy Framework (DPF).</p>
+          <p class="legal-p text-copy-s">The DPF is an agreement between the European Union and the United States intended to ensure compliance with European data-protection standards in the context of data processing in the USA.</p>
+          <p class="legal-p text-copy-s">Each company certified under the DPF undertakes to comply with these data-protection standards.</p>
+          <p class="legal-p text-copy-s">Further information can be obtained from the provider at the following link:</p>
+          <p class="legal-p text-copy-s">https://www.dataprivacyframework.gov/participant/5780</p>
+          <p class="legal-p text-copy-s">Google Fonts (Local Hosting)</p>
+          <p class="legal-p text-copy-s">This site uses so-called Google Fonts for the uniform display of fonts, which are provided by Google.</p>
+          <p class="legal-p text-copy-s">The Google Fonts are installed locally.</p>
+          <p class="legal-p text-copy-s">No connection to Google servers is established in this process.</p>
+          <p class="legal-p text-copy-s">Further information about Google Fonts can be found at:</p>
+          <p class="legal-p text-copy-s">https://developers.google.com/fonts/faq</p>
+          <p class="legal-p text-copy-s">and in Google’s Privacy Policy:</p>
+          <p class="legal-p text-copy-s">https://policies.google.com/privacy?hl=en</p>
+          <p class="legal-p text-copy-s">Google reCAPTCHA</p>
+          <p class="legal-p text-copy-s">We use “Google reCAPTCHA” (hereinafter “reCAPTCHA”) on this website.</p>
+          <p class="legal-p text-copy-s">The provider is Google Ireland Limited (“Google”), Gordon House, Barrow Street, Dublin 4, Ireland.</p>
+          <p class="legal-p text-copy-s">The purpose of reCAPTCHA is to verify whether data entered on this website (for example in a contact form) are provided by a human or by an automated programme.</p>
+          <p class="legal-p text-copy-s">For this purpose, reCAPTCHA analyses the behaviour of the website visitor based on various characteristics.</p>
+          <p class="legal-p text-copy-s">This analysis begins automatically as soon as the website visitor enters the website.</p>
+          <p class="legal-p text-copy-s">To carry out this analysis, reCAPTCHA evaluates various pieces of information (e.g. IP address, time spent on the website, or mouse movements performed by the user).</p>
+          <p class="legal-p text-copy-s">The data collected during the analysis are forwarded to Google.</p>
+          <p class="legal-p text-copy-s">The reCAPTCHA analyses run entirely in the background; website visitors are not informed that such an analysis is taking place.</p>
+          <p class="legal-p text-copy-s">The storage and analysis of the data are based on Article 6 (1) (f) GDPR.</p>
+          <p class="legal-p text-copy-s">The website operator has a legitimate interest in protecting its web offerings from abusive automated spying and spam.</p>
+          <p class="legal-p text-copy-s">If the corresponding consent has been requested, processing takes place solely on the basis of Article 6 (1) (a) GDPR and Section 25 (1) TDDDG, insofar as consent includes the storage of cookies or access to information on the user’s end device (e.g. device fingerprinting) within the meaning of the TDDDG.</p>
+          <p class="legal-p text-copy-s">Consent may be withdrawn at any time.</p>
+          <p class="legal-p text-copy-s">Further information about Google reCAPTCHA can be found in Google’s Privacy Policy and Terms of Service:</p>
+          <p class="legal-p text-copy-s">https://policies.google.com/privacy?hl=en and https://policies.google.com/terms?hl=en.</p>
+          <p class="legal-p text-copy-s">The company is certified under the EU–US Data Privacy Framework (DPF).</p>
+          <p class="legal-p text-copy-s">The DPF is an agreement between the European Union and the United States ensuring compliance with European data-protection standards for data processing in the USA.</p>
+          <p class="legal-p text-copy-s">Each company certified under the DPF undertakes to adhere to these data-protection standards.</p>
+          <p class="legal-p text-copy-s">Further information can be found at:</p>
+          <p class="legal-p text-copy-s">https://www.dataprivacyframework.gov/participant/5780</p>
+          <p class="legal-p text-copy-s">SoundCloud</p>
+          <p class="legal-p text-copy-s">This website may integrate plugins from the social network SoundCloud (SoundCloud Limited, Berners House, 47-48 Berners Street, London W1T 3NF, United Kingdom).</p>
+          <p class="legal-p text-copy-s">You can recognise SoundCloud plugins by the SoundCloud logo displayed on the relevant pages.</p>
+          <p class="legal-p text-copy-s">When you visit this website, after activating the plugin, a direct connection is established between your browser and the SoundCloud server.</p>
+          <p class="legal-p text-copy-s">SoundCloud thereby receives the information that you have visited this website with your IP address.</p>
+          <p class="legal-p text-copy-s">If you click the “Like” or “Share” button while logged into your SoundCloud user account, you can link and/or share the content of this website with your SoundCloud profile.</p>
+          <p class="legal-p text-copy-s">This allows SoundCloud to associate your visit to this website with your user account.</p>
+          <p class="legal-p text-copy-s">We would like to point out that, as the provider of these pages, we have no knowledge of the content of the data transmitted or of their use by SoundCloud.</p>
+          <p class="legal-p text-copy-s">The storage and analysis of the data are based on Article 6 (1) (f) GDPR.</p>
+          <p class="legal-p text-copy-s">The website operator has a legitimate interest in achieving the broadest possible visibility in social media.</p>
+          <p class="legal-p text-copy-s">If the corresponding consent has been requested, processing takes place exclusively on the basis of Article 6 (1) (a) GDPR and Section 25 (1) TDDDG, insofar as consent includes the storage of cookies or access to information on the user’s end device (e.g. device fingerprinting) within the meaning of the TDDDG.</p>
+          <p class="legal-p text-copy-s">Consent may be withdrawn at any time.</p>
+          <p class="legal-p text-copy-s">The United Kingdom is regarded as a data-protection-secure third country.</p>
+          <p class="legal-p text-copy-s">This means that the United Kingdom provides a level of data protection equivalent to that of the European Union.</p>
+          <p class="legal-p text-copy-s">Further information can be found in SoundCloud’s Privacy Policy:</p>
+          <p class="legal-p text-copy-s">https://soundcloud.com/pages/privacy</p>
+          <p class="legal-p text-copy-s">If you do not wish SoundCloud to associate your visit to this website with your SoundCloud user account, please log out of your SoundCloud account before activating any content.</p>
+          <p class="legal-p text-copy-s">Spotify</p>
+          <p class="legal-p text-copy-s">Functions of the music service Spotify are integrated into this website.</p>
+          <p class="legal-p text-copy-s">The provider is Spotify AB, Birger Jarlsgatan 61, 113 56 Stockholm, Sweden.</p>
+          <p class="legal-p text-copy-s">You can recognise Spotify plugins by the green logo displayed on this website.</p>
+          <p class="legal-p text-copy-s">An overview of Spotify plugins can be found at:</p>
+          <p class="legal-p text-copy-s">https://developer.spotify.com</p>
+          <p class="legal-p text-copy-s">When you visit this website, a direct connection is established between your browser and the Spotify server via the plugin.</p>
+          <p class="legal-p text-copy-s">Spotify thereby receives the information that you have visited this website with your IP address.</p>
+          <p class="legal-p text-copy-s">If you click the Spotify button while logged into your Spotify account, you can link the content of this website to your Spotify profile.</p>
+          <p class="legal-p text-copy-s">This allows Spotify to associate your visit to this website with your user account.</p>
+          <p class="legal-p text-copy-s">Please note that Spotify uses Google Analytics cookies, which means that your usage data when using Spotify may also be transmitted to Google.</p>
+          <p class="legal-p text-copy-s">Google Analytics is a user-behaviour analysis tool operated by the Google Group, headquartered in the USA.</p>
+          <p class="legal-p text-copy-s">Spotify alone is responsible for this integration; we, as the website operator, have no influence over this processing.</p>
+          <p class="legal-p text-copy-s">The storage and analysis of the data are based on Article 6 (1) (f) GDPR.</p>
+          <p class="legal-p text-copy-s">The website operator has a legitimate interest in providing an appealing acoustic design for its website.</p>
+          <p class="legal-p text-copy-s">If the corresponding consent has been requested, processing takes place exclusively on the basis of Article 6 (1) (a) GDPR and Section 25 (1) TDDDG, insofar as consent includes the storage of cookies or access to information on the user’s end device (e.g. device fingerprinting) within the meaning of the TDDDG.</p>
+          <p class="legal-p text-copy-s">Consent may be withdrawn at any time.</p>
+          <p class="legal-p text-copy-s">Further information can be found in Spotify’s Privacy Policy:</p>
+          <p class="legal-p text-copy-s">https://www.spotify.com/en/legal/privacy-policy/</p>
+          <p class="legal-p text-copy-s">If you do not want Spotify to associate your visit to this website with your Spotify user account, please log out of your Spotify account.</p>
+        </div>
       </div>
-      <nav class="secondary-nav">
-        <a href="mailto:official.eatme.music@gmail.com" class="text-copy-s">official.eatme.music@gmail.com</a>
-        <button class="sound-toggle text-copy-s" type="button" data-state="off">Sound</button>
-      </nav>
+      <div class="legal-col imprint">
+        <div class="legal-col-inner">
+          <p class="legal-heading text-copy-l">Imprint</p>
+          <p class="legal-p text-copy-s">Information in accordance with § 5 DDG (German Digital Services Act)</p>
+          <p class="legal-p text-copy-s">Weronika Jankowiak<br>Stralsunder Straße 4<br>20099 Hamburg<br>E-mail: official.eatme.music@gmail.com</p>
+          <p class="legal-p text-copy-s">Contact:<br>Phone: 0176 43800960<br>Email: <a href="mailto:official.eatme.music@gmail.com">official.eatme.music@gmail.com</a><br><br>Responsible for content pursuant to § 18 (2) MStV (German State Media Treaty):<br>Weronika Jankowiak<br>Stralsunder Straße 4<br>20099 Hamburg</p>
+          <p class="legal-p text-copy-s">Disclaimer:</p>
+          <p class="legal-p text-copy-s">Liability for Content<br>The contents of our pages have been created with the greatest care. However, we cannot guarantee the accuracy, completeness, or timeliness of the content. As a service provider, we are responsible for our own content on these pages in accordance with § 7 (1) DDG and general laws. According to §§ 8 to 10 DDG, we are not obliged as a service provider to monitor transmitted or stored third-party information or to investigate circumstances that indicate unlawful activity. Obligations to remove or block the use of information under general law remain unaffected. Liability in this respect, however, is only possible from the time we become aware of a specific infringement. Upon notification of such violations, we will remove the content immediately.</p>
+          <p class="legal-p text-copy-s">Liability for Links<br>Our website contains links to external third-party websites, over whose content we have no control. Therefore, we cannot accept any responsibility for these external contents. The respective provider or operator of the linked pages is always responsible for the content of those pages. The linked pages were checked for possible legal violations at the time the links were created. Illegal content was not recognisable at that time. Permanent monitoring of the content of linked pages is not reasonable without specific evidence of an infringement. Upon becoming aware of any such violations, we will remove the relevant links immediately.</p>
+          <p class="legal-p text-copy-s">Data Protection<br>The use of our website is generally possible without providing personal data. Insofar as personal data (such as name, address, or e-mail addresses) are collected on our pages, this is done, wherever possible, on a voluntary basis. These data will not be disclosed to third parties without your express consent.</p>
+          <p class="legal-p text-copy-s">Please note that data transmission over the Internet (e.g. when communicating via e-mail) may be subject to security vulnerabilities. Complete protection of data against access by third parties is not possible.</p>
+          <p class="legal-p text-copy-s">The use of contact details published as part of our legal notice obligations by third parties for the purpose of sending unsolicited advertising or informational material is hereby expressly prohibited. The operators of this website expressly reserve the right to take legal action in the event of the unsolicited sending of advertising information, such as spam e-mails.</p>
+        </div>
+      </div>
     </section>
 
-    <section id="section-02-text-01" class="section">
-      <div class="birds-blue-container" aria-hidden="true">
-        <img class="bird-blue-lg" src="assets/visuals/birds-blue/bird-blue-lg.svg" alt="" />
-        <img class="bird-blue-sm" src="assets/visuals/birds-blue/bird-blue-sm.svg" alt="" />
-      </div>
-      <div class="text-container">
-        <div class="text-01-copy text-copy-l" id="section-02-copy">
-          <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
-        </div>
-      </div>
-    </section>
-
-    <section id="section-03-images" class="section">
-      <div class="col-image-left">
-        <div class="image-container">
-          <img class="eatme-image-01" id="section-03-image-01" src="" alt="" />
-          <!--
-            Vogel-Silhouetten (assets/visuals/birds-black.webp,
-            Figma-Node 169:212) -- liegt in der linken Spalte, überlappt
-            Bandfoto 1 leicht am unteren Rand (Design-Update, siehe
-            ARCHITECTURE.md). Fixe px-Maße/-Position wie das Bandfoto
-            selbst (das ebenfalls bewusst nicht fluid ist), daher keine
-            JS-Positionierung nötig. Asset hat echte Alpha-Transparenz
-            (weißer Hintergrund entfernt) statt mix-blend-mode, siehe
-            ARCHITECTURE.md "Gelernte Lektionen". pointer-events: none,
-            rein dekorativ.
-          -->
-          <div class="birds-black" aria-hidden="true">
-            <img class="birds-black-img" src="assets/visuals/birds-black.webp" alt="" />
-          </div>
-        </div>
-      </div>
-      <div class="col-text-image">
-        <!--
-          Songtext-Modul: komplett klickbar (siehe components/eatme-lyrics.css
-          für Styling + verstärkten Blur). href wird zur Laufzeit aus
-          content.json (lyrics.song_link) gesetzt, siehe script.js --
-          Platzhalter-# hier nur als Fallback, falls content.json mal nicht
-          lädt.
-        -->
-        <a href="#" class="eatme-lyrics-link" id="section-03-lyrics-link" aria-label="Song abspielen">
-          <div class="lyrics-lines text-lyrics" id="section-03-lyrics-lines">
-            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
-          </div>
-          <div class="song-link">
-            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
-            </svg>
-            <span class="text-copy-xs" id="section-03-song-title"></span>
-          </div>
-        </a>
-        <img class="eatme-image-02" id="section-03-image-02" src="" alt="" />
-      </div>
-    </section>
-
-    <section id="section-04-text-02" class="section">
-      <div class="text-container">
-        <div class="text-04-copy text-copy-l" id="section-04-copy">
-          <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
-        </div>
-      </div>
-    </section>
-
-    <section id="section-05-images-drops" class="section">
-      <div class="col-image-left">
-        <div class="image-container">
-          <!--
-            eatme-image-04 (Querformat) ersetzt das bisherige eatme-image-03
-            (Hochformat) -- Klassenname + Bildmaße dazu angepasst, siehe
-            sections/section-05-images-drops.css und ARCHITECTURE.md.
-          -->
-          <img class="eatme-image-04" id="section-05-image-01" src="" alt="" />
-        </div>
-      </div>
-      <div class="col-text-image">
-        <!--
-          Songtext-Modul: identisch zu section-03 (siehe dort), komplett
-          klickbar (siehe components/eatme-lyrics.css für Styling +
-          verstärkten Blur). href wird zur Laufzeit aus content.json
-          (lyrics.song_link) gesetzt, siehe script.js.
-        -->
-        <a href="#" class="eatme-lyrics-link" id="section-05-lyrics-link" aria-label="Song abspielen">
-          <div class="lyrics-lines text-lyrics" id="section-05-lyrics-lines">
-            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
-          </div>
-          <div class="song-link">
-            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
-            </svg>
-            <span class="text-copy-xs" id="section-05-song-title"></span>
-          </div>
-        </a>
-      </div>
-
-      <!-- ==== Desktop-Tropfen-Layer: 19 Instanzen, Positionen % relativ zum
-           aktuellen 1280x657-Referenzrahmen (Figma Node 1:3415 -- Update:
-           Rahmen war vorher 1280x688, hat sich mit dem eatme-image-04-
-           Wechsel verschoben, alle top%-Werte unten sind neu berechnet).
-           Rein dekorativ, nicht content.json-gesteuert -- Positionen/Assets
-           fest im Markup, siehe ARCHITECTURE.md Details section-05. 4 Formen
-           (assets/visuals/drops/01-04.png) x 2 Größen (24px/40px).
-           data-size steuert den Parallax-Faktor, siehe script.js
-           initDropsParallax(). ==== -->
-      <div class="tropfen-group tropfen-group--desktop" data-size="24">
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:49.786%; top:27.019%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/01.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:40.887%; top:58.617%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/01.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:63.465%; top:82.620%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/02.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:53.379%; top:65.090%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/02.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:53.222%; top:46.400%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/02.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:48.433%; top:39.647%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/02.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:32.260%; top:37.033%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/02.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:24.987%; top:68.216%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/03.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:25.629%; top:12.325%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/04.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:66.861%; top:41.836%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/04.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="24" style="left:33.972%; top:44.876%; width:24px; height:24px;">
-          <img src="assets/visuals/drops/04.png" alt="" />
-        </div>
-      </div>
-
-      <div class="tropfen-group tropfen-group--desktop" data-size="40">
-        <div class="tropfen tropfen--desktop" data-size="40" style="left:53.178%; top:30.454%; width:40px; height:40px;">
-          <img src="assets/visuals/drops/01.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="40" style="left:42.516%; top:32.414%; width:40px; height:40px;">
-          <img src="assets/visuals/drops/01.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="40" style="left:32.805%; top:59.001%; width:40px; height:40px;">
-          <img src="assets/visuals/drops/02.png" alt="" />
-        </div>
-        <!-- Update: dieser Tropfen (40px) ist laut aktuellem Figma-Stand
-             deutlich weiter nach links gerückt -- vorher left:17.226% -->
-        <div class="tropfen tropfen--desktop" data-size="40" style="left:5.313%; top:34.857%; width:40px; height:40px;">
-          <img src="assets/visuals/drops/02.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="40" style="left:48.535%; top:71.401%; width:40px; height:40px;">
-          <img src="assets/visuals/drops/03.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="40" style="left:65.613%; top:75.780%; width:40px; height:40px;">
-          <img src="assets/visuals/drops/03.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="40" style="left:41.522%; top:45.717%; width:40px; height:40px;">
-          <img src="assets/visuals/drops/03.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--desktop" data-size="40" style="left:74.852%; top:67.888%; width:40px; height:40px;">
-          <img src="assets/visuals/drops/04.png" alt="" />
-        </div>
-      </div>
-
-      <!-- ==== Mobile-Tropfen-Layer: eigener, kleinerer Satz (9 Stück),
-           in px verankert statt % (siehe ARCHITECTURE.md Details
-           section-05 für die Begründung). Zone 1 oben rechts neben dem
-           Bild, Zone 2 im Gap zwischen Bild und Lyrics-Modul. Vom
-           eatme-image-04-Update unberührt. ==== -->
-      <div class="tropfen-group tropfen-group--mobile" data-size="24">
-        <div class="tropfen tropfen--mobile" data-size="24" style="left:78%; top:110px; width:24px; height:24px;">
-          <img src="assets/visuals/drops/01.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--mobile" data-size="24" style="left:87%; top:250px; width:24px; height:24px;">
-          <img src="assets/visuals/drops/03.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--mobile" data-size="24" style="left:68%; top:335px; width:24px; height:24px;">
-          <img src="assets/visuals/drops/04.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--mobile" data-size="24" style="left:45%; top:450px; width:24px; height:24px;">
-          <img src="assets/visuals/drops/02.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--mobile" data-size="24" style="left:28%; top:520px; width:24px; height:24px;">
-          <img src="assets/visuals/drops/04.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--mobile" data-size="24" style="left:58%; top:545px; width:24px; height:24px;">
-          <img src="assets/visuals/drops/01.png" alt="" />
-        </div>
-      </div>
-
-      <div class="tropfen-group tropfen-group--mobile" data-size="40">
-        <div class="tropfen tropfen--mobile" data-size="40" style="left:58%; top:170px; width:40px; height:40px;">
-          <img src="assets/visuals/drops/02.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--mobile" data-size="40" style="left:12%; top:405px; width:40px; height:40px;">
-          <img src="assets/visuals/drops/01.png" alt="" />
-        </div>
-        <div class="tropfen tropfen--mobile" data-size="40" style="left:74%; top:475px; width:40px; height:40px;">
-          <img src="assets/visuals/drops/03.png" alt="" />
-        </div>
-      </div>
-    </section>
-
-    <section id="section-06-text-social" class="section">
-      <!-- Zwei gleich breite Spalten: links Ankündigungstext, rechts das
-           Instagram-Modul (Komponente, siehe components/instagram-module.css
-           + initInstagramModule() in script.js). Details zum Hug-Verhalten
-           der rechten Spalte + z-index-Schichtung siehe ARCHITECTURE.md
-           Details section-06. -->
-      <div class="col-text">
-        <div class="text-06-copy" id="section-06-copy">
-          <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
-        </div>
-      </div>
-      <div class="col-instagram">
-        <div class="instagram-module-stage" id="instagram-module-stage">
-          <div class="instagram-module" id="instagram-module">
-            <div class="insta-header">
-              <div class="insta-top-bar" id="instagram-drag-handle">
-                <p class="insta-top-bar-label">Instagram</p>
-                <span class="insta-fake-button"></span>
-                <span class="insta-fake-button"></span>
-                <span class="insta-fake-button"></span>
-              </div>
-              <a class="insta-header-link" id="instagram-header-link" href="#" target="_blank" rel="noopener noreferrer" aria-label="Zu Instagram">
-                <div class="insta-avatar">
-                  <img id="instagram-avatar" src="" alt="" />
-                </div>
-                <div class="insta-handle">
-                  <p class="insta-handle-name" id="instagram-handle-name"></p>
-                  <p class="insta-handle-caption" id="instagram-handle-caption"></p>
-                </div>
-                <span class="eatme-button">Follow</span>
-              </a>
-            </div>
-
-            <a class="insta-content-scroll" id="instagram-scroll" href="#" target="_blank" rel="noopener noreferrer" aria-label="Zu Instagram">
-              <div class="insta-grid" id="instagram-grid">
-                <!-- wird zur Laufzeit aus assets/images/insta/ befüllt
-                     (GitHub Contents API), siehe script.js -->
-              </div>
-            </a>
-
-            <div class="resize-edge n" data-dir="n"></div>
-            <div class="resize-edge s" data-dir="s"></div>
-            <div class="resize-edge e" data-dir="e"></div>
-            <div class="resize-edge w" data-dir="w"></div>
-            <div class="resize-corner nw" data-dir="nw"></div>
-            <div class="resize-corner ne" data-dir="ne"></div>
-            <div class="resize-corner sw" data-dir="sw"></div>
-            <div class="resize-corner se" data-dir="se"></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="section-07-footer" class="section">
-      <!-- Zwei-Spalten-Grid: links eatme-lyrics + scribble-sm ("Height
-           Fill"), rechts scribble-lg (vertikal zentriert, rechtsbündig).
-           Mittig absolut zentrierter Booking-CTA. eatme-footer-Pille
-           unten, absolut positioniert. Details siehe ARCHITECTURE.md
-           ("Details section-07-footer") und sections/section-07-footer.css. -->
-      <div class="footer-col-left">
-        <!-- component: eatme-lyrics (identisches Markup wie section-03/05) -->
-        <a href="#" class="eatme-lyrics-link" id="section-07-lyrics-link" aria-label="Song abspielen">
-          <div class="lyrics-lines text-lyrics" id="section-07-lyrics-lines">
-            <!-- wird zur Laufzeit aus content.json befüllt, siehe script.js -->
-          </div>
-          <div class="song-link">
-            <svg class="icon-play" viewBox="0 0 9 8" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M0 0L9 4L0 8V0Z" fill="currentColor" />
-            </svg>
-            <span class="text-copy-xs" id="section-07-song-title"></span>
-          </div>
-        </a>
-        <img class="footer-scribble-sm" src="assets/visuals/scribble/scribble-sm.svg" alt="" aria-hidden="true" />
-      </div>
-      <div class="footer-col-right">
-        <img class="footer-scribble-lg" src="assets/visuals/scribble/scribble-lg.svg" alt="" aria-hidden="true" />
-      </div>
-
-      <!-- Booking-CTA: Text + Umbruch nach dem ersten Wort wird zur
-           Laufzeit über renderFooterCta() in script.js eingefügt. -->
-      <a href="#" class="footer-cta text-highlight" id="section-07-cta"></a>
-
-      <!-- component: eatme-footer -->
+    <div class="footer-pill-wrap">
       <nav class="eatme-footer" aria-label="Footer">
-        <a href="#" id="footer-contact-link" class="eatme-footer-contact text-copy-s"></a>
-        <a href="#" id="footer-legal-link" class="eatme-footer-legal text-copy-s"></a>
+        <a href="mailto:official.eatme.music@gmail.com" class="eatme-footer-contact text-copy-s">Contact</a>
+        <a href="/imprint-and-privacy/" class="eatme-footer-legal is-current text-copy-s">Imprint and privacy</a>
       </nav>
-    </section>
+    </div>
   </main>
 
-  <!-- Content wird zur Laufzeit aus content.json geladen -->
-  <script src="script.js" defer></script>
 </body>
 </html>
