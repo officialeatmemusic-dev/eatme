@@ -64,20 +64,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // ==========================================================================
-// Cloud-Shader (WebGL) — 1:1 identischer Shader-Code wie script.js
-// (initCloudShader()/CLOUD_FRAGMENT_SRC), eigene Instanz + eigene
-// Parameter (BG_CLOUD_404_PARAMS) für diese Seite. Siehe Kommentarblock
-// in script.js für Herkunft/Kalibrierung der Optik (Figma-Shader-Fill,
-// Node 3:3664) -- gilt hier identisch. Bei Shader-Bugfixes (z.B. dem
-// Schwarz-Bug-Fallback unten) bitte auch hier nachziehen.
+// Cloud-Shader (WebGL) — Shader-Code (Noise/fBm, Uniform-Struktur) 1:1
+// identisch zu script.js (initCloudShader()/CLOUD_FRAGMENT_SRC), eigene
+// Instanz + eigene Form-Parameter (BG_CLOUD_404_PARAMS). Bei
+// Shader-Bugfixes (z.B. Compile-Fehlern) bitte auch hier nachziehen.
+//
+// FARBEN: bewusst NICHT aus tokens.css gelesen (anders als der sitewide
+// Shader in script.js) -- eigenes 404-spezifisches Farbschema, mit Til
+// per Regler-Vorschau abgestimmt (28.08.2026). Gilt nur für diese Seite,
+// tokens.css/--gradient-sky-top etc. bleiben unberührt.
 // ==========================================================================
 
-const CLOUD_COLOR_FALLBACK = {
-  skyTop: "#87c8d7",
-  skyBottom: "#fbfdfe",
-  cloudLight: "#edf8ff",
-  cloudShadow: "#6b9ea9", // --color-blue
-  fadeColor: "#ffffff",   // --color-white
+const CLOUD_404_COLORS = {
+  skyTop: "#46676f",
+  skyBottom: "#719da6",
+  cloudLight: "#c8d2d9",
+  cloudShadow: "#28535a",
+  fadeColor: "#ffffff", // ungenutzt bei edgeFade: 0, siehe BG_CLOUD_404_PARAMS
 };
 
 function hexToRgbFloat(hex) {
@@ -89,19 +92,6 @@ function hexToRgbFloat(hex) {
     ((bigint >> 8) & 255) / 255,
     (bigint & 255) / 255,
   ];
-}
-
-function readToken(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-}
-
-function readColorWithFallback(tokenName, fallbackKey) {
-  const rgb = hexToRgbFloat(readToken(tokenName));
-  if (rgb) return rgb;
-  console.warn(
-    `404 Cloud-Shader: Token ${tokenName} war beim Lesen leer/ungueltig (tokens.css evtl. noch nicht angewendet) -- nutze Fallback-Farbe.`
-  );
-  return hexToRgbFloat(CLOUD_COLOR_FALLBACK[fallbackKey]);
 }
 
 const CLOUD_VERTEX_SRC = `
@@ -235,11 +225,11 @@ function compileShader(gl, type, src) {
 
 function readCloudColors() {
   return {
-    skyTop: readColorWithFallback("--gradient-sky-top", "skyTop"),
-    skyBottom: readColorWithFallback("--gradient-sky-bottom", "skyBottom"),
-    cloudLight: readColorWithFallback("--color-cloud-light", "cloudLight"),
-    cloudShadow: readColorWithFallback("--color-blue", "cloudShadow"),
-    fadeColor: readColorWithFallback("--color-white", "fadeColor"),
+    skyTop: hexToRgbFloat(CLOUD_404_COLORS.skyTop),
+    skyBottom: hexToRgbFloat(CLOUD_404_COLORS.skyBottom),
+    cloudLight: hexToRgbFloat(CLOUD_404_COLORS.cloudLight),
+    cloudShadow: hexToRgbFloat(CLOUD_404_COLORS.cloudShadow),
+    fadeColor: hexToRgbFloat(CLOUD_404_COLORS.fadeColor),
   };
 }
 
@@ -330,28 +320,21 @@ function initCloudShader(canvas, params) {
       gl.uniform1f(u.uScroll, 0); // diese Seite scrollt nicht
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     },
-    refreshColors: applyColors,
   };
 }
 
-// Mit Til per Regler-Vorschau final abgestimmte Werte (28.08.2026).
+// Mit Til per Regler-Vorschau final abgestimmte Werte (28.08.2026,
+// zweite Runde inkl. eigenem Farbschema -- siehe CLOUD_404_COLORS oben).
 // edgeFade: 0 -- diese Seite hat nur einen Viewport (kein Scroll), daher
 // kein Rand-Fade wie beim sitewide .bg-cloud nötig.
 const BG_CLOUD_404_PARAMS = {
-  coverage: 45, density: 50, brightness: 70, detail: 73, variation: 100,
-  warpAmount: 100, warpScale: 6, stretch: 0, phase: 100, radius: 150,
+  coverage: 36, density: 52, brightness: 71, detail: 65, variation: 160,
+  warpAmount: 54, warpScale: 8, stretch: 0, phase: 100, radius: 150,
   drift: 100, rise: -100, edgeFade: 0,
 };
 
 const cloud404Canvas = document.getElementById("cloud-canvas-404");
 const cloud404Shader = cloud404Canvas ? initCloudShader(cloud404Canvas, BG_CLOUD_404_PARAMS) : null;
-
-// Sicherheitsnetz gegen den Schwarz-Bug (siehe script.js-Kommentar bei
-// readColorWithFallback()): spaetestens beim "load"-Event ist tokens.css
-// sicher vollstaendig angewendet.
-window.addEventListener("load", () => {
-  if (cloud404Shader) cloud404Shader.refreshColors();
-});
 
 function loop() {
   if (cloud404Shader) cloud404Shader.render();
