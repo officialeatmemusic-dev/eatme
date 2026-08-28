@@ -454,8 +454,17 @@
   /* ---- Content-Bereich: quadratisch statt vertikal scrollend.
      aspect-ratio 1/1 auf der vollen Modulbreite ersetzt die feste
      Höhe -- overflow-x scrollt, overflow-y ist gesperrt (nur noch eine
-     Zeile, kein vertikaler Inhalt mehr). */
+     Zeile, kein vertikaler Inhalt mehr).
+     BUGFIX (siehe Chat, Live-Check 28.08.2026): die Desktop-Basisregel
+     setzt `flex: 1 0 0` -- also eine explizite flex-basis:0, die dann
+     in den freien Platz des fest-hohen Desktop-Moduls (520px) reinwächst.
+     Auf Mobile ist das Modul aber height:auto (hugt nur den Header,
+     siehe oben) -- es gibt keinen freien Platz zum Reinwachsen, und die
+     flex-basis:0 überschreibt dabei die eigentlich gewünschte
+     aspect-ratio-Höhe, wodurch der Bereich auf ~0 Höhe zusammenklappte.
+     `flex: none` hier hebt das auf, erst dann greift aspect-ratio. */
   .insta-content-scroll {
+    flex: none;
     width: 100%;
     aspect-ratio: 1 / 1;
     margin: 0;
