@@ -65,14 +65,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // ==========================================================================
 // Cloud-Shader (WebGL) — Shader-Code (Noise/fBm, Uniform-Struktur) 1:1
-// identisch zu script.js (initCloudShader()/CLOUD_FRAGMENT_SRC), eigene
-// Instanz + eigene Form-Parameter (BG_CLOUD_404_PARAMS). Bei
-// Shader-Bugfixes (z.B. Compile-Fehlern) bitte auch hier nachziehen.
+// identisch zu script.js (initCloudShader()/CLOUD_FRAGMENT_SRC). Eigene
+// Instanz, die aber NICHT statisch bei den 404-Werten startet, sondern
+// beim Laden 30s lang vom sitewide Wolken-Look in den 404-eigenen Look
+// überblendet (Werte + Farben) -- siehe CLOUD_TRANSITION-Block weiter
+// unten. Bei Shader-Bugfixes (z.B. Compile-Fehlern) bitte auch in
+// script.js nachziehen.
 //
-// FARBEN: bewusst NICHT aus tokens.css gelesen (anders als der sitewide
-// Shader in script.js) -- eigenes 404-spezifisches Farbschema, mit Til
-// per Regler-Vorschau abgestimmt (28.08.2026). Gilt nur für diese Seite,
-// tokens.css/--gradient-sky-top etc. bleiben unberührt.
+// FARBEN (Zielzustand): bewusst NICHT aus tokens.css gelesen (anders als
+// der sitewide Shader in script.js) -- eigenes 404-spezifisches
+// Farbschema, mit Til per Regler-Vorschau abgestimmt (28.08.2026). Gilt
+// nur für diese Seite, tokens.css/--gradient-sky-top etc. bleiben
+// unberührt.
 // ==========================================================================
 
 const CLOUD_404_COLORS = {
@@ -223,17 +227,40 @@ function compileShader(gl, type, src) {
   return shader;
 }
 
-function readCloudColors() {
+function readCloudColors(colors) {
   return {
-    skyTop: hexToRgbFloat(CLOUD_404_COLORS.skyTop),
-    skyBottom: hexToRgbFloat(CLOUD_404_COLORS.skyBottom),
-    cloudLight: hexToRgbFloat(CLOUD_404_COLORS.cloudLight),
-    cloudShadow: hexToRgbFloat(CLOUD_404_COLORS.cloudShadow),
-    fadeColor: hexToRgbFloat(CLOUD_404_COLORS.fadeColor),
+    skyTop: hexToRgbFloat(colors.skyTop),
+    skyBottom: hexToRgbFloat(colors.skyBottom),
+    cloudLight: hexToRgbFloat(colors.cloudLight),
+    cloudShadow: hexToRgbFloat(colors.cloudShadow),
+    fadeColor: hexToRgbFloat(colors.fadeColor),
   };
 }
 
-function initCloudShader(canvas, params) {
+// Lineare Interpolation + Ease-Funktion fuer den Werte-Uebergang unten
+// (SITEWIDE- -> 404-Look, siehe CLOUD_TRANSITION weiter unten). Sanftes
+// Ein-/Ausschwingen statt linear, damit der Wechsel nicht mechanisch wirkt.
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+function lerpColor(fromRgb, toRgb, t) {
+  return [
+    lerp(fromRgb[0], toRgb[0], t),
+    lerp(fromRgb[1], toRgb[1], t),
+    lerp(fromRgb[2], toRgb[2], t),
+  ];
+}
+
+const SHAPE_KEYS = [
+  "coverage", "density", "brightness", "detail", "variation",
+  "warpAmount", "warpScale", "stretch", "phase", "radius",
+  "drift", "rise", "edgeFade",
+];
+
+function initCloudShader(canvas, transition) {
   const gl = canvas.getContext("webgl", { antialias: false, alpha: false }) ||
              canvas.getContext("experimental-webgl");
   if (!gl) {
@@ -263,30 +290,31 @@ function initCloudShader(canvas, params) {
     "uSkyTop", "uSkyBottom", "uCloudLight", "uCloudShadow", "uFadeColor",
   ].forEach((name) => { u[name] = gl.getUniformLocation(program, name); });
 
-  function applyColors() {
-    gl.useProgram(program);
-    const colors = readCloudColors();
-    gl.uniform3fv(u.uSkyTop, colors.skyTop);
-    gl.uniform3fv(u.uSkyBottom, colors.skyBottom);
-    gl.uniform3fv(u.uCloudLight, colors.cloudLight);
-    gl.uniform3fv(u.uCloudShadow, colors.cloudShadow);
-    gl.uniform3fv(u.uFadeColor, colors.fadeColor);
-  }
-  applyColors();
+  const uniformNameByKey = {
+    coverage: "uCoverage", density: "uDensity", brightness: "uBrightness",
+    detail: "uDetail", variation: "uVariation", warpAmount: "uWarpAmount",
+    warpScale: "uWarpScale", stretch: "uStretch", phase: "uPhase",
+    radius: "uRadius", drift: "uDrift", rise: "uRise", edgeFade: "uEdgeFade",
+  };
 
-  gl.uniform1f(u.uCoverage, params.coverage);
-  gl.uniform1f(u.uDensity, params.density);
-  gl.uniform1f(u.uBrightness, params.brightness);
-  gl.uniform1f(u.uDetail, params.detail);
-  gl.uniform1f(u.uVariation, params.variation);
-  gl.uniform1f(u.uWarpAmount, params.warpAmount);
-  gl.uniform1f(u.uWarpScale, params.warpScale);
-  gl.uniform1f(u.uStretch, params.stretch);
-  gl.uniform1f(u.uPhase, params.phase);
-  gl.uniform1f(u.uRadius, params.radius);
-  gl.uniform1f(u.uDrift, params.drift);
-  gl.uniform1f(u.uRise, params.rise);
-  gl.uniform1f(u.uEdgeFade, params.edgeFade);
+  // Farben: fadeColor bleibt in Start- und Ziel-Zustand identisch weiss,
+  // daher kein Lerp noetig -- einmalig gesetzt.
+  const startRgb = readCloudColors(transition.fromColors);
+  const targetRgb = readCloudColors(transition.toColors);
+  gl.uniform3fv(u.uFadeColor, targetRgb.fadeColor);
+
+  function applyShapeAndColors(t) {
+    gl.useProgram(program);
+    SHAPE_KEYS.forEach((key) => {
+      const val = lerp(transition.fromParams[key], transition.toParams[key], t);
+      gl.uniform1f(u[uniformNameByKey[key]], val);
+    });
+    gl.uniform3fv(u.uSkyTop, lerpColor(startRgb.skyTop, targetRgb.skyTop, t));
+    gl.uniform3fv(u.uSkyBottom, lerpColor(startRgb.skyBottom, targetRgb.skyBottom, t));
+    gl.uniform3fv(u.uCloudLight, lerpColor(startRgb.cloudLight, targetRgb.cloudLight, t));
+    gl.uniform3fv(u.uCloudShadow, lerpColor(startRgb.cloudShadow, targetRgb.cloudShadow, t));
+  }
+  applyShapeAndColors(0); // Startzustand sofort sichtbar, kein Warten auf den ersten rAF-Tick
 
   // Resize nur bei echten Breiten-Aenderungen -- Safari feuert "resize" beim
   // Ein-/Ausblenden der Adressleiste (siehe script.js-Kommentar zum
@@ -312,16 +340,51 @@ function initCloudShader(canvas, params) {
   doResize();
 
   const start = performance.now();
+  let transitionDone = false;
 
   return {
     render() {
-      const t = (performance.now() - start) / 1000;
+      const elapsedMs = performance.now() - start;
+      if (!transitionDone) {
+        const progress = Math.min(elapsedMs / transition.durationMs, 1);
+        applyShapeAndColors(easeInOutCubic(progress));
+        if (progress >= 1) transitionDone = true; // danach keine Uniform-Writes mehr noetig, Werte stehen fest
+      }
+      const t = elapsedMs / 1000;
       gl.uniform1f(u.uTime, t);
       gl.uniform1f(u.uScroll, 0); // diese Seite scrollt nicht
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     },
   };
 }
+
+// ==========================================================================
+// Werte-Uebergang beim Laden der 404: startet beim "normalen" sitewide
+// Wolken-Look (1:1 BG_CLOUD_PARAMS + Token-Farben aus script.js/tokens.css)
+// und blendet innerhalb von 30s sanft in den eigenen 404-Look
+// (BG_CLOUD_404_PARAMS/CLOUD_404_COLORS) über. Rein visueller Effekt beim
+// Seitenaufruf, kein Loop/keine Wiederholung -- nach 30s bleibt der
+// Ziel-Zustand einfach stehen (siehe transitionDone oben).
+//
+// ACHTUNG bei Aenderungen am sitewide Shader (script.js BG_CLOUD_PARAMS
+// oder den Token-Farben in tokens.css): CLOUD_SITEWIDE_START_PARAMS/
+// -COLORS hier von Hand nachziehen, sonst startet der Uebergang von einem
+// veralteten Ausgangspunkt.
+// ==========================================================================
+const CLOUD_TRANSITION_DURATION_MS = 30000;
+
+const CLOUD_SITEWIDE_START_PARAMS = {
+  coverage: 52, density: 50, brightness: 70, detail: 55, variation: 100,
+  warpAmount: 100, warpScale: 6, stretch: 0, phase: 12, radius: 60,
+  drift: 30, rise: 0, edgeFade: 1, // sitewide .bg-cloud laeuft mit Rand-Fade
+};
+const CLOUD_SITEWIDE_START_COLORS = {
+  skyTop: "#87c8d7",     // --gradient-sky-top
+  skyBottom: "#fbfdfe",  // --gradient-sky-bottom
+  cloudLight: "#edf8ff", // --color-cloud-light
+  cloudShadow: "#6b9ea9", // --color-blue
+  fadeColor: "#ffffff",   // --color-white
+};
 
 // Mit Til per Regler-Vorschau final abgestimmte Werte (28.08.2026,
 // zweite Runde inkl. eigenem Farbschema -- siehe CLOUD_404_COLORS oben).
@@ -334,10 +397,17 @@ const BG_CLOUD_404_PARAMS = {
 };
 
 const cloud404Canvas = document.getElementById("cloud-canvas-404");
-const cloud404Shader = cloud404Canvas ? initCloudShader(cloud404Canvas, BG_CLOUD_404_PARAMS) : null;
+const cloud404Shader = cloud404Canvas ? initCloudShader(cloud404Canvas, {
+  fromParams: CLOUD_SITEWIDE_START_PARAMS,
+  toParams: BG_CLOUD_404_PARAMS,
+  fromColors: CLOUD_SITEWIDE_START_COLORS,
+  toColors: CLOUD_404_COLORS,
+  durationMs: CLOUD_TRANSITION_DURATION_MS,
+}) : null;
 
 function loop() {
   if (cloud404Shader) cloud404Shader.render();
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
+
