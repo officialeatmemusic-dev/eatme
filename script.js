@@ -84,7 +84,7 @@ document.addEventListener("DOMContentLoaded", () => initFadeInText());
 //     verweigert Audio-Play sonst, wenn der Aufruf den User-Gesture-Kontext
 //     bereits verlassen hat (await vor play()).
 
-const MUSIC_FOLDER_API = "https://api.github.com/repos/t-i-l/eatme/contents/assets/music";
+const MUSIC_FOLDER_API = "https://api.github.com/repos/officialeatmemusic-dev/eatme/contents/assets/music";
 const MUSIC_CACHE_KEY = "eatme-music-folder-cache";
 const MUSIC_CACHE_TTL_MS = 5 * 60 * 1000;
 const MUSIC_AUDIO_EXT = ["mp3", "wav", "ogg", "m4a", "aac"];
@@ -485,7 +485,7 @@ document.addEventListener("eatme:content-ready", (e) => {
 //     (siehe applyMobileReset() unten + die pointer-events-Regel in der CSS).
 // ==========================================================================
 
-const INSTA_FOLDER_API = "https://api.github.com/repos/t-i-l/eatme/contents/assets/images/insta";
+const INSTA_FOLDER_API = "https://api.github.com/repos/officialeatmemusic-dev/eatme/contents/assets/images/insta";
 const INSTA_CACHE_KEY = "eatme-insta-folder-cache";
 const INSTA_CACHE_TTL_MS = 5 * 60 * 1000;
 const INSTA_IMAGE_EXT = ["jpg", "jpeg", "png", "webp", "gif"];
@@ -606,16 +606,34 @@ function setupInstagramInteraction({ moduleEl, stageEl, scrollEl, dragHandle, gr
     state.top = Math.round((stageRect.height - state.height) / 2);
   }
 
+  // Auf Mobile (siehe applyMobileReset() unten) werden bewusst KEINE
+  // inline left/top/width/height gesetzt -- dort übernimmt die CSS
+  // (position:static, width:100%, aspect-ratio-basierte Höhe, siehe
+  // components/instagram-module.css) die komplette Größe/Position.
+  // Würde applyState() hier trotzdem px-Werte reinschreiben, würden die
+  // die CSS-Regeln überschreiben (Inline-Style schlägt normale
+  // Autoren-Regeln), obwohl state.width/height auf Mobile ohnehin nur
+  // die (bedeutungslose) Default-Größe halten.
   function applyState() {
+    if (mobileQuery.matches) {
+      moduleEl.style.left = "";
+      moduleEl.style.top = "";
+      moduleEl.style.width = "";
+      moduleEl.style.height = "";
+      return;
+    }
     moduleEl.style.left = `${state.left}px`;
     moduleEl.style.top = `${state.top}px`;
     moduleEl.style.width = `${state.width}px`;
     moduleEl.style.height = `${state.height}px`;
   }
 
-  // Mobile: Modul auf Default-Größe zurücksetzen + neu zentrieren.
-  // hasInteracted wird ebenfalls zurückgesetzt, damit es beim Zurück-
-  // wechseln zu Desktop wieder frisch zentriert startet.
+  // Mobile: Modul auf Default-Größe zurücksetzen (state dient hier nur
+  // noch als "letzter bekannter Desktop-Wert" für den Fall, dass wieder
+  // zu Desktop zurückgewechselt wird -- angewendet wird auf Mobile
+  // nichts davon, siehe applyState()). hasInteracted wird ebenfalls
+  // zurückgesetzt, damit es beim Zurückwechseln zu Desktop wieder frisch
+  // zentriert startet.
   function applyMobileReset() {
     state.width = DEFAULT_STATE.width;
     state.height = DEFAULT_STATE.height;
@@ -638,6 +656,13 @@ function setupInstagramInteraction({ moduleEl, stageEl, scrollEl, dragHandle, gr
       centerInStage();
       applyState();
     }
+    // Breakpoint-Wechsel = Achsenwechsel des Endlos-Scrolls (vertikal
+    // <-> horizontal, siehe measureAndReset()) + ggf. Wechsel der
+    // Set-Struktur (isWide). Der ResizeObserver auf moduleEl würde das
+    // meist ohnehin anstoßen (Modulgröße ändert sich durch die
+    // CSS-Umschaltung), hier zusätzlich explizit für den Fall, dass die
+    // Modulgröße dabei zufällig gleich bleibt.
+    scheduleRefresh();
   });
 
   // Sonstige Fenster-Größenänderungen (ohne Breakpoint-Wechsel): nur neu
@@ -791,15 +816,23 @@ function setupInstagramInteraction({ moduleEl, stageEl, scrollEl, dragHandle, gr
   }
 
   // ---- Endloser Scroll: Start-Position liegt am Anfang der mittleren der
-  // 3 Kopien. Nähert man sich oben/unten der Kante, wird die Scroll-
-  // Position per JS unsichtbar (kein smooth-behavior) um exakt eine
-  // Kopien-Höhe zurückgesetzt -> fühlt sich endlos an, ohne dass der DOM
-  // unendlich wächst. ----
-  let setHeight = 0;
+  // 3 Kopien. Nähert man sich einer Kante, wird die Scroll-Position per
+  // JS unsichtbar (kein smooth-behavior) um exakt eine Kopien-Größe
+  // zurückgesetzt -> fühlt sich endlos an, ohne dass der DOM unendlich
+  // wächst. Läuft auf Desktop vertikal (scrollTop/scrollHeight), auf
+  // Mobile horizontal (scrollLeft/scrollWidth, siehe Mobile-Regeln in
+  // components/instagram-module.css: eine Zeile statt gestapelter
+  // Sets). ----
+  let setSize = 0;
 
   function measureAndReset() {
-    setHeight = grid.scrollHeight / 3;
-    scrollEl.scrollTop = setHeight;
+    if (mobileQuery.matches) {
+      setSize = grid.scrollWidth / 3;
+      scrollEl.scrollLeft = setSize;
+    } else {
+      setSize = grid.scrollHeight / 3;
+      scrollEl.scrollTop = setSize;
+    }
   }
 
   let rafPending = false;
@@ -808,7 +841,11 @@ function setupInstagramInteraction({ moduleEl, stageEl, scrollEl, dragHandle, gr
     rafPending = true;
     requestAnimationFrame(() => {
       rafPending = false;
-      const nowWide = moduleEl.getBoundingClientRect().width >= WIDE_BREAKPOINT;
+      // Die 2-Spalten-Aufteilung (is-row/insta-col) ist eine reine
+      // Desktop-Angelegenheit -- auf Mobile bleibt isWide immer false,
+      // damit .insta-set immer die flache Bild-Liste ist, die die
+      // Mobile-CSS zu einer Zeile dreht (siehe dortiger Kommentar).
+      const nowWide = !mobileQuery.matches && moduleEl.getBoundingClientRect().width >= WIDE_BREAKPOINT;
       if (nowWide !== isWide) {
         isWide = nowWide;
         renderGrid();
@@ -830,11 +867,19 @@ function setupInstagramInteraction({ moduleEl, stageEl, scrollEl, dragHandle, gr
   }
 
   scrollEl.addEventListener("scroll", () => {
-    if (!setHeight) return;
-    if (scrollEl.scrollTop <= 0) {
-      scrollEl.scrollTop += setHeight;
-    } else if (scrollEl.scrollTop >= setHeight * 2) {
-      scrollEl.scrollTop -= setHeight;
+    if (!setSize) return;
+    if (mobileQuery.matches) {
+      if (scrollEl.scrollLeft <= 0) {
+        scrollEl.scrollLeft += setSize;
+      } else if (scrollEl.scrollLeft >= setSize * 2) {
+        scrollEl.scrollLeft -= setSize;
+      }
+    } else {
+      if (scrollEl.scrollTop <= 0) {
+        scrollEl.scrollTop += setSize;
+      } else if (scrollEl.scrollTop >= setSize * 2) {
+        scrollEl.scrollTop -= setSize;
+      }
     }
   });
 
